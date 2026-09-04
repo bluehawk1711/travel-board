@@ -13,6 +13,8 @@ import { AuthModule } from './auth/auth.module';
 import { BoardsModule } from './boards/boards.module';
 import { CountersModule } from './counters/counters.module';
 import { DiscoveryModule } from './discovery/discovery.module';
+import { CommentsModule } from './comments/comments.module';
+import { FollowsModule } from './follows/follows.module';
 import { RedisModule } from './common/redis/redis.module';
 import { REDIS_CLIENT } from './common/redis/redis.constants';
 import { UpstashKeyvStore } from './common/cache/upstash-keyv.store';
@@ -62,6 +64,8 @@ const CACHE_L1_LRU_SIZE = 5_000;
     CountersModule,
     BoardsModule,
     DiscoveryModule,
+    CommentsModule,
+    FollowsModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],

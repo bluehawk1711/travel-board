@@ -30,6 +30,15 @@ export const MESSAGES = {
   PLACES: {
     SEARCH_FAILED: 'Places search failed',
   },
+  COMMENTS: {
+    NOT_FOUND: 'Comment not found',
+    EMPTY_BODY: 'Comment cannot be empty',
+    NOT_AUTHOR: 'You can only delete your own comments',
+  },
+  FOLLOWS: {
+    SELF_FOLLOW: 'You cannot follow yourself',
+    UNFOLLOW_SELF: 'You cannot unfollow yourself',
+  },
   COMMON: {
     UPDATED: 'Updated successfully',
     DELETED: 'Deleted successfully',

@@ -566,13 +566,21 @@ export class BoardsService {
     return item;
   }
 
-  private async requireVisibleBoard(boardId: string, user?: AuthUser) {
-    const role = await this.getRole(boardId, user?.id);
+  /** Public boards for everyone; private boards require a membership role. */
+  async canView(boardId: string, userId?: string): Promise<boolean> {
+    const role = await this.getRole(boardId, userId);
     const board = await this.db.query.boards.findFirst({
       columns: { id: true, visibility: true },
       where: eq(boards.id, boardId),
     });
-    if (!board || (board.visibility === 'PRIVATE' && !role)) {
+    if (!board) {
+      return false;
+    }
+    return board.visibility === 'PUBLIC' || role !== null;
+  }
+
+  private async requireVisibleBoard(boardId: string, user?: AuthUser) {
+    if (!(await this.canView(boardId, user?.id))) {
       throw new NotFoundException(MESSAGES.BOARDS.NOT_FOUND);
     }
   }
