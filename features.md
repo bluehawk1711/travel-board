@@ -75,7 +75,11 @@ Prioritized using MoSCoW: **Must** (MVP, can't launch without), **Should** (impo
 | Roles: Owner / Editor / Viewer | Must |
 | Permission-based edit/reorder/delete | Must |
 | See who's on a board (member list) | Must |
-| Real-time or near-real-time sync of edits | Should |
+| Real-time co-editing — multiple users edit the same board live | Must |
+| Live presence — see who's viewing/editing a board right now | Should |
+| Realtime broadcast of changes (items/sections/positions) to collaborators | Must |
+| Conflict handling (last-write-wins for MVP, escalate to CRDT/OT later) | Should |
+| Real-time or near-real-time sync of edits | Must |
 | Activity log (who added/changed what) | Could |
 | @mentions / comments on specific items | Could |
 
@@ -109,7 +113,21 @@ Prioritized using MoSCoW: **Must** (MVP, can't launch without), **Should** (impo
 | Mobile ad network integration (AdMob or similar) | Could |
 | Sponsored board placements | Won't (v1) |
 
-## 10. Platform / Technical
+## 10. Realtime Infrastructure
+
+| Feature | Priority |
+|---|---|
+| Socket.IO gateway (NestJS) with JWT auth on the socket handshake | Must |
+| Chat: 1:1 DMs, group conversations, per-board chat rooms | Must |
+| Realtime board edits broadcast to board room (items, sections, positions) | Must |
+| Presence: online status (Redis keys) + per-board "who's editing" | Should |
+| Typing indicators in chat | Should |
+| Read receipts / unread counts in chat | Should |
+| Socket.IO Redis adapter for multi-instance scaling (Upstash REST can't pub/sub — needs a TCP Redis client) | Could |
+
+---
+
+## 11. Platform / Technical
 
 | Feature | Priority |
 |---|---|
@@ -125,9 +143,9 @@ Prioritized using MoSCoW: **Must** (MVP, can't launch without), **Should** (impo
 ## MVP Cut Line (what "must launch with" actually looks like)
 
 **Ship with:**
-Auth (email + Google) → create/edit board → sections → items (place/image/note/link) → drag-to-reorder within a section → public/private → explore feed (masonry) → save a board → like → share link → invite collaborators with roles → manual + Google Places search for places → basic map view.
+Auth (email + Google) → create/edit board → sections → items (place/image/note/link) → drag-to-reorder within a section → public/private → explore feed (masonry) → save a board → like → share link → invite collaborators with roles → **real-time co-editing + chat (Socket.IO)** → manual + Google Places search for places → basic map view.
 
 **Deliberately deferred:**
-AI trip builder, monetization (ads/premium), comments/notifications, real-time sync, PDF export, budget tracking.
+AI trip builder, monetization (ads/premium), comments/notifications, PDF export, budget tracking, CRDT/OT conflict resolution (start with last-write-wins).
 
 This keeps the first Play Store release focused on the core loop — *create a board, make it visual, share it, let people save and collaborate on it* — without the complexity of AI generation or ad integration slowing down launch.

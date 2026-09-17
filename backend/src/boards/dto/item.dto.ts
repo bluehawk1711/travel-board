@@ -2,6 +2,8 @@ import {
   IsDateString,
   IsEnum,
   IsInt,
+  IsLatitude,
+  IsLongitude,
   IsNotEmpty,
   IsOptional,
   IsString,
@@ -61,6 +63,14 @@ export class CreateItemDto {
   position?: number;
 
   @IsOptional()
+  @IsLatitude()
+  lat?: number;
+
+  @IsOptional()
+  @IsLongitude()
+  lng?: number;
+
+  @IsOptional()
   @IsDateString()
   date?: string;
 }
@@ -97,6 +107,14 @@ export class UpdateItemDto {
   @Min(0)
   @Max(100_000)
   position?: number;
+
+  @IsOptional()
+  @IsLatitude()
+  lat?: number;
+
+  @IsOptional()
+  @IsLongitude()
+  lng?: number;
 
   @IsOptional()
   @IsDateString()

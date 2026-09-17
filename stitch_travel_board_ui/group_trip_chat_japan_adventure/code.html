@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{width:100%;margin:0;padding:0;background-color:#fbf9f6;font-family:'Plus Jakarta Sans',sans-serif;}body{overscroll-behavior-y:none;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: 'class', theme: { extend: { colors: { 'surface-dim': '#dbdad7', 'surface-container-high': '#eae8e5', 'secondary-container': '#ffa03b', 'secondary': '#8d4f00', 'on-primary-fixed-variant': '#8f1000', 'secondary-fixed': '#ffdcc0', 'surface-container': '#efeeeb', 'on-tertiary-fixed': '#002113', 'on-secondary': '#ffffff', 'on-tertiary-fixed-variant': '#005235', 'on-primary-fixed': '#3f0300', 'on-surface': '#1b1c1a', 'surface-container-lowest': '#ffffff', 'outline-variant': '#e4beb7', 'on-primary': '#ffffff', 'tertiary-fixed': '#9ff4c6', 'inverse-surface': '#30312f', 'on-tertiary': '#ffffff', 'inverse-on-surface': '#f2f0ed', 'surface-container-low': '#f5f3f0', 'tertiary-container': '#2c835d', 'on-secondary-fixed': '#2d1600', 'primary-container': '#d63b22', 'on-secondary-fixed-variant': '#6b3b00', 'surface-container-highest': '#e4e2df', 'surface-tint': '#b6230c', 'surface-bright': '#fbf9f6', 'on-tertiary-container': '#f6fff6', 'on-secondary-container': '#6c3b00', 'on-error': '#ffffff', 'primary-fixed': '#ffdad3', 'error': '#ba1a1a', 'primary-fixed-dim': '#ffb4a6', 'on-primary-container': '#fffbff', 'on-background': '#1b1c1a', 'on-error-container': '#93000a', 'outline': '#8f706a', 'inverse-primary': '#ffb4a6', 'primary': '#b32109', 'surface-variant': '#e4e2df', 'tertiary-fixed-dim': '#83d8ab', 'tertiary': '#026a46', 'on-surface-variant': '#5b403b', 'surface': '#fbf9f6', 'secondary-fixed-dim': '#ffb875', 'error-container': '#ffdad6', 'background': '#fbf9f6' }, borderRadius: { 'DEFAULT': '0.25rem', 'lg': '0.5rem', 'xl': '0.75rem', 'full': '9999px' }, spacing: { 'margin-tablet': '2rem', 'space-lg': '1.5rem', 'gutter': '1rem', 'gutter-compact': '0.75rem', 'space-xl': '2rem', 'space-sm': '0.5rem', 'margin': '1rem', 'space-xs': '0.25rem', 'space-md': '1rem' }, fontFamily: { 'headline-md': ['Plus Jakarta Sans'], 'headline-sm': ['Plus Jakarta Sans'], 'display-lg': ['Plus Jakarta Sans'], 'body-sm': ['Plus Jakarta Sans'], 'title-md': ['Plus Jakarta Sans'], 'headline-lg': ['Plus Jakarta Sans'], 'label-md': ['Plus Jakarta Sans'], 'label-lg': ['Plus Jakarta Sans'], 'title-lg': ['Plus Jakarta Sans'], 'label-sm': ['Plus Jakarta Sans'], 'display-lg-mobile': ['Plus Jakarta Sans'], 'body-md': ['Plus Jakarta Sans'], 'body-lg': ['Plus Jakarta Sans'] }, fontSize: { 'headline-md': ['24px', { lineHeight: '30px', letterSpacing: '-0.015em', fontWeight: '700' }], 'headline-sm': ['20px', { lineHeight: '26px', letterSpacing: '-0.01em', fontWeight: '600' }], 'display-lg': ['44px', { lineHeight: '52px', letterSpacing: '-0.03em', fontWeight: '800' }], 'body-sm': ['12px', { lineHeight: '16px', fontWeight: '400' }], 'title-md': ['16px', { lineHeight: '22px', fontWeight: '600' }], 'headline-lg': ['30px', { lineHeight: '38px', letterSpacing: '-0.02em', fontWeight: '700' }], 'label-md': ['12px', { lineHeight: '16px', letterSpacing: '0.02em', fontWeight: '600' }], 'label-lg': ['14px', { lineHeight: '18px', letterSpacing: '0.01em', fontWeight: '600' }], 'title-lg': ['18px', { lineHeight: '24px', fontWeight: '600' }], 'label-sm': ['10px', { lineHeight: '14px', letterSpacing: '0.04em', fontWeight: '700' }], 'display-lg-mobile': ['34px', { lineHeight: '40px', letterSpacing: '-0.025em', fontWeight: '800' }], 'body-md': ['14px', { lineHeight: '20px', fontWeight: '400' }], 'body-lg': ['16px', { lineHeight: '24px', fontWeight: '400' }] } } } };</script><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-surface text-on-surface min-h-full flex flex-col antialiased"><header class="fixed top-0 w-full z-50 pt-safe bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(84,42,30,0.05)]"><div class="h-16 px-gutter flex items-center justify-between"><div class="flex items-center gap-space-sm"><button aria-label="Go back" class="w-11 h-11 -ml-space-xs flex items-center justify-center rounded-full text-on-surface hover:bg-surface-container-high/60 transition-colors" onclick="window.history.back()"><span class="material-symbols-outlined text-[24px]">arrow_back</span></button><img alt="Brand logo. - Primary color: #fa5438 - Font: plusJakartaSans - Mode: light - Roundness: rounded-md" class="h-7 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1Xluasy3R1z_ELew3U82wsQe1_gDZiG6w1LK7OcWGElSYo_hDjxxurj_M9QB1intnG-FZlNRTN6ZGE0Hj_IqaAHRswV24WYh9ammCn9n_dykyXmvam-El2XPNehfeDyTkUYOdYfBcTm22dJDkfCgM9DhV4_j9E60sdN22KiupLVTcp7LYZM6VTsL4E5ai0QcRhz99UXRNUb138xE-QzHTZ10fVB2qnn2zJif-ijwsgdjs46gh0qlfJcGfI"/><h1 class="font-title-lg text-title-lg text-on-surface truncate max-w-[180px]">Live Chat Room</h1></div><div class="flex items-center gap-space-xs"><button aria-label="More options" class="w-11 h-11 flex items-center justify-center rounded-full text-on-surface-variant hover:text-on-surface transition-colors"><span class="material-symbols-outlined text-[24px]">more_vert</span></button><div class="w-11 h-11 flex items-center justify-center"><img alt="Profile" class="w-8 h-8 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1WGHciOArrD04qkdRuXQrtJCWb52e2h0SnP29E4xGovHgI-n0cIT_paggeXmC7nMkn7hZXmCW3noveHH6aOzSwq-b4ooELhYHlBNDVwVC6XeaNwaeNRnHm7NHqTB3RjCz6oE_JN7fkPotfKPz98y902B2kwApyPx2xcDpf7Ff28IFlohm2c7ngE6zVtFPCKNebNZeqFCfcUb2uBhdyiwUP9FzQbeGtWkpFwweyD0_PmQ_FxgwIXLANgxg"/></div></div></div></header><main class="flex-1 flex flex-col relative w-full pt-16 pb-safe bg-surface"><div class="flex flex-col w-full">
+<!-- Trip Sub-Header Context & Collaboration Bar -->
+<section class="bg-surface-container-low px-margin py-space-sm flex items-center justify-between shadow-sm">
+<div class="flex items-center gap-space-sm min-w-0">
+<div class="relative flex-shrink-0">
+<div class="w-10 h-10 rounded-full overflow-hidden shadow-sm bg-surface-container-highest">
+<img class="w-full h-full object-cover" data-alt="Vibrant aesthetic travel journal flatlay with leather passport cover, hot latte art, postcard of Kyoto Fushimi Inari shrine, Japanese ink pen, on a warm rustic wooden cafe table bathed in golden morning light." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDOz4RNSYHwUUZKhJ16QTp5EcYVrQnuXb5mk9Dd2JWLP-tz6LauN2HMVQmYvtvbPyKmLz4TPAj83Ikcv-Kj_C6NHapTgdqW9-Ed8wzd3htq_5zW1JeJidNyyA9AfXnCBsItoS23_Bm0pK5T5YQlDJN6_aVXnr40VLkoyQSmB2IdoFj8fJjVVcTFLb2cpy02TofrYnC0U9xOMhoe9n1fxjGGl_hMYjI7pByPIwIN5l3HaRcRxrDBMx-2"/>
+</div>
+<div class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-tertiary rounded-full"></div>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-space-xs">
+<span class="font-title-md text-title-md text-on-surface truncate">Japan Adventure 🇯🇵</span>
+</div>
+<div class="flex items-center gap-space-xs">
+<div class="flex -space-x-1.5 items-center">
+<span class="w-4 h-4 rounded-full bg-primary text-on-primary font-label-sm text-[8px] flex items-center justify-center">A</span>
+<span class="w-4 h-4 rounded-full bg-secondary text-on-secondary font-label-sm text-[8px] flex items-center justify-center">S</span>
+<span class="w-4 h-4 rounded-full bg-tertiary text-on-tertiary font-label-sm text-[8px] flex items-center justify-center">E</span>
+<span class="w-4 h-4 rounded-full bg-surface-variant text-on-surface-variant font-label-sm text-[8px] flex items-center justify-center">K</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant truncate">4 members • 2 active now</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-space-xs flex-shrink-0">
+<button aria-label="Start group audio call" class="w-9 h-9 flex items-center justify-center rounded-full bg-surface text-on-surface hover:bg-surface-container-high transition-colors shadow-sm">
+<span class="material-symbols-outlined text-[18px]">call</span>
+</button>
+<button aria-label="Trip board details" class="w-9 h-9 flex items-center justify-center rounded-full bg-surface text-on-surface hover:bg-surface-container-high transition-colors shadow-sm">
+<span class="material-symbols-outlined text-[18px]">view_kanban</span>
+</button>
+</div>
+</section>
+<!-- Pinned Itinerary Alert Drawer -->
+<div class="bg-surface-container px-margin py-space-xs flex items-center justify-between shadow-sm transition-all duration-200" id="pinned-banner">
+<div class="flex items-center gap-space-sm min-w-0">
+<span class="material-symbols-outlined text-[18px] text-primary flex-shrink-0" style="font-variation-settings: 'FILL' 1;">push_pin</span>
+<p class="font-label-md text-label-md text-on-surface truncate">
+<span class="font-bold text-primary">Pinned:</span> Tokyo Tower tickets booked for Day 2 (19:00)
+      </p>
+</div>
+<button aria-label="Toggle pinned info" class="w-7 h-7 flex items-center justify-center rounded-full text-on-surface-variant hover:text-on-surface" onclick="document.getElementById('pinned-banner').classList.toggle('opacity-50')">
+<span class="material-symbols-outlined text-[16px]">expand_less</span>
+</button>
+</div>
+<!-- Main Scrollable Chat Timeline -->
+<div class="flex flex-col px-margin py-space-md gap-space-md">
+<!-- Date Divider -->
+<div class="flex items-center justify-center my-space-xs">
+<div class="px-space-md py-space-xs bg-surface-container-high rounded-full shadow-sm">
+<span class="font-label-sm text-label-sm text-on-surface-variant font-semibold">Today, Oct 14</span>
+</div>
+</div>
+<!-- Incoming Message 1: Sam -->
+<div class="flex items-start gap-space-sm max-w-[88%]">
+<div class="w-8 h-8 rounded-full bg-secondary-fixed text-on-secondary-fixed font-label-md flex items-center justify-center flex-shrink-0 shadow-sm">
+        S
+      </div>
+<div class="flex flex-col gap-1 min-w-0">
+<div class="flex items-baseline gap-space-xs">
+<span class="font-label-md text-label-md font-semibold text-on-surface">Sam Rivera</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">10:14 AM</span>
+</div>
+<div class="p-space-sm bg-surface-container-lowest text-on-surface rounded-2xl rounded-tl-sm shadow-sm">
+<p class="font-body-md text-body-md leading-relaxed">
+            Should we add Mount Fuji on Day 3 morning or afternoon? Check out this spot! 👇
+          </p>
+</div>
+</div>
+</div>
+<!-- Rich Interactive Place Card Shared into Timeline -->
+<div class="flex flex-col ml-10 max-w-[92%] bg-surface-container-lowest rounded-2xl overflow-hidden shadow-md">
+<!-- Media Thumbnail Header with Overlay Tags -->
+<div class="relative h-44 w-full overflow-hidden bg-surface-container-high">
+<img class="w-full h-full object-cover" data-alt="Breathtaking morning vista of majestic Mount Fuji with snow-dusted peak framed by red autumn maple leaves, Chureito Pagoda in the foreground, soft sun flare and clear blue sky in high definition travel editorial style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDSZ1TGPHOVFTgj2MtRvHenE13GStGVii9TFJ6qYOZwoV9fSs8QeAU0-jFP7J8SMUotujgR-xQMV2ON-SvH2CZIBhDCw11E5gws1SKz_wyrfQQNJslxp1Ei-Px3MI3Xgp9nXi04i4REFNWsIlhpIDws3FaPnqNiHyGrOYLD7324Rih3UrhmkNxlAJYvztfzqsupLjjFSkvHBJPs7rGTChAiPRESUSTynGAWCxt4j_IXps3pHkbfWFno"/>
+<div class="absolute inset-0 bg-gradient-to-t from-inverse-surface/80 via-inverse-surface/20 to-transparent"></div>
+<!-- Floating Badges -->
+<div class="absolute top-2.5 left-2.5 flex items-center gap-1 bg-inverse-surface/75 backdrop-blur-md px-2.5 py-1 rounded-full text-on-tertiary">
+<span class="material-symbols-outlined text-[13px] text-secondary-container" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-label-sm text-label-sm font-bold">4.9</span>
+<span class="font-label-sm text-label-sm opacity-80">(3.2k)</span>
+</div>
+<div class="absolute top-2.5 right-2.5 bg-tertiary-container/90 backdrop-blur-md text-on-tertiary-container px-2 py-0.5 rounded-full font-label-sm text-label-sm font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">verified</span>
+          Verified Spot
+        </div>
+<div class="absolute bottom-2.5 left-2.5 right-2.5">
+<span class="font-label-sm text-label-sm text-secondary-fixed font-semibold uppercase tracking-wider">Day Trip • 2.5 hrs from Tokyo</span>
+<h2 class="font-headline-sm text-headline-sm text-inverse-on-surface leading-tight drop-shadow-sm">Mount Fuji &amp; Chureito Pagoda</h2>
+</div>
+</div>
+<!-- Card Details & Actions -->
+<div class="p-space-sm flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px] text-primary">location_on</span>
+<span class="font-body-sm text-body-sm truncate">Fujiyoshida, Yamanashi</span>
+</div>
+<span class="font-label-sm text-label-sm text-tertiary font-bold bg-tertiary-fixed/40 px-2 py-0.5 rounded-full">Free Entry</span>
+</div>
+<!-- Quick Action CTAs -->
+<div class="grid grid-cols-2 gap-space-xs pt-1">
+<button class="w-full h-9 rounded-full bg-primary text-on-primary font-label-md text-label-md font-semibold flex items-center justify-center gap-1 shadow-sm active:scale-95 transition-transform" id="add-board-btn" onclick="this.classList.toggle('bg-tertiary-container'); this.innerHTML = '&lt;span class=\'material-symbols-outlined text-[16px]\'&gt;check&lt;/span&gt; Added to Day 3';">
+<span class="material-symbols-outlined text-[16px]">add</span>
+            Add to Board
+          </button>
+<button class="w-full h-9 rounded-full bg-surface-container text-on-surface font-label-md text-label-md font-semibold flex items-center justify-center gap-1 hover:bg-surface-container-high active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-[16px]">map</span>
+            View on Map
+          </button>
+</div>
+<!-- Collaborative Reactions Strip -->
+<div class="flex items-center justify-between pt-2">
+<div class="flex items-center gap-1.5">
+<button class="flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary-fixed text-on-primary-fixed font-label-sm text-label-sm font-bold shadow-xs">
+<span>🔥</span>
+<span>3</span>
+</button>
+<button class="flex items-center gap-1 px-2 py-1 rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm">
+<span>❤️</span>
+<span>2</span>
+</button>
+<button class="flex items-center gap-1 px-2 py-1 rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm">
+<span>👍</span>
+<span>1</span>
+</button>
+<button aria-label="Add reaction" class="w-6 h-6 flex items-center justify-center rounded-full bg-surface-container text-on-surface-variant hover:text-on-surface">
+<span class="material-symbols-outlined text-[14px]">add_reaction</span>
+</button>
+</div>
+<!-- Mini Collaborator Stack of Reactor Avatars -->
+<div class="flex -space-x-2 items-center">
+<div class="w-5 h-5 rounded-full bg-secondary-fixed text-on-secondary-fixed font-label-sm text-[9px] flex items-center justify-center shadow-xs">S</div>
+<div class="w-5 h-5 rounded-full bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-[9px] flex items-center justify-center shadow-xs">E</div>
+<div class="w-5 h-5 rounded-full bg-primary-fixed text-on-primary-fixed font-label-sm text-[9px] flex items-center justify-center shadow-xs">A</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Incoming Message 2: Elena -->
+<div class="flex items-start gap-space-sm max-w-[88%]">
+<div class="w-8 h-8 rounded-full bg-tertiary-fixed text-on-tertiary-fixed font-label-md flex items-center justify-center flex-shrink-0 shadow-sm">
+        E
+      </div>
+<div class="flex flex-col gap-1 min-w-0">
+<div class="flex items-baseline gap-space-xs">
+<span class="font-label-md text-label-md font-semibold text-on-surface">Elena Rostova</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">10:16 AM</span>
+</div>
+<div class="p-space-sm bg-surface-container-lowest text-on-surface rounded-2xl rounded-tl-sm shadow-sm relative">
+<p class="font-body-md text-body-md leading-relaxed">
+            Morning is way clearer for photography before the clouds roll in! 🗻✨ Let's catch the 07:30 express bus from Shinjuku.
+          </p>
+<div class="absolute -bottom-2.5 right-2 bg-surface-container-highest px-2 py-0.5 rounded-full flex items-center gap-1 shadow-xs">
+<span class="text-[11px]">💯</span>
+<span class="font-label-sm text-[10px] text-on-surface-variant font-bold">2</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Outgoing Message: You (Alex) -->
+<div class="flex items-end flex-col self-end max-w-[84%] gap-1 mt-1">
+<div class="p-space-sm bg-primary text-on-primary rounded-2xl rounded-br-sm shadow-md">
+<p class="font-body-md text-body-md leading-relaxed">
+          Agreed! Moving it to 08:30 AM slot on Day 3. I'll reserve the highway bus seats right now.
+        </p>
+</div>
+<div class="flex items-center gap-1 pr-1">
+<span class="font-label-sm text-label-sm text-on-surface-variant">10:18 AM</span>
+<span class="material-symbols-outlined text-[16px] text-primary">done_all</span>
+</div>
+</div>
+<!-- System Event Log Pill -->
+<div class="flex items-center justify-center my-space-xs">
+<button class="flex items-center gap-1.5 px-space-md py-1.5 bg-primary-fixed/50 hover:bg-primary-fixed text-on-primary-fixed-variant rounded-full shadow-xs transition-colors">
+<span class="material-symbols-outlined text-[16px] text-primary" style="font-variation-settings: 'FILL' 1;">bolt</span>
+<span class="font-label-sm text-label-sm font-semibold">Alex updated Day 3 Itinerary</span>
+<span class="font-label-sm text-label-sm underline opacity-90">View changes</span>
+</button>
+</div>
+<!-- Interactive Live Typing Indicator -->
+<div class="flex items-center gap-space-xs text-on-surface-variant px-1">
+<div class="w-6 h-6 rounded-full bg-surface-variant flex items-center justify-center text-[10px] font-bold">K</div>
+<span class="font-label-sm text-label-sm italic">Kenji is looking up train passes...</span>
+</div>
+</div>
+<!-- Sticky Bottom Input and Quick-Action Action Suite -->
+<footer class="sticky bottom-0 w-full bg-surface/90 backdrop-blur-xl pt-space-xs pb-space-sm px-margin shadow-[0_-4px_16px_rgba(84,42,30,0.04)] flex flex-col gap-space-xs">
+<!-- Fast Collaborative Action Pills -->
+<div class="flex items-center gap-space-xs overflow-x-auto no-scrollbar py-1">
+<button class="flex items-center gap-1 px-3 py-1.5 rounded-full bg-surface-container text-on-surface hover:bg-surface-container-high whitespace-nowrap shadow-xs font-label-md text-label-md font-semibold transition-transform active:scale-95">
+<span class="material-symbols-outlined text-[16px] text-primary">add_location_alt</span>
+        Share Place
+      </button>
+<button class="flex items-center gap-1 px-3 py-1.5 rounded-full bg-surface-container text-on-surface hover:bg-surface-container-high whitespace-nowrap shadow-xs font-label-md text-label-md font-semibold transition-transform active:scale-95">
+<span class="material-symbols-outlined text-[16px] text-secondary">calendar_month</span>
+        Share Itinerary Slot
+      </button>
+<button class="flex items-center gap-1 px-3 py-1.5 rounded-full bg-surface-container text-on-surface hover:bg-surface-container-high whitespace-nowrap shadow-xs font-label-md text-label-md font-semibold transition-transform active:scale-95">
+<span class="material-symbols-outlined text-[16px] text-tertiary">account_balance_wallet</span>
+        Split Expense
+      </button>
+<button class="flex items-center gap-1 px-3 py-1.5 rounded-full bg-surface-container text-on-surface hover:bg-surface-container-high whitespace-nowrap shadow-xs font-label-md text-label-md font-semibold transition-transform active:scale-95">
+<span class="material-symbols-outlined text-[16px] text-secondary-container">auto_awesome</span>
+        AI Ideas
+      </button>
+</div>
+<!-- Main Message Compose Input Bar -->
+<div class="flex items-center gap-space-xs bg-surface-container-lowest rounded-full p-1.5 shadow-sm">
+<button aria-label="Add attachment" class="w-9 h-9 flex items-center justify-center rounded-full text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-[20px]">add_circle</span>
+</button>
+<button aria-label="Attach photo or inspiration card" class="w-9 h-9 flex items-center justify-center rounded-full text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-[20px]">photo_library</span>
+</button>
+<button aria-label="Pin saved place" class="w-9 h-9 flex items-center justify-center rounded-full text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-[20px]">pin_drop</span>
+</button>
+<input class="flex-1 bg-transparent border-0 outline-none text-on-surface placeholder:text-on-surface-variant/60 font-body-md text-body-md px-1 py-1" id="chat-input" placeholder="Message Japan Adventure..." type="text"/>
+<button aria-label="Voice memo" class="w-9 h-9 flex items-center justify-center rounded-full text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-[20px]">mic</span>
+</button>
+<button aria-label="Send message" class="w-10 h-10 flex items-center justify-center rounded-full bg-primary text-on-primary shadow-sm hover:opacity-90 active:scale-90 transition-transform" id="send-btn">
+<span class="material-symbols-outlined text-[20px]">send</span>
+</button>
+</div>
+</footer>
+</div>
+<script>
+  (function() {
+    const input = document.getElementById('chat-input');
+    const sendBtn = document.getElementById('send-btn');
+
+    function handleSend() {
+      if (!input || !input.value.trim()) return;
+      const text = input.value.trim();
+      input.value = '';
+      
+      const newMsgContainer = document.createElement('div');
+      newMsgContainer.className = 'flex items-end flex-col self-end max-w-[84%] gap-1 mt-1 animate-pulse';
+      newMsgContainer.innerHTML = `
+        <div class="p-space-sm bg-primary text-on-primary rounded-2xl rounded-br-sm shadow-md">
+          <p class="font-body-md text-body-md leading-relaxed">${text.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>
+        </div>
+        <div class="flex items-center gap-1 pr-1">
+          <span class="font-label-sm text-label-sm text-on-surface-variant">Just now</span>
+          <span class="material-symbols-outlined text-[16px] text-primary">done</span>
+        </div>
+      `;
+      
+      const chatTimeline = document.querySelector('.px-margin.py-space-md');
+      if (chatTimeline) {
+        chatTimeline.appendChild(newMsgContainer);
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+        setTimeout(() => newMsgContainer.classList.remove('animate-pulse'), 400);
+      }
+    }
+
+    if (sendBtn && input) {
+      sendBtn.addEventListener('click', handleSend);
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          handleSend();
+        }
+      });
+    }
+  })();
+</script></main></body></html>

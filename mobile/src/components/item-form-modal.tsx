@@ -1,0 +1,499 @@
+import * as ImagePicker from 'expo-image-picker';
+import { useCallback, useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  View,
+} from 'react-native';
+
+import { ThemedText } from '@/components/themed-text';
+import { Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
+import { api, ApiError } from '@/lib/api';
+import type { BoardItem, BoardItemType } from '@/lib/board-types';
+import type { PlaceResult } from '@/lib/types';
+
+/** Types that map to a Google Places result (show the search field). */
+const PLACE_TYPES: BoardItemType[] = [
+  'PLACE',
+  'RESTAURANT',
+  'HOTEL',
+  'ACTIVITY',
+];
+
+const TYPE_LABELS: Record<BoardItemType, string> = {
+  PLACE: 'Place',
+  IMAGE: 'Image',
+  NOTE: 'Note',
+  LINK: 'Link',
+  RESTAURANT: 'Food',
+  HOTEL: 'Stay',
+  ACTIVITY: 'Activity',
+};
+
+export interface ItemFormPayload {
+  type: BoardItemType;
+  title: string;
+  description?: string;
+  imageUrl?: string;
+  url?: string;
+  placeId?: string;
+  lat?: number;
+  lng?: number;
+  date?: string;
+}
+
+/**
+ * Create/edit an item — one modal for both modes (pass `item` to edit), so the
+ * type picker, Places search and image upload exist in exactly one place
+ * (AGENTS.md §4).
+ */
+export function ItemFormModal({
+  visible,
+  onClose,
+  onSaved,
+  boardId,
+  sectionId,
+  item,
+  showDate = false,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  onSaved: () => void;
+  boardId: string;
+  sectionId: string;
+  /** Present → edit mode. */
+  item?: BoardItem | null;
+  /** Show the per-item date field (ITINERARY boards only). */
+  showDate?: boolean;
+}) {
+  const theme = useTheme();
+  const isEdit = !!item;
+
+  const [type, setType] = useState<BoardItemType>('PLACE');
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [url, setUrl] = useState('');
+  const [date, setDate] = useState('');
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [placeId, setPlaceId] = useState<string | null>(null);
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(
+    null,
+  );
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<PlaceResult[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Reset/populate the fields each time the modal opens.
+  useEffect(() => {
+    if (!visible) return;
+    setError(null);
+    setQuery('');
+    setResults([]);
+    if (item) {
+      setType(item.type);
+      setTitle(item.title);
+      setDescription(item.description ?? '');
+      setUrl(item.url ?? '');
+      setDate(item.date ? item.date.slice(0, 10) : '');
+      setImageUrl(item.imageUrl);
+      setPlaceId(item.placeId);
+      setCoords(
+        item.lat != null && item.lng != null
+          ? { lat: item.lat, lng: item.lng }
+          : null,
+      );
+    } else {
+      setType('PLACE');
+      setTitle('');
+      setDescription('');
+      setUrl('');
+      setDate('');
+      setImageUrl(null);
+      setPlaceId(null);
+      setCoords(null);
+    }
+  }, [visible, item]);
+
+  const searchPlaces = useCallback(async () => {
+    const q = query.trim();
+    if (!q) return;
+    setSearching(true);
+    setError(null);
+    try {
+      const found = await api.searchPlaces(q);
+      setResults(found);
+      if (found.length === 0) {
+        setError('No places matched that search');
+      }
+    } catch (err) {
+      setError(
+        err instanceof ApiError ? err.message : 'Place search failed',
+      );
+    } finally {
+      setSearching(false);
+    }
+  }, [query]);
+
+  const pickImage = useCallback(async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        quality: 0.8,
+      });
+      if (result.canceled || !result.assets?.[0]) return;
+      const asset = result.assets[0];
+      const uploaded = await api.uploadImage({
+        uri: asset.uri,
+        name: asset.fileName ?? 'item.jpg',
+        type: asset.mimeType ?? 'image/jpeg',
+      });
+      setImageUrl(uploaded.url);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Image upload failed');
+    }
+  }, []);
+
+  const applyPlace = useCallback((place: PlaceResult) => {
+    setTitle(place.name);
+    setPlaceId(place.placeId);
+    setCoords(place.location ?? null);
+    if (place.formattedAddress) {
+      setDescription(place.formattedAddress);
+    }
+    setResults([]);
+    setQuery('');
+  }, []);
+  const save = useCallback(async () => {
+    if (!title.trim()) {
+      setError('Item title is required');
+      return;
+    }
+    setSaving(true);
+    setError(null);
+    try {
+      const common = {
+        title: title.trim(),
+        description: description.trim() || undefined,
+        url: url.trim() || undefined,
+        imageUrl: imageUrl ?? undefined,
+        placeId: placeId ?? undefined,
+        lat: coords?.lat,
+        lng: coords?.lng,
+        date: date.trim() || undefined,
+      };
+      if (item) {
+        await api.updateItem(boardId, sectionId, item.id, common);
+      } else {
+        await api.createItem(boardId, sectionId, { ...common, type });
+      }
+      onSaved();
+      onClose();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Could not save item');
+    } finally {
+      setSaving(false);
+    }
+  }, [
+    title,
+    description,
+    url,
+    imageUrl,
+    placeId,
+    coords,
+    date,
+    type,
+    item,
+    boardId,
+    sectionId,
+    onSaved,
+    onClose,
+  ]);
+
+  const showPlaceSearch = PLACE_TYPES.includes(type);
+
+  const inputStyle = {
+    backgroundColor: theme.backgroundElement,
+    borderColor: theme.backgroundSelected,
+    color: theme.text,
+  };
+
+  return (
+    <Modal visible={visible} transparent animationType="fade">
+      <Pressable style={styles.overlay} onPress={onClose}>
+        <Pressable
+          style={[styles.card, { backgroundColor: theme.background }]}
+          onPress={(e) => e.stopPropagation()}
+        >
+          <ScrollView keyboardShouldPersistTaps="handled">
+            <ThemedText type="subtitle" style={styles.title}>
+              {isEdit ? 'Edit item' : 'New item'}
+            </ThemedText>
+
+            <View style={styles.typeRow}>
+              {PLACE_TYPES.concat(['IMAGE', 'NOTE', 'LINK']).map((t) => (
+                <Pressable
+                  key={t}
+                  onPress={() => {
+                    setType(t);
+                    setResults([]);
+                    setQuery('');
+                  }}
+                  disabled={isEdit}
+                  style={[
+                    styles.typePill,
+                    {
+                      backgroundColor:
+                        type === t ? theme.text : theme.backgroundElement,
+                      opacity: isEdit && type !== t ? 0.5 : 1,
+                    },
+                  ]}
+                >
+                  <ThemedText
+                    type="small"
+                    style={{
+                      color: type === t ? theme.background : theme.text,
+                    }}
+                  >
+                    {TYPE_LABELS[t]}
+                  </ThemedText>
+                </Pressable>
+              ))}
+            </View>
+
+            {showPlaceSearch ? (
+              <View style={styles.searchBlock}>
+                <View style={styles.searchRow}>
+                  <TextInput
+                    style={[styles.input, styles.searchInput, inputStyle]}
+                    placeholder="Search Google Places…"
+                    placeholderTextColor={theme.textSecondary}
+                    value={query}
+                    onChangeText={setQuery}
+                    onSubmitEditing={() => void searchPlaces()}
+                    returnKeyType="search"
+                  />
+                  <Pressable
+                    onPress={() => void searchPlaces()}
+                    disabled={searching}
+                    style={[styles.searchBtn, { backgroundColor: theme.text }]}
+                  >
+                    {searching ? (
+                      <ActivityIndicator color={theme.background} size="small" />
+                    ) : (
+                      <ThemedText
+                        type="small"
+                        style={{ color: theme.background }}
+                      >
+                        Find
+                      </ThemedText>
+                    )}
+                  </Pressable>
+                </View>
+                {coords ? (
+                  <ThemedText type="small" themeColor="textSecondary">
+                     {coords.lat.toFixed(4)}, {coords.lng.toFixed(4)}
+                  </ThemedText>
+                ) : null}
+                {results.map((place) => (
+                  <Pressable
+                    key={place.placeId}
+                    onPress={() => applyPlace(place)}
+                    style={[
+                      styles.resultRow,
+                      { borderColor: theme.backgroundSelected },
+                    ]}
+                  >
+                    <ThemedText type="smallBold" numberOfLines={1}>
+                      {place.name}
+                    </ThemedText>
+                    {place.formattedAddress ? (
+                      <ThemedText
+                        type="small"
+                        themeColor="textSecondary"
+                        numberOfLines={1}
+                      >
+                        {place.formattedAddress}
+                      </ThemedText>
+                    ) : null}
+                  </Pressable>
+                ))}
+              </View>
+            ) : null}
+            <TextInput
+              style={[styles.input, inputStyle]}
+              placeholder="Item title *"
+              placeholderTextColor={theme.textSecondary}
+              value={title}
+              onChangeText={setTitle}
+            />
+            <TextInput
+              style={[styles.input, styles.textArea, inputStyle]}
+              placeholder="Notes (optional)"
+              placeholderTextColor={theme.textSecondary}
+              multiline
+              numberOfLines={2}
+              value={description}
+              onChangeText={setDescription}
+            />
+            {type === 'LINK' || url ? (
+              <TextInput
+                style={[styles.input, inputStyle]}
+                placeholder="URL (https://…)"
+                placeholderTextColor={theme.textSecondary}
+                autoCapitalize="none"
+                keyboardType="url"
+                value={url}
+                onChangeText={setUrl}
+              />
+            ) : null}
+            {showDate ? (
+              <TextInput
+                style={[styles.input, inputStyle]}
+                placeholder="Date (YYYY-MM-DD)"
+                placeholderTextColor={theme.textSecondary}
+                autoCapitalize="none"
+                value={date}
+                onChangeText={setDate}
+              />
+            ) : null}
+
+            <Pressable onPress={() => void pickImage()} style={styles.imageRow}>
+              <View
+                style={[styles.imageBtn, { borderColor: theme.backgroundSelected }]}
+              >
+                <ThemedText type="small" themeColor="textSecondary">
+                  {imageUrl ? 'Image ✓' : 'Add image'}
+                </ThemedText>
+              </View>
+              {imageUrl ? (
+                <Pressable onPress={() => setImageUrl(null)}>
+                  <ThemedText type="small" style={styles.error}>
+                    Remove
+                  </ThemedText>
+                </Pressable>
+              ) : null}
+            </Pressable>
+
+            {error ? (
+              <ThemedText type="small" style={styles.error}>
+                {error}
+              </ThemedText>
+            ) : null}
+
+            <View style={styles.actions}>
+              <Pressable onPress={onClose} style={styles.cancelBtn}>
+                <ThemedText type="small" themeColor="textSecondary">
+                  Cancel
+                </ThemedText>
+              </Pressable>
+              <Pressable
+                onPress={() => void save()}
+                disabled={saving}
+                style={[
+                  styles.primaryBtn,
+                  { backgroundColor: theme.text },
+                  saving && styles.disabled,
+                ]}
+              >
+                {saving ? (
+                  <ActivityIndicator color={theme.background} size="small" />
+                ) : (
+                  <ThemedText
+                    type="smallBold"
+                    style={{ color: theme.background }}
+                  >
+                    {isEdit ? 'Save' : 'Add'}
+                  </ThemedText>
+                )}
+              </Pressable>
+            </View>
+          </ScrollView>
+        </Pressable>
+      </Pressable>
+    </Modal>
+  );
+}
+
+const styles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: Spacing.three,
+  },
+  card: {
+    width: '100%',
+    maxWidth: 480,
+    maxHeight: '85%',
+    borderRadius: Spacing.three,
+    padding: Spacing.three,
+    gap: Spacing.two,
+  },
+  title: { marginBottom: Spacing.one },
+  typeRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.one + Spacing.half,
+  },
+  typePill: {
+    borderRadius: Spacing.three,
+    paddingHorizontal: Spacing.two + Spacing.half,
+    paddingVertical: Spacing.one,
+  },
+  searchBlock: { gap: Spacing.one },
+  searchRow: { flexDirection: 'row', gap: Spacing.two },
+  searchInput: { flex: 1 },
+  searchBtn: {
+    borderRadius: Spacing.three,
+    paddingHorizontal: Spacing.three,
+    justifyContent: 'center',
+    alignItems: 'center',
+    minWidth: 56,
+  },
+  resultRow: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    paddingVertical: Spacing.one + Spacing.half,
+  },
+  input: {
+    borderWidth: 1,
+    borderRadius: Spacing.three,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two + Spacing.half,
+    fontSize: 15,
+  },
+  textArea: { minHeight: 60, textAlignVertical: 'top' },
+  imageRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
+  imageBtn: {
+    borderWidth: 1,
+    borderRadius: Spacing.three,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
+  },
+  error: { color: '#dc2626' },
+  actions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    gap: Spacing.two,
+    marginTop: Spacing.one,
+  },
+  cancelBtn: { paddingHorizontal: Spacing.three, paddingVertical: Spacing.two },
+  primaryBtn: {
+    borderRadius: Spacing.three,
+    paddingHorizontal: Spacing.four,
+    paddingVertical: Spacing.two + Spacing.half,
+    minWidth: 72,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  disabled: { opacity: 0.5 },
+});

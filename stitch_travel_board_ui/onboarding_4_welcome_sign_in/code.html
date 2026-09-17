@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "outline-variant": "#e4beb7", "surface-container-high": "#eae8e5", "tertiary": "#026a46", "error-container": "#ffdad6", "surface-dim": "#dbdad7", "primary-container": "#d63b22", "on-secondary-container": "#6c3b00", "surface-container-low": "#f5f3f0", "inverse-on-surface": "#f2f0ed", "on-primary-container": "#fffbff", "inverse-primary": "#ffb4a6", "on-surface-variant": "#5b403b", "on-primary": "#ffffff", "tertiary-container": "#2c835d", "surface-container-highest": "#e4e2df", "surface-container": "#efeeeb", "surface-variant": "#e4e2df", "secondary-fixed": "#ffdcc0", "primary": "#b32109", "on-surface": "#1b1c1a", "on-secondary-fixed": "#2d1600", "primary-fixed": "#ffdad3", "on-primary-fixed": "#3f0300", "on-secondary": "#ffffff", "on-background": "#1b1c1a", "background": "#fbf9f6", "on-secondary-fixed-variant": "#6b3b00", "secondary": "#8d4f00", "on-tertiary": "#ffffff", "inverse-surface": "#30312f", "primary-fixed-dim": "#ffb4a6", "on-tertiary-container": "#f6fff6", "on-tertiary-fixed": "#002113", "on-error": "#ffffff", "surface-container-lowest": "#ffffff", "tertiary-fixed-dim": "#83d8ab", "error": "#ba1a1a", "secondary-container": "#ffa03b", "on-error-container": "#93000a", "surface": "#fbf9f6", "tertiary-fixed": "#9ff4c6", "on-primary-fixed-variant": "#8f1000", "outline": "#8f706a", "surface-tint": "#b6230c", "surface-bright": "#fbf9f6", "on-tertiary-fixed-variant": "#005235", "secondary-fixed-dim": "#ffb875" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "margin": "1rem", "space-md": "1rem", "gutter": "1rem", "margin-tablet": "2rem", "space-xl": "2rem", "space-xs": "0.25rem", "space-lg": "1.5rem", "space-sm": "0.5rem", "gutter-compact": "0.75rem" }, "fontFamily": { "title-md": ["Plus Jakarta Sans"], "label-sm": ["Plus Jakarta Sans"], "display-lg": ["Plus Jakarta Sans"], "display-lg-mobile": ["Plus Jakarta Sans"], "body-lg": ["Plus Jakarta Sans"], "headline-sm": ["Plus Jakarta Sans"], "body-sm": ["Plus Jakarta Sans"], "headline-md": ["Plus Jakarta Sans"], "title-lg": ["Plus Jakarta Sans"], "label-lg": ["Plus Jakarta Sans"], "label-md": ["Plus Jakarta Sans"], "body-md": ["Plus Jakarta Sans"], "headline-lg": ["Plus Jakarta Sans"] }, "fontSize": { "title-md": ["16px", { "lineHeight": "22px", "fontWeight": "600" }], "label-sm": ["10px", { "lineHeight": "14px", "letterSpacing": "0.04em", "fontWeight": "700" }], "display-lg": ["44px", { "lineHeight": "52px", "letterSpacing": "-0.03em", "fontWeight": "800" }], "display-lg-mobile": ["34px", { "lineHeight": "40px", "letterSpacing": "-0.025em", "fontWeight": "800" }], "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }], "headline-sm": ["20px", { "lineHeight": "26px", "letterSpacing": "-0.01em", "fontWeight": "600" }], "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }], "headline-md": ["24px", { "lineHeight": "30px", "letterSpacing": "-0.015em", "fontWeight": "700" }], "title-lg": ["18px", { "lineHeight": "24px", "fontWeight": "600" }], "label-lg": ["14px", { "lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "600" }], "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600" }], "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }], "headline-lg": ["30px", { "lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700" }] } } } }</script><style>@layer base { html, body { width: 100vw; min-height: 100vh; margin: 0; padding: 0; background-color: #fbf9f6; } .pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); } .pt-safe { padding-top: env(safe-area-inset-top, 0px); } main > :first-child { margin-top: 0 !important; } main > :last-child { margin-bottom: 0 !important; } } ::-webkit-scrollbar { display: none; }</style><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-surface font-body-md text-on-surface antialiased"><main class="min-h-screen w-full flex flex-col relative bg-surface pt-safe pb-safe"><div class="flex flex-col w-full px-margin pb-space-lg">
+<!-- Brand Header Mark & Progress Bar -->
+<div class="flex items-center justify-between pt-space-sm mb-space-md">
+<div class="flex items-center gap-space-xs">
+<div class="w-8 h-8 rounded-xl bg-primary-container flex items-center justify-center shadow-md">
+<span class="material-symbols-outlined text-on-primary-container text-[20px]" style="font-variation-settings: 'FILL' 1;">explore</span>
+</div>
+<span class="font-title-md text-title-md text-on-surface tracking-tight">Wanderfolk</span>
+</div>
+<!-- Step Indicator Pill -->
+<div class="flex items-center gap-1.5 bg-surface-container px-3 py-1.5 rounded-full">
+<div class="w-1.5 h-1.5 rounded-full bg-outline-variant"></div>
+<div class="w-1.5 h-1.5 rounded-full bg-outline-variant"></div>
+<div class="w-1.5 h-1.5 rounded-full bg-outline-variant"></div>
+<div class="w-4 h-1.5 rounded-full bg-primary-container"></div>
+<span class="font-label-sm text-label-sm text-on-surface-variant ml-1 font-bold">4 / 4</span>
+</div>
+</div>
+<!-- Hero Cinematic Photobook Card Stack -->
+<div class="relative w-full h-64 mb-space-lg select-none">
+<!-- Ambient Radial Glow -->
+<div class="absolute inset-0 -top-4 bg-gradient-to-tr from-secondary-container/15 via-primary-fixed/25 to-tertiary-fixed/15 blur-2xl rounded-full"></div>
+<!-- Background Rotated Card (Amalfi Coast) -->
+<div class="absolute left-2 right-6 top-3 h-48 rounded-xl bg-surface-container-high shadow-sm transform -rotate-3 overflow-hidden opacity-75">
+<div class="relative w-full h-full" data-alt="Sun-drenched cliffside village on the Amalfi coast with colorful houses, deep Mediterranean turquoise sea, warm terracotta rooftops, golden hour light, cinematic 35mm travel documentary photography." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBe0s9dEVqaSoTlqiu8fIb1r44gyECXCdrIq29O6zM-sG8t7HTvKiCFERSmKo2l21eL1e6-pKDE7D5WFi_tEkwrvWWu4DwNX8Qn-m78fy0rDWfC6bPEdDCh-aNfg-G8B6m2Lu-21Yq98RX_XU7_fL7MTpIMIG6MhGSO24Q07noX1osOEqIXQvP-fHoPRvkHqUAlmHQApE_0VwAhjaiaIqq-WDo5cEJ9f2e-5aiy_uEeB71XDtbaDjP6')">
+<div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent"></div>
+<div class="absolute bottom-2.5 left-3 right-3 flex items-center justify-between text-on-primary">
+<span class="font-label-sm text-label-sm opacity-90 tracking-wide uppercase">Amalfi Coast • 28 Spots</span>
+<span class="material-symbols-outlined text-[16px]">bookmark</span>
+</div>
+</div>
+</div>
+<!-- Middle Slanted Card (Kyoto Fall Foliage) -->
+<div class="absolute left-6 right-2 top-2 h-50 rounded-xl bg-surface-container shadow-md transform rotate-3 overflow-hidden opacity-90">
+<div class="relative w-full h-full" data-alt="Traditional wooden tea house in Kyoto nestled within vibrant red autumn maple trees, a stone lantern softly glowing in late afternoon light, warm cinematic atmosphere." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCWtEKg4-MpHWGlwn12QCI1EXq3rAhwYzgrAbRXZZFjNdoM1c9OnCiquTYJHm1jV7hx5AUtvW0yqxV7RDs2QGYhW4EykqkZuN4_oPgZk-AAe3QI7d_agG67sLWFW9YjMppoNepCYDykGA_ctogX6Nj1hn4VDG3yKpwjInzyqsk17KUeTs_Jp--5uuq4IJCHZC8mXDvxewHixGQkqztfT_ZUrM_84dTJ6Z-lDS1-ZJC1DezWgVUm4f3I')">
+<div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
+<div class="absolute bottom-3 left-3.5 right-3.5 flex items-center justify-between text-on-primary">
+<span class="font-label-sm text-label-sm font-semibold">Kyoto Memories • Autumn 2024</span>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-secondary-container text-[14px]" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-label-sm text-label-sm">4.9</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Foreground Featured Active Card (Japan 2025 AI Itinerary) -->
+<div class="absolute inset-x-1 bottom-0 h-52 rounded-xl bg-surface-container-lowest shadow-xl overflow-hidden transform transition-all duration-300">
+<div class="relative w-full h-full" data-alt="Iconic view of Mount Fuji crowned with snow against a warm apricot sunset sky with the Pagoda framed by golden dusk light, highly detailed modern editorial travel journal lookbook aesthetic." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDWh7wpT6jvdX96dlEZxLP6KyHpKEGAx46Imf36QvcmTs10HA0XJXuiztpWnMToeAmjcL3Bxn0H0MnusdavMChjWe3QBgLkkfzirZ86hgaUz3bXPadQG-SVs2E0WNOYt7x1IZREhIcCDIkb8BVspm7Q5lgQp61vl9Ad04L92tEUZVgnMOguxqpNT3h1ehH5cwLWooTo-mnqlOzamNrESxzCn8jOjeR5ijbNfk_L8lGtAiixCEC3c_h2')">
+<!-- Editorial Scrim Gradient -->
+<div class="absolute inset-0 bg-gradient-to-t from-on-surface/90 via-on-surface/40 to-transparent"></div>
+<!-- Floating Glassmorphic Pill Badges -->
+<div class="absolute top-3 inset-x-3 flex items-center justify-between">
+<div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface/80 backdrop-blur-md shadow-sm">
+<span class="w-2 h-2 rounded-full bg-tertiary animate-pulse"></span>
+<span class="font-label-sm text-label-sm text-on-surface">Curated &amp; Ready</span>
+</div>
+<div class="flex items-center gap-1 px-2.5 py-1 rounded-full bg-on-surface/60 backdrop-blur-md text-on-primary shadow-sm">
+<span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">favorite</span>
+<span class="font-label-sm text-label-sm">1.8k</span>
+</div>
+</div>
+<!-- Card Content Footer -->
+<div class="absolute bottom-3.5 inset-x-3.5 flex flex-col gap-1.5 text-on-primary">
+<div class="flex items-center gap-2">
+<span class="px-2 py-0.5 rounded-full bg-primary-container font-label-sm text-label-sm text-on-primary-container uppercase tracking-wider font-bold">Trip Complete</span>
+<span class="font-label-sm text-label-sm text-surface-container-high opacity-90">14 Days</span>
+</div>
+<div class="flex items-end justify-between">
+<div>
+<p class="font-headline-sm text-headline-sm text-on-primary leading-tight font-bold">Japan 2025</p>
+<p class="font-body-sm text-body-sm text-surface-container-high opacity-90 mt-0.5">42 Photos &amp; AI Itinerary saved</p>
+</div>
+<!-- Collaborators Avatar Stack -->
+<div class="flex items-center -space-x-2">
+<div class="w-7 h-7 rounded-full bg-surface-container-highest flex items-center justify-center shadow-sm overflow-hidden ring-2 ring-surface-container-lowest">
+<div class="w-full h-full bg-cover bg-center" data-alt="Portrait avatar of a smiling young woman traveler wearing a linen sunhat with golden hour sunlight hitting her face outdoors." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuC0oUi1NMBxGPSzqrzMEC8ca-BjWbw0GQeUbAuLUDdMzg3HygOew4RDAFRGSniCaGNe_2B4knaqDEofW8BceMf7S3I0q2dbIhPDbTOpKjpQJpryvckGvmRACmG-ch8ZOdkRqtLHuslxPI3QSyCD2QihQ_vc8INZgR1R9Fl7No10WO2qFBkkT14mITdsfvfUDGmok2ci81PaKV6WCPWlPcRwdIUXAhZDcoy0o56Dk_vlDRzMDSjq3xIT')"></div>
+</div>
+<div class="w-7 h-7 rounded-full bg-surface-container-highest flex items-center justify-center shadow-sm overflow-hidden ring-2 ring-surface-container-lowest">
+<div class="w-full h-full bg-cover bg-center" data-alt="Portrait avatar of an adventurous man with sunglasses laughing against an ocean horizon." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBKzhXXFgnT-CS0a9rPfgwhAPAEbUbDtW2MLO7X7Hl-3JS2OP1qau1wLyMZIisRdWfPWdQyHNuoMLL75bYGsI2oZ4n5B6nebw0GrODVmhw-wYuhmbR-HidJzat_y7JljGW3rw6hFQD_9nfytBNxwa0Q7L_UewkG_rbPEzSw5lB0ewYuKA2SMegZ7qQ0sEwID0nSBJkRaADNPc9X-btc2OW7FP4OARO3GgcDYBZ54I0OPA5C2beReCWO')"></div>
+</div>
+<div class="w-7 h-7 rounded-full bg-primary-fixed flex items-center justify-center font-label-sm text-label-sm text-on-primary-fixed font-bold shadow-sm ring-2 ring-surface-container-lowest">
+                +4
+              </div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Editorial Headline Section -->
+<div class="flex flex-col mb-space-lg text-left">
+<div class="inline-flex items-center gap-1.5 mb-1.5">
+<span class="material-symbols-outlined text-primary-container text-[18px]" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+<span class="font-label-md text-label-md text-primary-container font-bold uppercase tracking-wide">Ready for departure</span>
+</div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface font-extrabold tracking-tight">
+      Your trips. Your people. <span class="text-primary-container">Your memories.</span>
+</h1>
+<p class="font-body-md text-body-md text-on-surface-variant mt-2 leading-relaxed">
+      Join over <strong class="text-on-surface font-semibold">250,000 travelers</strong> sharing real itineraries, insider local guides, and lifelong group adventures.
+    </p>
+</div>
+<!-- Social Proof Trust Badge -->
+<div class="flex items-center gap-space-sm p-space-sm rounded-xl bg-surface-container-low mb-space-lg shadow-sm">
+<div class="flex -space-x-1.5 items-center">
+<div class="w-6 h-6 rounded-full bg-surface-container-highest flex items-center justify-center shadow-sm overflow-hidden">
+<div class="w-full h-full bg-cover bg-center" data-alt="Close up face of a smiling young explorer in front of mountain scenery." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBnz8w_lmgvJqgKRRy1aWJthYxtBSgn7nsatfIXA9ziYToQvl2q5iVFVji-6JKybyhaLl2_mJTJDbRnD254bBdQ57LojVdZY_MJlMM3NRRnA5EeeGpVmhXXl3g7rckA7c6y2pfo6Pk1ZVnshV2974_il9ZxOHVlV4u77F4Yr3XvmwyH3Jx4UAa8AUynstbflVUXHHE6S-NxjELPoT5_9ZYYDaMM_Xz63M6lLEWAVMKakbO2_lWR3_ga')"></div>
+</div>
+<div class="w-6 h-6 rounded-full bg-surface-container-highest flex items-center justify-center shadow-sm overflow-hidden">
+<div class="w-full h-full bg-cover bg-center" data-alt="Profile photo of a female nomad smiling warmly with camera in hand." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCa6PB4Pd-e6-9oWWbJu2AcVwvkhWC5WApQpgXiiPSH-qCdxZBHWZZJ-RbxzbkDoJXyiB4Faf_po8rCUkb7RjRd3T85NZLg6pPGEeLKvSPMNNY0rvrAxzk8YyCO8H7JQCYaggz4cuvmUtlhEb40i8kKftpl73RXPMlvI-wzqV1QsF3vIUoThaatdZIVxjPaHg2NTcZk9SjlPoR35TYifrBcBqek9SvOPLTYiyRVSgWQGBt2wkJ8o4tO')"></div>
+</div>
+<div class="w-6 h-6 rounded-full bg-secondary-fixed flex items-center justify-center font-label-sm text-label-sm text-on-secondary-fixed font-bold">
+        ★
+      </div>
+</div>
+<div class="flex-1 min-w-0">
+<p class="font-body-sm text-body-sm text-on-surface truncate">
+<span class="font-semibold text-on-surface">4.9/5 App Rating</span> • 1.2M+ Pins created this month
+      </p>
+</div>
+<span class="material-symbols-outlined text-tertiary-container text-[18px]">verified</span>
+</div>
+<!-- Authentication Call-To-Action Cluster -->
+<div class="flex flex-col gap-space-sm w-full">
+<!-- Google OAuth Button -->
+<button class="w-full h-12 px-6 rounded-full bg-surface-container-lowest shadow-md flex items-center justify-center gap-3 active:scale-[0.98] transition-transform duration-150" id="btn-google" type="button">
+<!-- Authentic Google SVG G Logo -->
+<svg aria-hidden="true" class="w-5 h-5 flex-shrink-0" viewbox="0 0 24 24">
+<path d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17Z" fill="#4285F4"></path>
+<path d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.36 24 12 24Z" fill="#34A853"></path>
+<path d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.14-1.55.38-2.27V6.58H1.25C.45 8.18 0 10.03 0 12s.45 3.82 1.25 5.42l4.03-3.15Z" fill="#FBBC05"></path>
+<path d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.36 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98Z" fill="#EA4335"></path>
+</svg>
+<span class="font-label-lg text-label-lg text-on-surface font-semibold">Continue with Google</span>
+</button>
+<!-- Primary Brand Sign Up Button -->
+<button class="w-full h-12 px-6 rounded-full bg-primary-container text-on-primary-container shadow-lg shadow-primary-container/25 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform duration-150" id="btn-email" type="button">
+<span class="material-symbols-outlined text-[20px]">mail</span>
+<span class="font-label-lg text-label-lg font-bold">Sign up with Email</span>
+</button>
+<!-- Subtle Guest / Exploration Escape Action -->
+<button class="w-full py-2.5 text-center active:opacity-70 transition-opacity" id="btn-guest" type="button">
+<span class="font-label-lg text-label-lg text-on-surface-variant hover:text-on-surface transition-colors flex items-center justify-center gap-1">
+        Continue as Guest • Explore first
+        <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</span>
+</button>
+</div>
+<!-- Bottom Login & Legal Footnote -->
+<div class="mt-space-md pt-space-sm flex flex-col items-center gap-2 text-center">
+<div class="font-body-md text-body-md text-on-surface-variant">
+      Already have an account? 
+      <button class="font-title-md text-title-md text-primary-container hover:underline ml-1 font-bold" id="btn-login" type="button">
+        Log In
+      </button>
+</div>
+<p class="font-label-sm text-label-sm text-outline max-w-xs leading-relaxed">
+      By continuing, you agree to Wanderfolk's 
+      <a class="underline hover:text-on-surface transition-colors" href="#terms">Terms of Service</a> &amp; 
+      <a class="underline hover:text-on-surface transition-colors" href="#privacy">Privacy Policy</a>.
+    </p>
+</div>
+</div>
+<script>
+  // Micro-interactions & Tactile Feedback for Onboarding Completion
+  document.addEventListener('DOMContentLoaded', () => {
+    const buttons = [
+      document.getElementById('btn-google'),
+      document.getElementById('btn-email'),
+      document.getElementById('btn-guest'),
+      document.getElementById('btn-login')
+    ];
+
+    buttons.forEach(btn => {
+      if (!btn) return;
+      btn.addEventListener('click', (e) => {
+        // Provide tactile press feedback
+        btn.style.transform = 'scale(0.96)';
+        setTimeout(() => {
+          btn.style.transform = '';
+        }, 120);
+      });
+    });
+  });
+</script></main></body></html>

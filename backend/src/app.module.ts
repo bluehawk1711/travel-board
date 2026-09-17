@@ -4,6 +4,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { CacheModule } from '@nestjs/cache-manager';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { LoggerModule } from 'nestjs-pino';
 import { KeyvCacheableMemory } from 'cacheable';
 import { Redis } from '@upstash/redis';
 import { AppController } from './app.controller';
@@ -15,6 +16,9 @@ import { CountersModule } from './counters/counters.module';
 import { DiscoveryModule } from './discovery/discovery.module';
 import { CommentsModule } from './comments/comments.module';
 import { FollowsModule } from './follows/follows.module';
+import { ChatModule } from './chat/chat.module';
+import { UploadsModule } from './uploads/uploads.module';
+import { UsersModule } from './users/users.module';
 import { RedisModule } from './common/redis/redis.module';
 import { REDIS_CLIENT } from './common/redis/redis.constants';
 import { UpstashKeyvStore } from './common/cache/upstash-keyv.store';
@@ -27,6 +31,19 @@ const CACHE_L1_LRU_SIZE = 5_000;
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    LoggerModule.forRootAsync({
+      imports: [ConfigService],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        pinoHttp: {
+          level: config.get<string>('LOG_LEVEL', 'info'),
+          transport:
+            config.get<string>('NODE_ENV') !== 'production'
+              ? { target: 'pino/file', options: { destination: 1 } }
+              : undefined,
+        },
+      }),
+    }),
     ScheduleModule.forRoot(),
     RedisModule,
     CacheModule.registerAsync({
@@ -66,6 +83,9 @@ const CACHE_L1_LRU_SIZE = 5_000;
     DiscoveryModule,
     CommentsModule,
     FollowsModule,
+    ChatModule,
+    UploadsModule,
+    UsersModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],

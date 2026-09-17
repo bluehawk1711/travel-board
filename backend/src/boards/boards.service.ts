@@ -6,7 +6,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { and, eq, inArray, sql } from 'drizzle-orm';
+import { and, desc, eq, inArray, sql } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import type { Redis } from '@upstash/redis';
 import { PG_CONNECTION } from '../db/dbProvider';
@@ -29,6 +29,7 @@ import { UpdateBoardDto } from './dto/update-board.dto';
 import { CreateSectionDto, UpdateSectionDto } from './dto/section.dto';
 import { CreateItemDto, UpdateItemDto } from './dto/item.dto';
 import { ReorderItemsDto } from './dto/reorder-items.dto';
+import { ReorderSectionsDto } from './dto/reorder-sections.dto';
 import { AddMemberDto, UpdateMemberRoleDto } from './dto/member.dto';
 
 export type BoardRole = 'OWNER' | 'EDITOR' | 'VIEWER';
@@ -125,27 +126,45 @@ export class BoardsService {
 
   /** Boards the user owns, is a member of, or has saved. */
   async findMine(user: AuthUser) {
-    const owned = await this.db.query.boards.findMany({
-      where: eq(boards.ownerId, user.id),
-      orderBy: (b, { desc }) => [desc(b.createdAt)],
-    });
-    const memberRows = await this.db
-      .select({ board: boards })
-      .from(boardMembers)
-      .innerJoin(boards, eq(boardMembers.boardId, boards.id))
-      .where(eq(boardMembers.userId, user.id));
-    const savedRows = await this.db
+    // Single UNION query instead of 3 separate queries (M3).
+    const result = await this.db.execute<schema.Board>(sql`
+      SELECT DISTINCT b.* FROM boards b
+      WHERE b.owner_id = ${user.id}
+      UNION
+      SELECT DISTINCT b.* FROM board_members bm
+      JOIN boards b ON b.id = bm.board_id
+      WHERE bm.user_id = ${user.id}
+      UNION
+      SELECT DISTINCT b.* FROM board_saves bs
+      JOIN boards b ON b.id = bs.board_id
+      WHERE bs.user_id = ${user.id}
+      ORDER BY created_at DESC
+    `);
+
+    return this.decorateBoards(result.rows, user);
+  }
+
+  /** Public + visible boards the user has saved (mobile "Saved" tab). */
+  async findSaved(user: AuthUser) {
+    const rows = await this.db
       .select({ board: boards })
       .from(boardSaves)
-      .innerJoin(boards, eq(boardSaves.boardId, boards.id))
-      .where(eq(boardSaves.userId, user.id));
+      .innerJoin(boards, eq(boards.id, boardSaves.boardId))
+      .where(eq(boardSaves.userId, user.id))
+      .orderBy(desc(boardSaves.createdAt));
 
-    const seen = new Set<string>(owned.map((b) => b.id));
-    const extras = [...memberRows, ...savedRows]
-      .map((r) => r.board)
-      .filter((b) => !seen.has(b.id) && (seen.add(b.id), true));
-
-    return this.decorateBoards([...owned, ...extras], user);
+    // Filter out private boards the user can no longer see (e.g. removed
+    // as a member after saving) — same visibility contract as findOne.
+    const visible: schema.Board[] = [];
+    for (const { board } of rows) {
+      if (
+        board.visibility === 'PUBLIC' ||
+        (await this.getRole(board.id, user.id)) !== null
+      ) {
+        visible.push(board);
+      }
+    }
+    return this.decorateBoards(visible, user);
   }
 
   async findOne(boardId: string, viewer?: AuthUser) {
@@ -294,6 +313,8 @@ export class BoardsService {
         url: dto.url ?? null,
         placeId: dto.placeId ?? null,
         position: dto.position ?? 0,
+        lat: dto.lat ?? null,
+        lng: dto.lng ?? null,
         date: dto.date ?? null,
       })
       .returning();
@@ -363,6 +384,38 @@ export class BoardsService {
     return { reordered: true };
   }
 
+  /** Reorders sections by replacing their position values (drags across days). */
+  async reorderSections(
+    boardId: string,
+    user: AuthUser,
+    dto: ReorderSectionsDto,
+  ) {
+    const role = await this.getRole(boardId, user.id);
+    this.assertCanEdit(role);
+
+    const existing = await this.db
+      .select({ id: boardSections.id })
+      .from(boardSections)
+      .where(eq(boardSections.boardId, boardId));
+    const validIds = new Set(existing.map((s) => s.id));
+    if (
+      dto.orderedSectionIds.length !== existing.length ||
+      dto.orderedSectionIds.some((id) => !validIds.has(id))
+    ) {
+      throw new BadRequestException(MESSAGES.BOARDS.INVALID_REORDER);
+    }
+
+    await this.db.transaction(async (tx) => {
+      for (const [index, id] of dto.orderedSectionIds.entries()) {
+        await tx
+          .update(boardSections)
+          .set({ position: index })
+          .where(eq(boardSections.id, id));
+      }
+    });
+    return { reordered: true };
+  }
+
   // ── Members ───────────────────────────────────────────────
 
   async listMembers(
@@ -420,8 +473,12 @@ export class BoardsService {
         userId: target.id,
         role: dto.role ?? 'VIEWER',
       });
-    } catch {
-      throw new ConflictException(MESSAGES.BOARDS.ALREADY_MEMBER);
+    } catch (error) {
+      // 23505 = unique_violation in PostgreSQL (duplicate PK).
+      if ((error as { code?: string }).code === '23505') {
+        throw new ConflictException(MESSAGES.BOARDS.ALREADY_MEMBER);
+      }
+      throw error;
     }
     return {
       member: { userId: target.id, role: dto.role ?? 'VIEWER', user: target },
@@ -509,15 +566,59 @@ export class BoardsService {
     const itemCounts = await this.groupCounts(boardItems, ids);
     const likeCounts = await this.groupCounts(likes, ids);
 
-    return Promise.all(
-      list.map(async (board) => ({
-        ...board,
-        role: await this.getRole(board.id, viewer?.id),
-        memberCount: memberCounts.get(board.id) ?? 0,
-        itemCount: itemCounts.get(board.id) ?? 0,
-        likeCount: likeCounts.get(board.id) ?? 0,
-      })),
-    );
+    // Batch role lookups: fetch all memberships for this user in one query,
+    // then resolve owner from the board rows themselves.
+    const roles = await this.batchRoles(ids, viewer?.id);
+
+    return list.map((board) => ({
+      ...board,
+      role: roles.get(board.id) ?? null,
+      memberCount: memberCounts.get(board.id) ?? 0,
+      itemCount: itemCounts.get(board.id) ?? 0,
+      likeCount: likeCounts.get(board.id) ?? 0,
+    }));
+  }
+
+  /** Batch role resolution for a set of boards and a single viewer. */
+  private async batchRoles(
+    boardIds: string[],
+    userId: string | undefined,
+  ): Promise<Map<string, BoardRole>> {
+    const result = new Map<string, BoardRole>();
+    if (!userId || boardIds.length === 0) return result;
+
+    // Owner check — already have the ownerId from the board rows, but we need
+    // the boards to resolve it. Batch-fetch owners.
+    const boardRows = await this.db
+      .select({ id: boards.id, ownerId: boards.ownerId })
+      .from(boards)
+      .where(inArray(boards.id, boardIds));
+    const ownerMap = new Map(boardRows.map((r) => [r.id, r.ownerId]));
+
+    for (const id of boardIds) {
+      if (ownerMap.get(id) === userId) {
+        result.set(id, 'OWNER');
+      }
+    }
+
+    // Member check — single query for all remaining boards.
+    const remainingIds = boardIds.filter((id) => !result.has(id));
+    if (remainingIds.length > 0) {
+      const memberRows = await this.db
+        .select({ boardId: boardMembers.boardId, role: boardMembers.role })
+        .from(boardMembers)
+        .where(
+          and(
+            inArray(boardMembers.boardId, remainingIds),
+            eq(boardMembers.userId, userId),
+          ),
+        );
+      for (const row of memberRows) {
+        result.set(row.boardId, row.role);
+      }
+    }
+
+    return result;
   }
 
   private async countRows(
@@ -546,7 +647,8 @@ export class BoardsService {
     return new Map(rows.map((r) => [r.boardId, Number(r.count)]));
   }
 
-  private async requireSection(sectionId: string) {
+  /** Throws SECTION_NOT_FOUND when missing — used by controller broadcasts too. */
+  async requireSection(sectionId: string) {
     const section = await this.db.query.boardSections.findFirst({
       where: eq(boardSections.id, sectionId),
     });
@@ -556,7 +658,8 @@ export class BoardsService {
     return section;
   }
 
-  private async requireItem(itemId: string) {
+  /** Throws ITEM_NOT_FOUND when missing — used by controller broadcasts too. */
+  async requireItem(itemId: string) {
     const item = await this.db.query.boardItems.findFirst({
       where: eq(boardItems.id, itemId),
     });

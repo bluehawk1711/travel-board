@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="tbGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF6B4A" />
+      <stop offset="100%" stop-color="#E04022" />
+    </linearGradient>
+    <linearGradient id="pinGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="100%" stop-color="#FFF0EB" />
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="16" stdDeviation="24" flood-color="#FF5A36" flood-opacity="0.32" />
+    </filter>
+  </defs>
+  <!-- Background Squircle / Rounded Board Tile -->
+  <rect x="32" y="32" width="448" height="448" rx="112" fill="url(#tbGrad)" filter="url(#glow)" />
+  <!-- Stylized Compass Needle & Location Pin interlocking as 'T' and 'B' -->
+  <g transform="translate(256, 246)">
+    <!-- Travel Board Pin / Compass Geometric Icon -->
+    <path d="M0 -120 C-64 -120 -106 -72 -106 0 C-106 60 -40 128 0 176 C40 128 106 60 106 0 C106 -72 64 -120 0 -120 Z" fill="url(#pinGrad)" />
+    <!-- Inner Compass Center Dot / Window -->
+    <circle cx="0" cy="-14" r="44" fill="#FF5438" />
+    <path d="M0 -46 L14 -14 L0 18 L-14 -14 Z" fill="#FFFFFF" />
+    <circle cx="0" cy="-14" r="8" fill="#FF6B4A" />
+  </g>
+</svg>

@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+<title>Settings &amp; Preferences</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#fa5438",
+            "primary-container": "#d63b22",
+            "primary-dark": "#b32109",
+            "surface": "#fbf9f6",
+            "surface-container-lowest": "#ffffff",
+            "surface-container-low": "#f5f3f0",
+            "surface-container": "#efeeeb",
+            "surface-container-high": "#eae8e5",
+            "surface-container-highest": "#e4e2df",
+            "on-surface": "#1b1c1a",
+            "on-surface-variant": "#5b403b",
+            "secondary": "#8d4f00",
+            "secondary-container": "#ffa03b",
+            "secondary-fixed": "#ffdcc0",
+            "tertiary": "#026a46",
+            "tertiary-container": "#2c835d",
+            "tertiary-fixed": "#9ff4c6",
+            "tertiary-fixed-dim": "#83d8ab",
+            "outline": "#8f706a",
+            "outline-variant": "#e4beb7",
+            "error": "#ba1a1a",
+            "error-container": "#ffdad6"
+          },
+          borderRadius: {
+            "DEFAULT": "0.375rem",
+            "lg": "0.625rem",
+            "xl": "1rem",
+            "2xl": "1.375rem",
+            "full": "9999px"
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    @layer base {
+      html, body {
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        background-color: #fbf9f6;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+      }
+      body {
+        overscroll-behavior-y: none;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .pb-safe { padding-bottom: env(safe-area-inset-bottom, 20px); }
+      .pt-safe { padding-top: env(safe-area-inset-top, 0px); }
+    }
+    ::-webkit-scrollbar { display: none; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body class="bg-surface text-on-surface flex flex-col min-h-screen selection:bg-primary/20 antialiased">
+<!-- Top App Bar -->
+<header class="fixed top-0 inset-x-0 z-40 bg-surface/90 backdrop-blur-xl border-b border-surface-container-high/60 pt-safe">
+<div class="px-4 h-16 max-w-lg mx-auto flex items-center justify-between">
+<div class="flex items-center gap-2.5">
+<button aria-label="Go back" class="w-10 h-10 -ml-1.5 flex items-center justify-center text-on-surface rounded-full active:scale-95 transition-transform hover:bg-surface-container" onclick="history.back()">
+<span class="material-symbols-outlined text-[24px]">arrow_back</span>
+</button>
+<h1 class="text-lg font-bold text-on-surface tracking-tight">Settings &amp; Preferences</h1>
+</div>
+<div class="flex items-center gap-1">
+<button aria-label="Help &amp; Documentation" class="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:text-on-surface rounded-full hover:bg-surface-container transition-colors active:scale-95">
+<span class="material-symbols-outlined text-[22px]">help_outline</span>
+</button>
+</div>
+</div>
+</header>
+<!-- Main Scrollable Content -->
+<main class="flex-1 flex flex-col w-full pt-20 pb-20 max-w-lg mx-auto px-4">
+<!-- Search Bar -->
+<div class="pt-2 pb-4">
+<div class="relative w-full flex items-center">
+<span class="material-symbols-outlined absolute left-3.5 text-on-surface-variant/70 text-[20px] pointer-events-none">search</span>
+<input aria-label="Search settings, accounts..." class="w-full h-12 pl-11 pr-10 rounded-full bg-surface-container-low border border-surface-container-high/80 text-[14px] text-on-surface placeholder:text-on-surface-variant/60 focus:outline-none focus:bg-surface-container-lowest focus:border-primary/60 focus:ring-2 focus:ring-primary/20 shadow-xs transition-all" id="settingsSearch" placeholder="Search settings, accounts..." type="text"/>
+<button aria-label="Clear search query" class="hidden absolute right-3 w-6 h-6 flex items-center justify-center rounded-full bg-surface-container-high text-on-surface-variant hover:text-on-surface active:scale-95 transition-all" id="clearSearchBtn" onclick="document.getElementById('settingsSearch').value=''; this.classList.add('hidden'); filterSettings('');" type="button">
+<span class="material-symbols-outlined text-[15px]">close</span>
+</button>
+</div>
+</div>
+<!-- User Profile Overview Card -->
+<section class="bg-surface-container-lowest rounded-2xl p-4 border border-surface-container shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col gap-3.5 relative overflow-hidden group">
+<div class="flex items-center gap-3.5">
+<div class="relative shrink-0">
+<div class="w-16 h-16 rounded-full p-0.5 bg-gradient-to-tr from-secondary-container via-primary to-secondary shadow-sm">
+<img alt="Alex Sharma portrait" class="w-full h-full rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCXlQt_mYvaXl4g7o5WFhV4yGEHh2UVgUsEoILij3_Lg6VNCJIDTnVafDVN_poW6VOQqBC-PhWx_rqtKOLKf1ftYZhN31CPR2q-X2LaCSPkw-IEx1jOR5MPVyTvrnTiddbjq-Q1HVtXqhIgbWFT9D3J26dvHOCDIRVBDCpRPbtrg52ImFh5EyxykPVbPFUOPbSMgeG8cbBP1M_Fc2vz5nlFKuOboezqrXpIRlFbxTVb4KxrFTN9_NMS"/>
+</div>
+<div class="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-surface-container-lowest flex items-center justify-center shadow-xs">
+<span class="material-symbols-outlined text-[14px] text-tertiary" style="font-variation-settings: 'FILL' 1;">verified</span>
+</div>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center gap-1.5 flex-wrap">
+<h2 class="text-base font-bold text-on-surface truncate">Alex Sharma</h2>
+<span class="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[11px] font-extrabold tracking-wide uppercase">Pro Explorer</span>
+</div>
+<p class="text-xs text-on-surface-variant font-medium truncate mt-0.5">@alex_sharma • alex.sharma@traveler.com</p>
+<div class="flex items-center gap-1.5 mt-2">
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-surface-container text-[11px] font-semibold text-on-surface-variant">
+<span class="material-symbols-outlined text-[13px] text-primary">public</span>
+              14 Countries
+            </span>
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-surface-container text-[11px] font-semibold text-on-surface-variant">
+<span class="material-symbols-outlined text-[13px] text-secondary">dashboard_customize</span>
+              8 Boards
+            </span>
+</div>
+</div>
+<button aria-label="Edit Profile" class="w-9 h-9 rounded-full bg-surface-container-low hover:bg-surface-container text-on-surface flex items-center justify-center active:scale-95 transition-all shrink-0">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+</div>
+</section>
+<!-- Subscription / Membership Banner (Travel Board Club Pro) -->
+<section class="mt-4 relative overflow-hidden rounded-2xl bg-gradient-to-br from-neutral-900 via-neutral-900 to-stone-900 p-4 border border-white/10 shadow-md text-white">
+<div class="absolute -top-10 -right-10 w-36 h-36 bg-gradient-to-br from-[#fa5438]/30 to-amber-500/20 rounded-full blur-2xl pointer-events-none"></div>
+<div class="flex items-start justify-between gap-3 relative z-10">
+<div class="flex flex-col gap-1.5">
+<div class="flex items-center gap-1.5">
+<span class="inline-flex items-center gap-1 bg-gradient-to-r from-orange-500 to-[#fa5438] text-white px-2 py-0.5 rounded-full text-[10px] font-extrabold tracking-wider uppercase shadow-xs">
+<span class="material-symbols-outlined text-[12px]" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+              PRO MEMBER
+            </span>
+<span class="text-[11px] font-medium text-white/70">• Renews Nov 2026</span>
+</div>
+<h3 class="text-sm font-bold text-white tracking-tight leading-snug">Unlimited AI Itinerary &amp; Offline Maps</h3>
+<p class="text-xs text-white/75 leading-tight">Priority transit sync, 4K media export &amp; collaborator co-planning active.</p>
+</div>
+<button class="px-3 py-1.5 rounded-xl bg-white text-neutral-950 text-xs font-bold shrink-0 hover:bg-neutral-100 active:scale-95 transition-all shadow-sm flex items-center gap-1 mt-1">
+<span>Manage Plan</span>
+<span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+</button>
+</div>
+</section>
+<!-- Grouped Settings Sections -->
+<div class="mt-6 flex flex-col gap-6" id="settingsContainer">
+<!-- Section A: Travel & Itinerary -->
+<section class="settings-group flex flex-col gap-2.5" data-category="travel itinerary concierge pace offline maps currency units ai">
+<div class="flex items-center justify-between px-1">
+<h3 class="text-[11px] font-extrabold uppercase tracking-wider text-on-surface-variant">TRAVEL &amp; ITINERARY</h3>
+<span class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/60">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            Smart Sync Active
+          </span>
+</div>
+<div class="bg-surface-container-lowest rounded-2xl p-2 border border-surface-container shadow-xs flex flex-col divide-y divide-surface-container-low">
+<!-- AI Concierge Assistant Toggle -->
+<div class="p-2.5 flex items-center justify-between gap-3 min-h-[56px]">
+<div class="flex items-center gap-3 min-w-0">
+<div class="w-10 h-10 rounded-xl bg-[#fa5438]/10 text-primary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+</div>
+<div class="min-w-0">
+<div class="flex items-center gap-1.5">
+<p class="text-sm font-bold text-on-surface truncate">AI Concierge Assistant</p>
+<span class="px-1.5 py-0.2 rounded-md bg-[#fa5438]/10 text-primary text-[10px] font-extrabold">ACTIVE</span>
+</div>
+<p class="text-xs text-on-surface-variant truncate mt-0.5">Smart route rebalancing &amp; live alerts</p>
+</div>
+</div>
+<!-- Terracotta Active Switch Toggle -->
+<button aria-checked="true" class="toggle-button relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out bg-primary focus:outline-none" onclick="toggleSwitch(this)" role="switch" type="button">
+<span class="pointer-events-none inline-block h-6 w-6 translate-x-[22px] rounded-full bg-white shadow-md transform ring-0 transition duration-200 ease-in-out mt-0.5"></span>
+</button>
+</div>
+<!-- Default Journey Pace Selector -->
+<div class="p-2.5 flex flex-col gap-2.5">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-orange-500/10 text-secondary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[20px]">speed</span>
+</div>
+<div>
+<p class="text-sm font-bold text-on-surface">Default Journey Pace</p>
+<p class="text-xs text-on-surface-variant">Sets daily stop densities &amp; break durations</p>
+</div>
+</div>
+<span class="text-xs font-bold text-primary" id="currentPaceLabel">Balanced</span>
+</div>
+<!-- Segmented Pill Control -->
+<div class="grid grid-cols-3 gap-1 bg-surface-container-low p-1 rounded-xl text-center">
+<button class="pace-btn py-1.5 rounded-lg text-xs font-semibold text-on-surface-variant hover:text-on-surface transition-all active:scale-95" onclick="setPace(this, 'Relaxed')">Relaxed</button>
+<button class="pace-btn py-1.5 rounded-lg text-xs font-bold bg-surface-container-lowest text-primary shadow-xs transition-all active:scale-95" onclick="setPace(this, 'Balanced')">Balanced</button>
+<button class="pace-btn py-1.5 rounded-lg text-xs font-semibold text-on-surface-variant hover:text-on-surface transition-all active:scale-95" onclick="setPace(this, 'Fast-track')">Fast-track</button>
+</div>
+</div>
+<!-- Offline Maps & Guides -->
+<button class="w-full p-2.5 flex items-center justify-between gap-3 text-left hover:bg-surface-container-low/50 rounded-xl transition-colors min-h-[56px] group" onclick="showToast('Tokyo &amp; Kyoto maps are up to date', 'download_done')" type="button">
+<div class="flex items-center gap-3 min-w-0">
+<div class="w-10 h-10 rounded-xl bg-emerald-600/10 text-tertiary flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-[20px]">map</span>
+</div>
+<div class="min-w-0">
+<p class="text-sm font-bold text-on-surface truncate">Offline Maps &amp; Guides</p>
+<p class="text-xs text-on-surface-variant truncate mt-0.5">Tokyo &amp; Kyoto downloaded (45 MB)</p>
+</div>
+</div>
+<div class="flex items-center gap-1.5 shrink-0">
+<span class="inline-flex items-center gap-0.5 text-[11px] font-bold text-tertiary bg-tertiary-fixed/40 px-2 py-0.5 rounded-full">
+<span class="material-symbols-outlined text-[13px]">check_circle</span> Ready
+              </span>
+<span class="material-symbols-outlined text-on-surface-variant text-[20px]">chevron_right</span>
+</div>
+</button>
+<!-- Currency & Units -->
+<button class="w-full p-2.5 flex items-center justify-between gap-3 text-left hover:bg-surface-container-low/50 rounded-xl transition-colors min-h-[56px] group" onclick="showToast('Currency set to USD ($), Metric units', 'paid')" type="button">
+<div class="flex items-center gap-3 min-w-0">
+<div class="w-10 h-10 rounded-xl bg-surface-container text-on-surface-variant flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-[20px]">monetization_on</span>
+</div>
+<div class="min-w-0">
+<p class="text-sm font-bold text-on-surface truncate">Currency &amp; Units</p>
+<p class="text-xs text-on-surface-variant truncate mt-0.5">USD ($) • Metric (km, °C)</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant text-[20px] shrink-0">chevron_right</span>
+</button>
+</div>
+</section>
+<!-- Section B: Account & Security -->
+<section class="settings-group flex flex-col gap-2.5" data-category="account security personal linked biometrics password 2fa">
+<div class="flex items-center justify-between px-1">
+<h3 class="text-[11px] font-extrabold uppercase tracking-wider text-on-surface-variant">ACCOUNT &amp; SECURITY</h3>
+<span class="inline-flex items-center gap-0.5 text-[11px] font-bold text-tertiary">
+<span class="material-symbols-outlined text-[14px]">lock</span> Encrypted
+          </span>
+</div>
+<div class="bg-surface-container-lowest rounded-2xl p-2 border border-surface-container shadow-xs flex flex-col divide-y divide-surface-container-low">
+<!-- Personal Info & Linked Accounts -->
+<button class="w-full p-2.5 flex items-center justify-between gap-3 text-left hover:bg-surface-container-low/50 rounded-xl transition-colors min-h-[56px] group" onclick="showToast('Managing connected accounts', 'hub')" type="button">
+<div class="flex items-center gap-3 min-w-0">
+<div class="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-[20px]">badge</span>
+</div>
+<div class="min-w-0">
+<p class="text-sm font-bold text-on-surface truncate">Personal Info &amp; Linked Accounts</p>
+<p class="text-xs text-on-surface-variant truncate mt-0.5">Google, Apple connected</p>
+</div>
+</div>
+<div class="flex items-center gap-2 shrink-0">
+<div class="flex -space-x-1.5">
+<div class="w-5 h-5 rounded-full bg-surface-container flex items-center justify-center text-[10px] font-bold text-on-surface ring-1 ring-white">G</div>
+<div class="w-5 h-5 rounded-full bg-surface-container flex items-center justify-center text-[10px] font-bold text-on-surface ring-1 ring-white"></div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant text-[20px]">chevron_right</span>
+</div>
+</button>
+<!-- Security & Biometrics -->
+<button class="w-full p-2.5 flex items-center justify-between gap-3 text-left hover:bg-surface-container-low/50 rounded-xl transition-colors min-h-[56px] group" onclick="showToast('Biometric security active &amp; verified', 'verified_user')" type="button">
+<div class="flex items-center gap-3 min-w-0">
+<div class="w-10 h-10 rounded-xl bg-tertiary-fixed/60 text-tertiary flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-[20px]">fingerprint</span>
+</div>
+<div class="min-w-0">
+<p class="text-sm font-bold text-on-surface truncate">Security &amp; Biometrics</p>
+<p class="text-xs text-on-surface-variant truncate mt-0.5">Face ID, passkeys &amp; passcodes</p>
+</div>
+</div>
+<div class="flex items-center gap-1.5 shrink-0">
+<span class="inline-flex items-center gap-0.5 px-2 py-0.5 rounded bg-tertiary-container/20 text-tertiary text-[10px] font-extrabold">
+<span class="material-symbols-outlined text-[12px]">security</span>
+                2FA Enabled
+              </span>
+<span class="material-symbols-outlined text-on-surface-variant text-[20px]">chevron_right</span>
+</div>
+</button>
+</div>
+</section>
+<!-- Section C: Preferences & Data -->
+<section class="settings-group flex flex-col gap-2.5" data-category="preferences data alerts notifications privacy cache storage">
+<div class="flex items-center justify-between px-1">
+<h3 class="text-[11px] font-extrabold uppercase tracking-wider text-on-surface-variant">PREFERENCES &amp; DATA</h3>
+</div>
+<div class="bg-surface-container-lowest rounded-2xl p-2 border border-surface-container shadow-xs flex flex-col divide-y divide-surface-container-low">
+<!-- Collaborative Trip Alerts Toggle -->
+<div class="p-2.5 flex items-center justify-between gap-3 min-h-[56px]">
+<div class="flex items-center gap-3 min-w-0">
+<div class="w-10 h-10 rounded-xl bg-orange-500/10 text-secondary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[20px]">notifications_active</span>
+</div>
+<div class="min-w-0">
+<p class="text-sm font-bold text-on-surface truncate">Collaborative Trip Alerts</p>
+<p class="text-xs text-on-surface-variant truncate mt-0.5">Push notifications for edits &amp; votes</p>
+</div>
+</div>
+<button aria-checked="true" class="toggle-button relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out bg-primary focus:outline-none" onclick="toggleSwitch(this)" role="switch" type="button">
+<span class="pointer-events-none inline-block h-6 w-6 translate-x-[22px] rounded-full bg-white shadow-md transform ring-0 transition duration-200 ease-in-out mt-0.5"></span>
+</button>
+</div>
+<!-- Default Board Privacy -->
+<div class="p-2.5 flex items-center justify-between gap-3 min-h-[56px]">
+<div class="flex items-center gap-3 min-w-0">
+<div class="w-10 h-10 rounded-xl bg-surface-container text-on-surface-variant flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[20px]">lock_person</span>
+</div>
+<div class="min-w-0">
+<p class="text-sm font-bold text-on-surface truncate">Default Board Privacy</p>
+<p class="text-xs text-on-surface-variant truncate mt-0.5">Visibility for newly created itineraries</p>
+</div>
+</div>
+<!-- Privacy Mode Pill Switch -->
+<div class="flex items-center bg-surface-container-low p-1 rounded-xl text-xs shrink-0 font-semibold">
+<button class="privacy-btn px-2.5 py-1 rounded-lg text-on-surface-variant hover:text-on-surface transition-all active:scale-95" onclick="setPrivacy(this, 'Public')">Public</button>
+<button class="privacy-btn px-2.5 py-1 rounded-lg bg-surface-container-lowest text-primary font-bold shadow-xs transition-all active:scale-95" onclick="setPrivacy(this, 'Collaborator only')">Collaborator only</button>
+</div>
+</div>
+<!-- Offline Cache & Media -->
+<div class="p-2.5 flex items-center justify-between gap-3 min-h-[56px]">
+<div class="flex items-center gap-3 min-w-0">
+<div class="w-10 h-10 rounded-xl bg-surface-container text-on-surface-variant flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[20px]">folder_zip</span>
+</div>
+<div class="min-w-0">
+<p class="text-sm font-bold text-on-surface truncate">Offline Cache &amp; Media</p>
+<p class="text-xs text-on-surface-variant truncate mt-0.5" id="cacheStatus">184 MB cached</p>
+</div>
+</div>
+<button class="px-3.5 py-1.5 rounded-full bg-surface-container-low border border-surface-container hover:bg-surface-container text-on-surface active:scale-95 text-xs font-bold transition-all shrink-0" id="clearCacheBtn" onclick="handleClearCache()" type="button">
+              Clear Cache
+            </button>
+</div>
+</div>
+</section>
+<!-- Section D: Support & About -->
+<section class="settings-group flex flex-col gap-2.5" data-category="support about help guides faq version community terms">
+<div class="flex items-center justify-between px-1">
+<h3 class="text-[11px] font-extrabold uppercase tracking-wider text-on-surface-variant">SUPPORT &amp; ABOUT</h3>
+</div>
+<div class="bg-surface-container-lowest rounded-2xl p-2 border border-surface-container shadow-xs flex flex-col divide-y divide-surface-container-low">
+<!-- Help Center & Travel Guides -->
+<button class="w-full p-2.5 flex items-center justify-between gap-3 text-left hover:bg-surface-container-low/50 rounded-xl transition-colors min-h-[56px] group" onclick="showToast('Opening Travel Board Help Center', 'open_in_new')" type="button">
+<div class="flex items-center gap-3 min-w-0">
+<div class="w-10 h-10 rounded-xl bg-surface-container text-on-surface-variant flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-[20px]">help_center</span>
+</div>
+<div class="min-w-0">
+<p class="text-sm font-bold text-on-surface truncate">Help Center &amp; Travel Guides</p>
+<p class="text-xs text-on-surface-variant truncate mt-0.5">Packing templates, FAQ &amp; video tutorials</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant text-[20px] shrink-0">open_in_new</span>
+</button>
+<!-- Community Guidelines -->
+<button class="w-full p-2.5 flex items-center justify-between gap-3 text-left hover:bg-surface-container-low/50 rounded-xl transition-colors min-h-[56px] group" onclick="showToast('Viewing Community Guidelines', 'handshake')" type="button">
+<div class="flex items-center gap-3 min-w-0">
+<div class="w-10 h-10 rounded-xl bg-surface-container text-on-surface-variant flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-[20px]">handshake</span>
+</div>
+<div class="min-w-0">
+<p class="text-sm font-bold text-on-surface truncate">Community Guidelines</p>
+<p class="text-xs text-on-surface-variant truncate mt-0.5">Etiquette for collaborative trips</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant text-[20px] shrink-0">chevron_right</span>
+</button>
+<!-- About Travel Board -->
+<button class="w-full p-2.5 flex items-center justify-between gap-3 text-left hover:bg-surface-container-low/50 rounded-xl transition-colors min-h-[56px] group" onclick="showToast('Travel Board v2.4 (Build 2489)', 'info')" type="button">
+<div class="flex items-center gap-3 min-w-0">
+<div class="w-10 h-10 rounded-xl bg-surface-container text-on-surface-variant flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-[20px]">info</span>
+</div>
+<div class="min-w-0">
+<p class="text-sm font-bold text-on-surface truncate">About Travel Board</p>
+<p class="text-xs text-on-surface-variant truncate mt-0.5">Release notes • Crafted with wanderlust</p>
+</div>
+</div>
+<div class="flex items-center gap-2 shrink-0">
+<span class="px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface text-[11px] font-bold">v2.4 (Build 2489)</span>
+<span class="material-symbols-outlined text-on-surface-variant text-[20px]">chevron_right</span>
+</div>
+</button>
+</div>
+</section>
+<!-- Account Actions at the Bottom -->
+<div class="pt-2 pb-6 flex flex-col items-center gap-3">
+<!-- Log Out Button with subtle warning outline -->
+<button class="w-full h-12 rounded-2xl border border-red-200 bg-red-50/60 hover:bg-red-100/80 text-error font-bold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-all shadow-xs" onclick="confirmLogout()" type="button">
+<span class="material-symbols-outlined text-[20px]">logout</span>
+<span>Log Out of Alex's Account</span>
+</button>
+<!-- Subtle muted Delete Account Link -->
+<button class="text-xs font-semibold text-on-surface-variant/70 hover:text-error active:underline transition-colors py-1" onclick="alert('To request account closure and data deletion, please follow the confirmation link sent to alex.sharma@traveler.com.')" type="button">
+          Permanently Delete Travel Account
+        </button>
+<p class="text-[11px] text-on-surface-variant/50 text-center mt-1">
+          Travel Board iOS Edition • Build 2489 • End-to-End Encrypted
+        </p>
+</div>
+</div>
+</main>
+<!-- Interactive Toast Notification -->
+<div class="fixed bottom-6 inset-x-4 mx-auto max-w-sm hidden bg-neutral-900 text-white px-4 py-3 rounded-2xl shadow-xl z-50 flex items-center justify-between border border-white/10 transition-all duration-300 animate-fade-in" id="toastNotification">
+<div class="flex items-center gap-2.5 min-w-0">
+<span class="material-symbols-outlined text-[#fa5438] text-[20px] shrink-0" id="toastIcon">check_circle</span>
+<span class="text-xs font-semibold truncate" id="toastMessage">Setting updated</span>
+</div>
+<button aria-label="Close notification" class="text-white/70 hover:text-white p-1 shrink-0 ml-2" onclick="hideToast()">
+<span class="material-symbols-outlined text-[16px]">close</span>
+</button>
+</div>
+<script>
+    // Search Filtering Interaction
+    const searchInput = document.getElementById('settingsSearch');
+    const clearBtn = document.getElementById('clearSearchBtn');
+
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase().trim();
+        if (query.length > 0) {
+          clearBtn.classList.remove('hidden');
+        } else {
+          clearBtn.classList.add('hidden');
+        }
+        filterSettings(query);
+      });
+    }
+
+    function filterSettings(query) {
+      const groups = document.querySelectorAll('.settings-group');
+      groups.forEach(group => {
+        const categoryData = group.getAttribute('data-category') || '';
+        const textContent = group.innerText.toLowerCase();
+        if (!query || categoryData.includes(query) || textContent.includes(query)) {
+          group.style.display = 'flex';
+        } else {
+          group.style.display = 'none';
+        }
+      });
+    }
+
+    // Tactile Toggle Switch Functionality
+    function toggleSwitch(btn) {
+      const isChecked = btn.getAttribute('aria-checked') === 'true';
+      const nextState = !isChecked;
+      btn.setAttribute('aria-checked', String(nextState));
+
+      const knob = btn.querySelector('span');
+      if (nextState) {
+        btn.classList.remove('bg-surface-container-high');
+        btn.classList.add('bg-primary');
+        knob.classList.remove('translate-x-0.5');
+        knob.classList.add('translate-x-[22px]');
+        showToast('Preference enabled', 'check_circle');
+      } else {
+        btn.classList.remove('bg-primary');
+        btn.classList.add('bg-surface-container-high');
+        knob.classList.remove('translate-x-[22px]');
+        knob.classList.add('translate-x-0.5');
+        showToast('Preference disabled', 'toggle_off');
+      }
+    }
+
+    // Segmented Control for Travel Pace
+    function setPace(clickedBtn, pace) {
+      const parent = clickedBtn.parentElement;
+      const buttons = parent.querySelectorAll('.pace-btn');
+      buttons.forEach(b => {
+        b.classList.remove('bg-surface-container-lowest', 'text-primary', 'shadow-xs', 'font-bold');
+        b.classList.add('text-on-surface-variant', 'font-semibold');
+      });
+      clickedBtn.classList.remove('text-on-surface-variant', 'font-semibold');
+      clickedBtn.classList.add('bg-surface-container-lowest', 'text-primary', 'shadow-xs', 'font-bold');
+      
+      const label = document.getElementById('currentPaceLabel');
+      if (label) label.textContent = pace;
+      showToast(`Journey pace updated to ${pace}`, 'speed');
+    }
+
+    // Segmented Control for Default Board Privacy
+    function setPrivacy(clickedBtn, mode) {
+      const parent = clickedBtn.parentElement;
+      const buttons = parent.querySelectorAll('.privacy-btn');
+      buttons.forEach(b => {
+        b.classList.remove('bg-surface-container-lowest', 'text-primary', 'shadow-xs', 'font-bold');
+        b.classList.add('text-on-surface-variant');
+      });
+      clickedBtn.classList.remove('text-on-surface-variant');
+      clickedBtn.classList.add('bg-surface-container-lowest', 'text-primary', 'shadow-xs', 'font-bold');
+      showToast(`Default board privacy: ${mode}`, 'lock');
+    }
+
+    // Clear Cache Action
+    function handleClearCache() {
+      const cacheStatus = document.getElementById('cacheStatus');
+      const clearBtn = document.getElementById('clearCacheBtn');
+      
+      clearBtn.disabled = true;
+      clearBtn.innerHTML = '<span class="material-symbols-outlined text-[14px] animate-spin">sync</span>';
+      
+      setTimeout(() => {
+        cacheStatus.textContent = '0 MB (Cleaned just now)';
+        clearBtn.textContent = 'Cleared';
+        clearBtn.classList.add('opacity-60');
+        showToast('Temporary cache cleared (184 MB freed)', 'cleaning_services');
+      }, 500);
+    }
+
+    // Log Out Confirmation
+    function confirmLogout() {
+      if (confirm("Log out of Alex Sharma's Travel Board account?")) {
+        showToast('Signing out...', 'logout');
+        setTimeout(() => {
+          window.location.reload();
+        }, 1200);
+      }
+    }
+
+    // Toast Notification Utility
+    let toastTimer;
+    function showToast(msg, icon = 'check_circle') {
+      const toast = document.getElementById('toastNotification');
+      const toastMsg = document.getElementById('toastMessage');
+      const toastIcon = document.getElementById('toastIcon');
+
+      if (!toast) return;
+
+      clearTimeout(toastTimer);
+      toastMsg.textContent = msg;
+      toastIcon.textContent = icon;
+
+      toast.classList.remove('hidden');
+      toastTimer = setTimeout(() => {
+        hideToast();
+      }, 2600);
+    }
+
+    function hideToast() {
+      const toast = document.getElementById('toastNotification');
+      if (toast) {
+        toast.classList.add('hidden');
+      }
+    }
+  </script>
+</body></html>

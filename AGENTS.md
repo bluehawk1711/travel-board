@@ -74,6 +74,13 @@ places/                      # Google Places proxy (24h cache-aside)
   kebab-case REST paths; camelCase JS/TS.
 - **Dates**: always store `timestamp with time zone` in Postgres; serialize to ISO-8601
   strings in API responses.
+- **★ UI components — reuse, never reinvent**: all UI is composed from the component
+  library, never hand-rolled inline. `web/components/ui/` (shadcn/ui primitives) and
+  `web/components/shadcn-space/` (community blocks) are the only source of UI building
+  blocks. When a screen needs a control, reuse one that exists; when one almost fits,
+  extend/parametrize the existing component (add props, refactor hardcoded demo data out)
+  instead of copying it or writing a new one. New screens must not introduce one-off
+  divs/buttons/inputs where a library component is available.
 
 ---
 

@@ -1,18 +1,23 @@
 {
   "expo": {
-    "name": "mobile",
-    "slug": "mobile",
+    "name": "Travel Board",
+    "slug": "travel-board",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "mobile",
+    "scheme": "travelboard",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/expo.icon",
+      "bundleIdentifier": "app.travelboard.mobile",
+      "infoPlist": {
+        "CFBundleDisplayName": "Travel Board"
+      }
     },
     "android": {
+      "package": "app.travelboard.mobile",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#FAF9F6",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
@@ -21,14 +26,17 @@
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/favicon.png",
+      "name": "Travel Board",
+      "themeColor": "#FA5438",
+      "backgroundColor": "#FAF9F6"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#208AEF",
+          "backgroundColor": "#FAF9F6",
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
         }
@@ -42,3 +50,4 @@
     }
   }
 }
+

@@ -67,9 +67,7 @@ export class ThrottlerStorageUpstash implements ThrottlerStorage {
 
     const ttlSeconds = Math.max(1, Math.ceil(ttl / 1000));
     const totalHits = await this.redis.incr(counterKey);
-    if (totalHits === 1) {
-      await this.redis.expire(counterKey, ttlSeconds);
-    }
+    await this.redis.expire(counterKey, ttlSeconds);
     const timeToExpire = await this.redis.ttl(counterKey);
 
     let isBlocked = false;

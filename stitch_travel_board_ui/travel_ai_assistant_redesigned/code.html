@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#fa5438",
+            "primary-container": "#d63b22",
+            "primary-dark": "#b32109",
+            "surface": "#fbf9f6",
+            "surface-container-low": "#f5f3f0",
+            "surface-container": "#efeeeb",
+            "surface-container-high": "#eae8e5",
+            "surface-container-lowest": "#ffffff",
+            "on-surface": "#1b1c1a",
+            "on-surface-variant": "#5b403b",
+            "secondary": "#8d4f00",
+            "secondary-container": "#ffa03b",
+            "tertiary": "#026a46",
+            "tertiary-container": "#2c835d",
+            "tertiary-fixed": "#9ff4c6",
+            "tertiary-fixed-dim": "#83d8ab"
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    @layer base {
+      html, body {
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        background-color: #fbf9f6;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+      }
+      body {
+        overscroll-behavior-y: none;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .pb-safe { padding-bottom: env(safe-area-inset-bottom, 16px); }
+      .pt-safe { padding-top: env(safe-area-inset-top, 0px); }
+    }
+    ::-webkit-scrollbar { display: none; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body class="bg-surface text-on-surface flex flex-col min-h-full antialiased selection:bg-primary/20">
+<!-- Top App Bar (Android style with AI Badge & Active Trip chip) -->
+<header class="fixed top-0 inset-x-0 z-40 bg-surface/90 backdrop-blur-md pt-safe border-b border-surface-container-high/60">
+<div class="px-4 py-2.5 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<button class="w-10 h-10 -ml-1.5 flex items-center justify-center text-on-surface rounded-full active:scale-95 transition-transform hover:bg-surface-container" onclick="history.back()">
+<span class="material-symbols-outlined text-[24px]">arrow_back</span>
+</button>
+<div>
+<div class="flex items-center gap-1.5">
+<h1 class="text-base font-bold text-on-surface leading-none tracking-tight">Travel AI Planner</h1>
+<span class="inline-flex items-center gap-0.5 bg-gradient-to-r from-orange-500 to-[#fa5438] text-white px-1.5 py-0.5 rounded-full text-[10px] font-extrabold tracking-wide uppercase shadow-xs">
+<span class="material-symbols-outlined text-[11px]" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+              PRO
+            </span>
+</div>
+<div class="flex items-center gap-1.5 mt-1">
+<span class="inline-flex items-center gap-1 bg-surface-container px-2 py-0.5 rounded-full text-[11px] font-semibold text-on-surface truncate max-w-[210px]">
+<span>🇯🇵</span>
+<span class="truncate">Japan Adventure</span>
+<span class="text-primary font-bold">• Day 2 of 8</span>
+</span>
+</div>
+</div>
+</div>
+<!-- Collaborators Avatars & Options -->
+<div class="flex items-center gap-1.5">
+<div class="flex items-center -space-x-2 bg-surface-container-lowest py-1 px-1.5 rounded-full border border-surface-container-high/80 shadow-xs" title="Alex, Sam, Elena">
+<div class="w-6 h-6 rounded-full bg-[#ffa03b] text-white flex items-center justify-center text-[10px] font-bold ring-2 ring-surface-container-lowest" title="Alex">A</div>
+<div class="w-6 h-6 rounded-full bg-[#2c835d] text-white flex items-center justify-center text-[10px] font-bold ring-2 ring-surface-container-lowest" title="Sam">S</div>
+<div class="w-6 h-6 rounded-full bg-[#fa5438] text-white flex items-center justify-center text-[10px] font-bold ring-2 ring-surface-container-lowest" title="Elena">E</div>
+</div>
+<button class="w-9 h-9 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</div>
+</div>
+</header>
+<!-- Main Scrollable Feed -->
+<main class="flex-1 w-full pt-[78px] pb-36 px-4 max-w-lg mx-auto flex flex-col gap-4">
+<!-- Trip Intelligence & Health Overview Card -->
+<section class="mt-2 bg-gradient-to-br from-surface-container-lowest to-[#fff7f4] rounded-2xl p-4 border border-[#ffdcd2]/60 shadow-[0_4px_20px_rgba(250,84,56,0.06)] relative overflow-hidden">
+<div class="flex items-center justify-between pb-3 border-b border-surface-container">
+<div class="flex items-center gap-2">
+<div class="w-7 h-7 rounded-xl bg-[#fa5438]/10 text-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-[17px]" style="font-variation-settings: 'FILL' 1;">insights</span>
+</div>
+<div>
+<h2 class="text-xs font-bold uppercase tracking-wider text-on-surface">Trip Health &amp; Optimization</h2>
+<p class="text-[11px] text-on-surface-variant">Live itinerary sync for Tokyo leg</p>
+</div>
+</div>
+<span class="inline-flex items-center gap-1 bg-emerald-50 text-emerald-800 border border-emerald-200/80 px-2 py-0.5 rounded-full text-[10px] font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          Connected
+        </span>
+</div>
+<!-- 3 Key Metric Cards -->
+<div class="grid grid-cols-3 gap-2 mt-3">
+<div class="bg-white/80 rounded-xl p-2.5 border border-surface-container shadow-xs flex flex-col justify-between">
+<div class="flex items-center gap-1 text-emerald-700">
+<span class="material-symbols-outlined text-[15px]">timer</span>
+<span class="text-[10px] font-bold tracking-tight">TRANSIT</span>
+</div>
+<div class="mt-1">
+<p class="text-sm font-extrabold text-on-surface leading-tight">50m saved</p>
+<p class="text-[10px] text-emerald-700 font-medium leading-none mt-0.5">Rush bypassed</p>
+</div>
+</div>
+<div class="bg-white/80 rounded-xl p-2.5 border border-surface-container shadow-xs flex flex-col justify-between">
+<div class="flex items-center gap-1 text-primary">
+<span class="material-symbols-outlined text-[15px]">speed</span>
+<span class="text-[10px] font-bold tracking-tight">PACE SCORE</span>
+</div>
+<div class="mt-1">
+<p class="text-sm font-extrabold text-on-surface leading-tight">92% Relaxed</p>
+<p class="text-[10px] text-emerald-700 font-semibold leading-none mt-0.5">↑ from 64%</p>
+</div>
+</div>
+<div class="bg-white/80 rounded-xl p-2.5 border border-surface-container shadow-xs flex flex-col justify-between">
+<div class="flex items-center gap-1 text-amber-700">
+<span class="material-symbols-outlined text-[15px]">route</span>
+<span class="text-[10px] font-bold tracking-tight">ROUTING</span>
+</div>
+<div class="mt-1">
+<p class="text-sm font-extrabold text-on-surface leading-tight">Optimal</p>
+<p class="text-[10px] text-on-surface-variant leading-none mt-0.5">Zero backtracking</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Chat Timeline Stream -->
+<div class="flex flex-col gap-4 mt-1">
+<!-- User Message -->
+<div class="flex flex-col items-end gap-1 pl-10">
+<div class="bg-surface-container-high/90 text-on-surface px-4 py-3 rounded-2xl rounded-tr-xs shadow-xs text-[13.5px] leading-relaxed">
+          Day 2 feels a bit packed with Shibuya and Tokyo Tower during evening rush hour. Can you rebalance it?
+        </div>
+<span class="text-[10px] text-on-surface-variant/70 font-medium pr-1">10:42 AM</span>
+</div>
+<!-- AI Concierge Response -->
+<div class="flex flex-col gap-2.5 pr-2">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-gradient-to-tr from-[#fa5438] to-[#ff7d66] text-white flex items-center justify-center shadow-xs">
+<span class="material-symbols-outlined text-[14px]">auto_awesome</span>
+</div>
+<span class="text-xs font-bold text-on-surface">Travel Concierge AI</span>
+<span class="text-[10px] text-on-surface-variant font-medium">• Just now</span>
+</div>
+<!-- AI Message Bubble & Interactive Proposal Card -->
+<div class="bg-surface-container-lowest rounded-2xl rounded-tl-xs p-4 border border-surface-container shadow-sm flex flex-col gap-3.5">
+<!-- Diagnostic Note -->
+<div class="text-[13.5px] text-on-surface leading-relaxed">
+            I ran a transit check on Day 2. Crossing from <span class="font-semibold text-on-surface">Shibuya</span> to <span class="font-semibold text-on-surface">Tokyo Tower (Minato)</span> between 5:30–7:00 PM creates severe metro congestion and adds <strong class="text-primary font-bold">45 minutes of transit fatigue</strong>.
+          </div>
+<!-- Visual Proposed Changes Card -->
+<div class="bg-surface-container-low/70 rounded-xl p-3.5 border border-surface-container flex flex-col gap-3">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[17px] text-primary" style="font-variation-settings: 'FILL' 1;">tune</span>
+<span class="text-xs font-bold uppercase tracking-wider text-on-surface">Proposed Smart Rebalance</span>
+</div>
+<span class="text-[10px] font-extrabold uppercase tracking-wide bg-[#fa5438]/10 text-primary px-2 py-0.5 rounded-md">
+                High Impact
+              </span>
+</div>
+<!-- Change Item 1 -->
+<div class="bg-surface-container-lowest rounded-xl p-2.5 flex items-center gap-3 border border-surface-container shadow-xs">
+<img alt="Tokyo Tower illuminated with golden light against night sky" class="w-14 h-14 rounded-lg object-cover shrink-0 shadow-xs" src="https://lh3.googleusercontent.com/aida-public/AB6AXuACYnX85bi2uYYThCj-NJxlzPYPwx2DdsLQy4HXXjY6YWDyAWlrnuflxT-FAmqnpDOUCUydA5I5UJOsguJn2bFKvtxZGfrpl8rNKBBK0PTKjnyHsMJhBbda6WlAPTJR09lvcudLFeKog-iGQ7Nsdr9p3nhSQwdlBTDFQE9AtrNknSAE23ViW_0J3cqxKxTtvJ-AbdnnQ8OcXE5eP3vmydDi3tGZIzcFNuyIKw-4mXSq2XWNYuf1WXfj"/>
+<div class="min-w-0 flex-1">
+<div class="flex items-center gap-1 text-primary">
+<span class="material-symbols-outlined text-[13px] font-bold">schedule</span>
+<span class="text-[10px] font-bold uppercase tracking-wide">Move to Day 3 Sunset (5:45 PM)</span>
+</div>
+<p class="text-xs font-bold text-on-surface truncate mt-0.5">Tokyo Tower Night Deck</p>
+<p class="text-[11px] text-on-surface-variant leading-tight mt-0.5">Clearer skies, pairs seamlessly with Roppongi dinner</p>
+</div>
+</div>
+<!-- Change Item 2 -->
+<div class="bg-surface-container-lowest rounded-xl p-2.5 flex items-center gap-3 border border-surface-container shadow-xs">
+<img alt="Peaceful Japanese garden with pathway and moss at Nezu Museum" class="w-14 h-14 rounded-lg object-cover shrink-0 shadow-xs" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCG9iZMw5ylplUzbDyJTtvbtB4Qv_jidn03qBTPyHMEjae2h0HtXwOWEgHHn_bkpQF9KZQAmpEWLFO0Kj3LdLHxf57vR8s6G44v7-R4aenB3HbaRgQTD_6e3j2uWqejA-pdh3mJ5cIwFw6Dj1gho0Dl8OcHsVjsiVNzTSRmolB0gVUEXBdJJt05r6STFxuAejkSgVNisdMyJAZIg8664-BsV0kfoHfvM5Q7FUDH-aGAyAfmq_9D7ODA"/>
+<div class="min-w-0 flex-1">
+<div class="flex items-center gap-1 text-emerald-700">
+<span class="material-symbols-outlined text-[13px] font-bold">add_circle</span>
+<span class="text-[10px] font-bold uppercase tracking-wide">Add to Day 2 Afternoon (3:30 PM)</span>
+</div>
+<p class="text-xs font-bold text-on-surface truncate mt-0.5">Nezu Museum Garden &amp; Cafe</p>
+<p class="text-[11px] text-on-surface-variant leading-tight mt-0.5">10 min walk from Meiji Shrine • Serene tea break</p>
+</div>
+</div>
+<!-- Action Bar Buttons -->
+<div class="flex flex-col gap-2 pt-1" id="suggestion-actions">
+<button class="w-full h-11 bg-primary hover:bg-primary-container text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 shadow-[0_4px_14px_rgba(250,84,56,0.35)] active:scale-[0.98] transition-all" id="apply-btn" onclick="applySchedule()">
+<span class="material-symbols-outlined text-[17px]">auto_awesome</span>
+<span>Apply to Itinerary ✨</span>
+</button>
+<div class="grid grid-cols-2 gap-2">
+<button class="h-9 bg-surface-container text-on-surface font-semibold rounded-lg text-xs flex items-center justify-center gap-1 hover:bg-surface-container-high transition-colors active:scale-95">
+<span class="material-symbols-outlined text-[15px]">tune</span>
+<span>Customize Proposal</span>
+</button>
+<button class="h-9 bg-transparent hover:bg-surface-container text-on-surface-variant font-medium rounded-lg text-xs flex items-center justify-center transition-colors active:scale-95" onclick="dismissSuggestion()">
+                  Dismiss
+                </button>
+</div>
+</div>
+<!-- Dynamic Confirmation Banner (hidden initially) -->
+<div class="hidden bg-emerald-50 border border-emerald-200 text-emerald-900 p-3 rounded-xl flex items-center gap-2.5 transition-all" id="applied-state">
+<span class="material-symbols-outlined text-[20px] text-emerald-600" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<div class="min-w-0 flex-1">
+<p class="text-xs font-bold leading-tight">Day 2 &amp; Day 3 Itinerary Updated!</p>
+<p class="text-[11px] text-emerald-700 leading-tight mt-0.5">Broadcasted to Alex, Sam &amp; Elena.</p>
+</div>
+</div>
+</div>
+<div class="text-[11px] text-on-surface-variant flex items-center justify-between pt-0.5">
+<span>Collaborator consensus auto-notified</span>
+<span>10:43 AM</span>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Fixed Bottom Composer Area with Quick Suggestion Chips -->
+<div class="fixed bottom-0 inset-x-0 bg-surface/95 backdrop-blur-xl border-t border-surface-container-high/60 pt-2.5 pb-safe z-30">
+<div class="max-w-lg mx-auto px-4 flex flex-col gap-2.5">
+<!-- Floating Prompt Chips (Horizontal Scroll) -->
+<div class="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5 -mx-4 px-4">
+<button class="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-container-lowest border border-surface-container shadow-xs text-xs font-semibold text-on-surface hover:bg-surface-container transition-all active:scale-95">
+<span>🍜</span>
+<span>Quiet dinner near Shibuya</span>
+</button>
+<button class="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-container-lowest border border-surface-container shadow-xs text-xs font-semibold text-on-surface hover:bg-surface-container transition-all active:scale-95">
+<span>🌦️</span>
+<span>Weather backup plan</span>
+</button>
+<button class="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-container-lowest border border-surface-container shadow-xs text-xs font-semibold text-on-surface hover:bg-surface-container transition-all active:scale-95">
+<span>⚡</span>
+<span>Optimize transit route</span>
+</button>
+</div>
+<!-- Modern Smart Composer Bar -->
+<div class="flex items-center gap-2 pb-2">
+<button aria-label="Add location or bookmark" class="w-11 h-11 rounded-full bg-surface-container text-on-surface flex items-center justify-center shrink-0 hover:bg-surface-container-high transition-transform active:scale-95" title="Attach itinerary pin or spot">
+<span class="material-symbols-outlined text-[20px]">add_location_alt</span>
+</button>
+<div class="flex-1 h-12 bg-surface-container-lowest border border-surface-container rounded-full px-4 flex items-center gap-2 shadow-xs focus-within:ring-2 focus-within:ring-primary/40 focus-within:border-primary transition-all">
+<input class="w-full bg-transparent text-[13.5px] text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none" placeholder="Ask Concierge AI about Day 2, transit, food..." type="text"/>
+<button aria-label="Voice input" class="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-95" title="Speak to Concierge">
+<span class="material-symbols-outlined text-[20px]">mic</span>
+</button>
+</div>
+<button aria-label="Send query" class="w-11 h-11 rounded-full bg-primary hover:bg-primary-container text-white flex items-center justify-center shrink-0 shadow-[0_3px_12px_rgba(250,84,56,0.35)] transition-transform active:scale-95">
+<span class="material-symbols-outlined text-[20px]">send</span>
+</button>
+</div>
+</div>
+</div>
+<script>
+    function applySchedule() {
+      const actions = document.getElementById('suggestion-actions');
+      const appliedState = document.getElementById('applied-state');
+      if (actions && appliedState) {
+        actions.classList.add('hidden');
+        appliedState.classList.remove('hidden');
+      }
+    }
+
+    function dismissSuggestion() {
+      const card = document.getElementById('suggestion-actions')?.parentElement;
+      if (card) {
+        card.style.opacity = '0.5';
+        card.style.pointerEvents = 'none';
+      }
+    }
+  </script>
+</body></html>

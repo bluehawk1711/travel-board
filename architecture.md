@@ -66,7 +66,7 @@ third-party — talk only to a single NestJS API, which owns all business logic.
 | API caching | `@nestjs/cache-manager` (Keyv) + in-memory L1 | ^12 / cache-manager ^7 |
 | Rate limiting | `@nestjs/throttler` + custom Upstash storage | ^6.5 |
 | Auth | Passport (JWT strategy) + Google OAuth | passport ^0.7 |
-| Realtime (later) | `@nestjs/websockets` + socket.io | ^12 |
+| Realtime | `@nestjs/websockets` + socket.io | ^11 |
 | Jobs | `@nestjs/schedule` (cron: counter flush, cleanup) | ^12 |
 | Image storage | Cloudflare R2 (S3-compatible) | — |
 | Search | Postgres full-text → Meilisearch (later) | — |
@@ -123,6 +123,21 @@ Client → Guards (auth, throttler) → Pipes (validation/DTO) → Interceptors
 - Migrations with `drizzle-kit`; schema in `backend/src/db/schema.ts`.
 - **Cache invalidation triggers live in the same service transaction as the write** so they
   can never be forgotten (e.g. `boardsService.update()` deletes `board:{id}`).
+
+### 4.4 Realtime (Socket.IO)
+
+Two gateways share the single Socket.IO server mounted on the NestJS HTTP server
+(see plan.md §4.5):
+
+- **`ChatGateway`** (`chat/`) — `conv:{conversationId}` rooms, presence keys, flood guard.
+- **`BoardsGateway`** (`boards/`) — `board:{boardId}` rooms for co-editing: `board:join` /
+  `board:leave` (permission-checked against the service layer), `board:presence` from the
+  `board:{id}:active` Redis set, and `board:change` broadcasts emitted by the REST write
+  endpoints after the DB write (Postgres stays the source of truth; sockets are the
+  notification layer).
+
+Both register the same JWT handshake middleware (`common/ws/jwt-socket-auth.ts`) so socket
+and REST auth are enforced identically regardless of which gateway a client connects to.
 
 ---
 

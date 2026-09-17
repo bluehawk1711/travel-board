@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "surface": "#FAF9F6",
+            "surface-low": "#F4F2ED",
+            "surface-card": "#FFFFFF",
+            "on-surface": "#191716",
+            "on-surface-variant": "#6A645D",
+            "primary": "#FA5438",
+            "primary-container": "#FFECE8",
+            "primary-dark": "#D93D22",
+            "tertiary": "#0E7453",
+            "tertiary-light": "#E3F7EE",
+            "border-subtle": "#ECE8E1"
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif']
+          },
+          boxShadow: {
+            'card': '0 8px 24px -4px rgba(28, 20, 16, 0.06), 0 2px 6px -1px rgba(28, 20, 16, 0.04)',
+            'nav': '0 12px 36px -4px rgba(35, 23, 18, 0.12), 0 2px 8px 0 rgba(35, 23, 18, 0.04)',
+            'fab': '0 10px 24px -2px rgba(250, 84, 56, 0.42)'
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    @layer base {
+      html, body {
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        background-color: #FAF9F6;
+        color: #191716;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+    }
+  </style>
+</head>
+<body class="bg-surface text-on-surface flex flex-col min-h-screen selection:bg-primary/20">
+<!-- Android Modern App Bar / Header -->
+<header class="sticky top-0 z-40 bg-surface/90 backdrop-blur-xl pt-2 border-b border-border-subtle/50">
+<!-- Android Status Spacing & Brand Row -->
+<div class="px-5 pt-2.5 pb-2.5 flex items-center justify-between">
+<div class="flex items-center gap-2.5">
+<div class="w-9 h-9 rounded-2xl bg-gradient-to-tr from-primary to-[#ff7d63] flex items-center justify-center text-white shadow-sm shadow-primary/25">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">explore</span>
+</div>
+<div>
+<span class="font-extrabold text-[19px] tracking-tight text-on-surface block leading-none">TravelBoard</span>
+<span class="text-[11px] font-medium text-on-surface-variant leading-tight">Explore &amp; Pin Journeys</span>
+</div>
+</div>
+<!-- Right User Greeting & Actions -->
+<div class="flex items-center gap-2">
+<button aria-label="Notifications" class="relative w-10 h-10 rounded-full bg-surface-low flex items-center justify-center text-on-surface hover:bg-stone-200/60 active:scale-95 transition-all">
+<span class="material-symbols-outlined text-[21px]">notifications</span>
+<span class="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-primary ring-2 ring-surface"></span>
+</button>
+<a class="relative block rounded-full ring-2 ring-transparent hover:ring-primary/40 active:scale-95 transition-all" data-path="profile" href="#">
+<img alt="Alex's avatar" class="w-10 h-10 rounded-full object-cover shadow-sm" src="https://lh3.googleusercontent.com/aida/AEtjO1WGHciOArrD04qkdRuXQrtJCWb52e2h0SnP29E4xGovHgI-n0cIT_paggeXmC7nMkn7hZXmCW3noveHH6aOzSwq-b4ooELhYHlBNDVwVC6XeaNwaeNRnHm7NHqTB3RjCz6oE_JN7fkPotfKPz98y902B2kwApyPx2xcDpf7Ff28IFlohm2c7ngE6zVtFPCKNebNZeqFCfcUb2uBhdyiwUP9FzQbeGtWkpFwweyD0_PmQ_FxgwIXLANgxg"/>
+<span class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-tertiary ring-2 ring-surface flex items-center justify-center">
+<span class="w-1.5 h-1.5 rounded-full bg-white"></span>
+</span>
+</a>
+</div>
+</div>
+<!-- Greeting & Subheading -->
+<div class="px-5 pt-1 pb-3 flex items-baseline justify-between">
+<div>
+<h1 class="font-bold text-[22px] tracking-tight text-on-surface leading-tight">
+          Good morning, Alex <span class="inline-block transition-transform hover:rotate-12 duration-200 cursor-default">👋</span>
+</h1>
+<p class="text-[13px] text-on-surface-variant font-normal mt-0.5">Where will inspiration take you next?</p>
+</div>
+</div>
+<!-- Elevated Pill Search Bar -->
+<div class="px-5 pb-3">
+<div class="group relative flex items-center bg-surface-card rounded-full h-12 px-4 shadow-[0_4px_16px_rgba(0,0,0,0.04)] border border-border-subtle focus-within:border-primary/50 focus-within:shadow-[0_4px_20px_rgba(250,84,56,0.12)] transition-all">
+<span class="material-symbols-outlined text-[22px] text-primary group-focus-within:scale-110 transition-transform mr-3" style="font-variation-settings: 'FILL' 1;">travel_explore</span>
+<input class="w-full bg-transparent text-[13.5px] font-medium text-on-surface placeholder:text-on-surface-variant/70 border-none p-0 focus:outline-none focus:ring-0" placeholder="Search destinations, secret spots, food..." type="text"/>
+<button aria-label="Filters" class="ml-2 w-8 h-8 rounded-full bg-surface-low flex items-center justify-center text-on-surface-variant hover:text-on-surface active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-[18px]">tune</span>
+</button>
+</div>
+</div>
+<!-- Horizontal Category Filter Chips -->
+<nav aria-label="Feed filters" class="w-full overflow-x-auto no-scrollbar px-5 pb-3 flex items-center gap-2">
+<button class="flex-shrink-0 px-4 py-2 rounded-full bg-on-surface text-white text-[13px] font-semibold flex items-center gap-1.5 shadow-sm active:scale-95 transition-transform">
+<span>✨ For You</span>
+</button>
+<button class="flex-shrink-0 px-4 py-2 rounded-full bg-surface-card border border-border-subtle text-on-surface-variant hover:text-on-surface hover:border-stone-300 text-[13px] font-medium flex items-center gap-1.5 active:scale-95 transition-all">
+<span>🔥 Trending</span>
+</button>
+<button class="flex-shrink-0 px-4 py-2 rounded-full bg-surface-card border border-border-subtle text-on-surface-variant hover:text-on-surface hover:border-stone-300 text-[13px] font-medium flex items-center gap-1.5 active:scale-95 transition-all">
+<span>🇯🇵 Japan</span>
+</button>
+<button class="flex-shrink-0 px-4 py-2 rounded-full bg-surface-card border border-border-subtle text-on-surface-variant hover:text-on-surface hover:border-stone-300 text-[13px] font-medium flex items-center gap-1.5 active:scale-95 transition-all">
+<span>🏖️ Coastal</span>
+</button>
+<button class="flex-shrink-0 px-4 py-2 rounded-full bg-surface-card border border-border-subtle text-on-surface-variant hover:text-on-surface hover:border-stone-300 text-[13px] font-medium flex items-center gap-1.5 active:scale-95 transition-all">
+<span>⛰️ Alps</span>
+</button>
+<button class="flex-shrink-0 px-4 py-2 rounded-full bg-surface-card border border-border-subtle text-on-surface-variant hover:text-on-surface hover:border-stone-300 text-[13px] font-medium flex items-center gap-1.5 active:scale-95 transition-all">
+<span>🍜 Street Food</span>
+</button>
+</nav>
+</header>
+<!-- Main Discovery Feed: Staggered Visual Masonry Grid -->
+<main class="flex-1 px-4 pt-3 pb-32">
+<div class="grid grid-cols-2 gap-4 items-start">
+<!-- LEFT COLUMN -->
+<div class="flex flex-col gap-4">
+<!-- Card 1: 7 Days in Japan -->
+<article class="group relative flex flex-col bg-surface-card rounded-[20px] overflow-hidden shadow-card border border-border-subtle/80 hover:shadow-lg transition-all duration-300">
+<div class="relative w-full h-72 overflow-hidden bg-stone-100">
+<img alt="7 Days in Japan" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" data-alt="Vibrant golden hour photograph looking down the iconic tunnel of red-orange vermillion torii gates at Fushimi Inari Shrine in Kyoto" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAJ92PadlO5TKl_7-WApFxyvo152TLGb8at7z70ELdFFE2K6O1QlrgQg-QLkaG_VszVwzOOY30y3KlveYPBCtZTzy6T8LaV3kbUiRbZT7KJDZ0rd5omPzcm9Fq4O8j2PfS7gtFeGHKl2DtkPqaiAa6XB_BZ_bfLNDBO6hMONhymM0OhVdKuyV-1v9F7Jfeyg8aQYhfXoN5J8mtJCE6Zla1Rq1tdEyAPCykWbJj5luNla9qYQRpkJpW8"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-black/10"></div>
+<!-- Top Pill Badges -->
+<div class="absolute top-3 inset-x-3 flex items-center justify-between">
+<span class="px-2.5 py-1 rounded-full bg-black/45 backdrop-blur-md text-white text-[11px] font-bold tracking-wide border border-white/15">
+                7 Days
+              </span>
+<button aria-label="Save trip" class="save-bookmark-btn w-8 h-8 rounded-full bg-black/45 backdrop-blur-md text-white border border-white/20 flex items-center justify-center active:scale-75 transition-all hover:bg-primary">
+<span class="material-symbols-outlined text-[17px]">bookmark</span>
+</button>
+</div>
+<!-- Overlay Card Bottom Information -->
+<div class="absolute bottom-3 inset-x-3 text-white">
+<div class="flex items-center gap-1.5 mb-1">
+<span class="text-[10px] font-bold uppercase tracking-widest text-[#FFB4A6] bg-primary-dark/80 px-2 py-0.5 rounded-md backdrop-blur-sm">Curated Itinerary</span>
+</div>
+<h2 class="font-bold text-[17px] leading-snug drop-shadow-sm text-white">
+                Kyoto &amp; Tokyo Trail 🇯🇵
+              </h2>
+<p class="text-[12px] text-white/85 font-medium mt-0.5 flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px] text-[#FFB4A6]">pin_drop</span>
+                Tokyo • Kyoto • Osaka
+              </p>
+</div>
+</div>
+<!-- Card Creator Details & Social Proof -->
+<div class="p-3.5 flex flex-col gap-2.5">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2 min-w-0">
+<img alt="@alextravels" class="w-6 h-6 rounded-full object-cover ring-1 ring-border-subtle" data-alt="Portrait of Alex" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAZ-pTk5yuuA4XfLTaYzxFEG6EhqIyqZfex2_Ya-uMRSR5xwUFig7ltg7oo0N0ihwNjG4c47wOoASa30vALOJWthYbTHoD05BwowCY3usQQltihd-dr8Q4A5sHp91DpHtfcYNVPZC_1er5RCVM-aXD-EkOB4sdaqurJ-Hs_NZfQ5gU3I_fDZsNSSkjxY0bs6reJcMAW9Dh5QCJGhvLt0uDpRctbnmjABJRCYbVmi1xbOPQ3XBlcAlRS"/>
+<div class="flex items-center gap-0.5 min-w-0">
+<span class="text-[12px] font-semibold text-on-surface truncate">@alextravels</span>
+<span class="material-symbols-outlined text-[13px] text-tertiary flex-shrink-0" style="font-variation-settings: 'FILL' 1;">verified</span>
+</div>
+</div>
+<span class="text-[11px] font-bold text-tertiary bg-tertiary-light px-2 py-0.5 rounded-full">Top Pick</span>
+</div>
+<div class="flex items-center justify-between pt-1 border-t border-border-subtle text-on-surface-variant text-[11px] font-medium">
+<div class="flex items-center gap-1 text-primary font-bold">
+<span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">bookmark</span>
+<span>8.4k saves</span>
+</div>
+<div class="flex items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-[13px]">favorite</span>
+<span>1.4k</span>
+</div>
+</div>
+</div>
+</article>
+<!-- Tasteful Native Sponsored Card: Eurail -->
+<article class="relative flex flex-col bg-surface-card rounded-[20px] overflow-hidden shadow-card border border-border-subtle/80 hover:shadow-lg transition-all duration-300">
+<div class="relative w-full h-44 overflow-hidden bg-stone-100">
+<img alt="Eurail Pass" class="w-full h-full object-cover" data-alt="Red panoramic train crossing scenic viaduct in Swiss Alps" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDTyBfHUQE2THsHOQhXbJcMBITqUNzBxEOYQBq1LIZ61wP1vVZr_VL8yM8pYbZ6qdgLOmm1PW3S_IyJIjjCF_Q3Zo0vrS3HKSNVJWA5Q5eBCifgRpD-6exN83xeJvlnc6qAG93lZ0HZ0KVRVzbQwvCmgGKBXqcoUhgwL0sJyVzDbaIciylb80A-pVc4m2NtVVa8FNqw1QRYOz1O-qRN_cRO3gIyumqGqMYxF3K2w18rAnG0_VvfZBGe"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent"></div>
+<div class="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/90 backdrop-blur-md shadow-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+<span class="text-[10px] font-bold tracking-wider text-on-surface uppercase">Sponsored</span>
+</div>
+<div class="absolute bottom-3 inset-x-3 text-white">
+<p class="text-[11px] font-semibold text-[#FFDCC0]">Eurail Official</p>
+<h3 class="font-bold text-[15px] leading-tight text-white mt-0.5">All-in-one Europe Pass 🚆</h3>
+</div>
+</div>
+<div class="p-3.5 flex flex-col gap-3">
+<p class="text-[12px] text-on-surface-variant line-clamp-2 leading-relaxed">
+              Unlimited scenic rail across 33 European countries with one flexible mobile pass.
+            </p>
+<a class="w-full py-2 px-3 rounded-xl bg-surface-low hover:bg-stone-200/80 text-on-surface font-semibold text-[12px] flex items-center justify-between transition-colors" href="#">
+<span>View Pass Options</span>
+<span class="material-symbols-outlined text-[15px] text-primary">arrow_forward</span>
+</a>
+</div>
+</article>
+<!-- Card 3: Swiss Alps Pass -->
+<article class="group relative flex flex-col bg-surface-card rounded-[20px] overflow-hidden shadow-card border border-border-subtle/80 hover:shadow-lg transition-all duration-300">
+<div class="relative w-full h-80 overflow-hidden bg-stone-100">
+<img alt="Swiss Alps" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" data-alt="Matterhorn peak alpine lake reflection" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA_SDP6DgNRt9J5MmGr2G76bMkpF41Dp0MNN51a3IiQvsNNO-CU6yaeXT3L7XIWAHczGPbfuXuN8bMoL07d4CDVltbAQX7_pTRTn8ofLb-pNktBYOcyiRaV1Fx9hMzqRmIb1QDBDofTOjwC8zlq74fnG6OkGALeLp-E-r5k7oAbJv2pdXxwzcqRSUEKKgpeHJnqmDrNXdfEbFwLqO39JYf-hQ6fhampEz6fsR0z0xARPVNWJTCjZxy2"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-black/10"></div>
+<div class="absolute top-3 inset-x-3 flex items-center justify-between">
+<span class="px-2.5 py-1 rounded-full bg-black/45 backdrop-blur-md text-white text-[11px] font-bold tracking-wide border border-white/15">
+                4 Days
+              </span>
+<button aria-label="Save trip" class="save-bookmark-btn w-8 h-8 rounded-full bg-black/45 backdrop-blur-md text-white border border-white/20 flex items-center justify-center active:scale-75 transition-all hover:bg-primary">
+<span class="material-symbols-outlined text-[17px]">bookmark</span>
+</button>
+</div>
+<div class="absolute bottom-3 inset-x-3 text-white">
+<h2 class="font-bold text-[17px] leading-snug drop-shadow-sm text-white">
+                Swiss Alpine Loop 🏔️
+              </h2>
+<p class="text-[12px] text-white/85 font-medium mt-0.5 flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px] text-[#FFB4A6]">pin_drop</span>
+                Zermatt • Interlaken
+              </p>
+</div>
+</div>
+<div class="p-3.5 flex flex-col gap-2.5">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2 min-w-0">
+<img alt="@nordic_lens" class="w-6 h-6 rounded-full object-cover ring-1 ring-border-subtle" data-alt="Outdoor photographer avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAHAAHJYJ9YM__herO6gvjeKx8mwxHbwyK_QuYGsKTuBfulgUe2yj5D9rmtl781eSVn7YUI4UDDLSarLibbZBJdXsXGJLJkjkw8TIh0ABWKosJKWhZTRatQtyGsnfNbkg9vsgPGbpD03lMmvsQAWeM9BXEpyJOU1tdgWsk0GMKl1vw6dtiZG_GpcNW5TremSVyNJ2CfsBBhEH5dG7eaHgNJqmssAf3xdbkucouQ9qNDmgPBi-A7gdbY"/>
+<span class="text-[12px] font-semibold text-on-surface truncate">@nordic_lens</span>
+</div>
+<div class="flex items-center gap-0.5 text-amber-600 font-bold text-[11px]">
+<span class="material-symbols-outlined text-[13px]" style="font-variation-settings: 'FILL' 1;">star</span>
+<span>4.9</span>
+</div>
+</div>
+<div class="flex items-center justify-between pt-1 border-t border-border-subtle text-on-surface-variant text-[11px] font-medium">
+<div class="flex items-center gap-1 text-primary font-bold">
+<span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">bookmark</span>
+<span>6.2k saves</span>
+</div>
+<div class="flex items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-[13px]">favorite</span>
+<span>3.5k</span>
+</div>
+</div>
+</div>
+</article>
+</div>
+<!-- RIGHT COLUMN -->
+<div class="flex flex-col gap-4">
+<!-- Card 2: Amalfi Coast Dream (Tall) -->
+<article class="group relative flex flex-col bg-surface-card rounded-[20px] overflow-hidden shadow-card border border-border-subtle/80 hover:shadow-lg transition-all duration-300">
+<div class="relative w-full h-88 overflow-hidden bg-stone-100" style="height: 22rem;">
+<img alt="Amalfi Coast" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" data-alt="Dramatic vertical shot of pastel houses in Positano overlooking azure sea" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBI5APWHDbB5GOzQwdXGeSGX7QuwRGmm5vh-jBQbgICdT65yBkBjAGPo1CMEskiW-rHXfvLCQ6kGmQOSv8dTTyX9mS0YL8JOYjpZ1_lXs4zYPONMxsxE4meq6YJ91XQaKAU8gcmpGf9K2kjuUe90mxnnEqcACgvC43smDx5NZ4jc2et8iCgMCTvSS-OipZiHBtEva6xe3DL8Em_PF5_gcmlmLIh5wHDQTSYmyj3TVkKDt9D3FW4G6as"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-black/10"></div>
+<div class="absolute top-3 inset-x-3 flex items-center justify-between">
+<span class="px-2.5 py-1 rounded-full bg-black/45 backdrop-blur-md text-white text-[11px] font-bold tracking-wide border border-white/15">
+                5 Days
+              </span>
+<button aria-label="Save trip" class="save-bookmark-btn w-8 h-8 rounded-full bg-black/45 backdrop-blur-md text-white border border-white/20 flex items-center justify-center active:scale-75 transition-all hover:bg-primary">
+<span class="material-symbols-outlined text-[17px]">bookmark</span>
+</button>
+</div>
+<div class="absolute bottom-3 inset-x-3 text-white">
+<div class="flex items-center gap-1.5 mb-1">
+<span class="text-[10px] font-bold uppercase tracking-widest text-[#FFDCC0] bg-black/40 px-2 py-0.5 rounded-md backdrop-blur-sm border border-white/15">Mediterranean</span>
+</div>
+<h2 class="font-bold text-[17px] leading-snug drop-shadow-sm text-white">
+                Amalfi Sunsets 🍋
+              </h2>
+<p class="text-[12px] text-white/85 font-medium mt-0.5 flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px] text-[#FFB4A6]">pin_drop</span>
+                Positano • Capri • Ravello
+              </p>
+</div>
+</div>
+<div class="p-3.5 flex flex-col gap-2.5">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2 min-w-0">
+<img alt="@marco_adv" class="w-6 h-6 rounded-full object-cover ring-1 ring-border-subtle" data-alt="Marco avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDgcGz28xsy6GvM22DavKGPyVwrY7JB8c-KjEqGveZQ0IV1qX2aKph5BrHtVWuq9oQoZ6xxsqAKDShqIDTXIiDJfP3_pkY9_ohiNbvgz9MylpUueThLRxoMNTmWhusntPXjk_QyM5U6O2lUfBAOfz2f7hv97OSmfdmkg63vJixIn7BXpoFYdjk1jC238YWJMf2UsB1eKS7gQ0GZfA6Bs8eVN0BUzq1ttkYj0bg5HUkj_5NOa1DTfndk"/>
+<div class="flex items-center gap-0.5 min-w-0">
+<span class="text-[12px] font-semibold text-on-surface truncate">@marco_adv</span>
+<span class="material-symbols-outlined text-[13px] text-tertiary flex-shrink-0" style="font-variation-settings: 'FILL' 1;">verified</span>
+</div>
+</div>
+<span class="text-[11px] font-bold text-on-surface-variant flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[13px]">location_on</span>
+                Italy
+              </span>
+</div>
+<div class="flex items-center justify-between pt-1 border-t border-border-subtle text-on-surface-variant text-[11px] font-medium">
+<div class="flex items-center gap-1 text-primary font-bold">
+<span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">bookmark</span>
+<span>9.1k saves</span>
+</div>
+<div class="flex items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-[13px]">favorite</span>
+<span>892</span>
+</div>
+</div>
+</div>
+</article>
+<!-- Card 4: Bali Hidden Waterfalls -->
+<article class="group relative flex flex-col bg-surface-card rounded-[20px] overflow-hidden shadow-card border border-border-subtle/80 hover:shadow-lg transition-all duration-300">
+<div class="relative w-full h-64 overflow-hidden bg-stone-100">
+<img alt="Bali Waterfalls" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" data-alt="Lush canyon waterfalls in Bali jungle" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBx5xTqKBF5fCHQSY1ANL-9q9JnqW5sNvmjclg5QH55ru4OPzeqVG7cWloARisjLSmHNPGE8edPgMms5B9bjWB9Ow9fwvPw7xAPCxApuWpgOQM6lN24qua-r-mVGNBPlfpy9ifIDb0wfp2sKbNHletazEzkGUVSB4-I_Uvh5tsg_wMIbrm07MudIQA0VmfiI-IzEeTx-X3hRDjzYjGCFv3ZB19jyW-0NjyalfscHJ_zTbmfVArejWcD"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-black/10"></div>
+<div class="absolute top-3 inset-x-3 flex items-center justify-between">
+<span class="px-2.5 py-1 rounded-full bg-black/45 backdrop-blur-md text-white text-[11px] font-bold tracking-wide border border-white/15">
+                Hidden Gems
+              </span>
+<button aria-label="Save trip" class="save-bookmark-btn w-8 h-8 rounded-full bg-black/45 backdrop-blur-md text-white border border-white/20 flex items-center justify-center active:scale-75 transition-all hover:bg-primary">
+<span class="material-symbols-outlined text-[17px]">bookmark</span>
+</button>
+</div>
+<div class="absolute bottom-3 inset-x-3 text-white">
+<h2 class="font-bold text-[17px] leading-snug drop-shadow-sm text-white">
+                Bali Waterfalls 🌿
+              </h2>
+<p class="text-[12px] text-white/85 font-medium mt-0.5 flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px] text-[#FFB4A6]">pin_drop</span>
+                Ubud • Munduk • Sidemen
+              </p>
+</div>
+</div>
+<div class="p-3.5 flex flex-col gap-2.5">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2 min-w-0">
+<img alt="@sarah_w" class="w-6 h-6 rounded-full object-cover ring-1 ring-border-subtle" data-alt="Sarah avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBudo1s7y3xbhaG03cGUHIxz4ArU-CmFtOqrA0Xm-YB1QnpKwg9vEr4ZU496wdoLd99oUapksOSZYfcGJrianWxB3VbOBJNcH29a3D42BO8e3XCH_8HBS-vWzjyZFj_A-C0oB0t8279rQtn-GATeYtXXSWX84Ca1a-jhqvr9KrxYS6QBPrJNcBZkAwXOBP_SZR7HXGgP0lFA5HJyWpxxFuoq_Ee6eBXK7n3Vq0dONsdNhDsHxnfon9m"/>
+<span class="text-[12px] font-semibold text-on-surface truncate">@sarah_w</span>
+</div>
+<span class="text-[11px] font-bold text-tertiary flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
+                Nature
+              </span>
+</div>
+<div class="flex items-center justify-between pt-1 border-t border-border-subtle text-on-surface-variant text-[11px] font-medium">
+<div class="flex items-center gap-1 text-primary font-bold">
+<span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">bookmark</span>
+<span>4.8k saves</span>
+</div>
+<div class="flex items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-[13px]">favorite</span>
+<span>2.1k</span>
+</div>
+</div>
+</div>
+</article>
+<!-- Collaborative Board Tile -->
+<div class="p-4 rounded-[20px] bg-gradient-to-br from-[#FFF3EB] to-[#FFE3D4] border border-[#FFD0B8] flex flex-col gap-2.5 shadow-sm">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center shadow-sm shadow-primary/30">
+<span class="material-symbols-outlined text-[17px]">group_add</span>
+</div>
+<span class="font-bold text-[13px] text-[#542417]">Shared Boards</span>
+</div>
+<p class="text-[12px] text-[#7A3A29] leading-snug">
+            Plan seamless road trips with friends in real-time.
+          </p>
+<button class="mt-1 w-full py-2 rounded-xl bg-primary text-white font-bold text-[12px] active:scale-95 transition-all shadow-sm hover:bg-primary-dark">
+            Invite Travelers
+          </button>
+</div>
+</div>
+</div>
+<!-- Feed Completion Indicator -->
+<div class="pt-10 pb-6 flex flex-col items-center justify-center gap-2.5 text-on-surface-variant">
+<div class="w-9 h-9 rounded-full bg-surface-card border border-border-subtle flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-[18px] text-primary">check_circle</span>
+</div>
+<p class="text-[11px] font-bold tracking-widest uppercase text-on-surface-variant/80">You're all caught up for today</p>
+</div>
+</main>
+<!-- Modern Floating Dock Navigation Bar -->
+<div class="fixed bottom-0 inset-x-0 z-50 pointer-events-none pb-4 px-4">
+<div class="max-w-md mx-auto pointer-events-auto">
+<nav class="relative bg-white/95 backdrop-blur-2xl rounded-full shadow-nav border border-border-subtle px-3 py-2 flex items-center justify-between">
+<!-- Home (Active) -->
+<a aria-current="page" class="flex flex-col items-center justify-center w-14 h-12 rounded-full text-primary transition-all active:scale-90" data-path="home" href="#">
+<span class="material-symbols-outlined text-[24px]" style="font-variation-settings: 'FILL' 1;">auto_stories</span>
+<span class="text-[10px] font-bold mt-0.5 tracking-tight">Home</span>
+</a>
+<!-- Explore -->
+<a class="flex flex-col items-center justify-center w-14 h-12 rounded-full text-on-surface-variant hover:text-on-surface transition-all active:scale-90" data-path="explore" href="#">
+<span class="material-symbols-outlined text-[24px]">explore</span>
+<span class="text-[10px] font-semibold mt-0.5 tracking-tight">Explore</span>
+</a>
+<!-- Elevated Central Action: + Create with Coral Glow -->
+<div class="relative -top-5 flex items-center justify-center">
+<button aria-label="Create Trip" class="w-14 h-14 rounded-full bg-primary text-white flex items-center justify-center shadow-fab ring-4 ring-surface active:scale-90 transition-all hover:bg-primary-dark group" data-path="create-trip">
+<span class="material-symbols-outlined text-[30px] font-bold transition-transform group-hover:rotate-90">add</span>
+</button>
+</div>
+<!-- Trips -->
+<a class="flex flex-col items-center justify-center w-14 h-12 rounded-full text-on-surface-variant hover:text-on-surface transition-all active:scale-90" data-path="trips" href="#">
+<span class="material-symbols-outlined text-[24px]">luggage</span>
+<span class="text-[10px] font-semibold mt-0.5 tracking-tight">Trips</span>
+</a>
+<!-- Profile -->
+<a class="flex flex-col items-center justify-center w-14 h-12 rounded-full text-on-surface-variant hover:text-on-surface transition-all active:scale-90" data-path="profile" href="#">
+<span class="material-symbols-outlined text-[24px]">account_circle</span>
+<span class="text-[10px] font-semibold mt-0.5 tracking-tight">Profile</span>
+</a>
+</nav>
+</div>
+<!-- Android Home Indicator Bar -->
+<div class="w-full flex justify-center pt-2">
+<div class="w-32 h-1 bg-on-surface/20 rounded-full"></div>
+</div>
+</div>
+<script>
+    // Micro-interaction for Bookmark buttons
+    document.querySelectorAll('.save-bookmark-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const icon = btn.querySelector('.material-symbols-outlined');
+        const isSaved = btn.getAttribute('data-saved') === 'true';
+        if (!isSaved) {
+          btn.setAttribute('data-saved', 'true');
+          btn.classList.remove('bg-black/45', 'text-white');
+          btn.classList.add('bg-primary', 'text-white', 'border-primary');
+          icon.style.fontVariationSettings = "'FILL' 1";
+        } else {
+          btn.setAttribute('data-saved', 'false');
+          btn.classList.remove('bg-primary', 'border-primary');
+          btn.classList.add('bg-black/45', 'text-white');
+          icon.style.fontVariationSettings = "'FILL' 0";
+        }
+      });
+    });
+  </script>
+</body></html>

@@ -8,6 +8,19 @@ import { defineConfig } from 'eslint/config';
 
 export default defineConfig([
   {
+    ignores: [
+      'dist/**',
+      'build/**',
+      'coverage/**',
+      'node_modules/**',
+      'drizzle/**',
+      // Config/data files that aren't lint targets in this config.
+      'README.md',
+      '**/tsconfig*.json',
+      '**/*.map',
+    ],
+  },
+  {
     files: ['**/*.{js,mjs,cjs,ts,mts,cts}'],
     plugins: { js },
     extends: ['js/recommended'],

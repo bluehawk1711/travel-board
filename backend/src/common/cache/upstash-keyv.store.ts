@@ -45,21 +45,28 @@ export class UpstashKeyvStore {
   }
 
   async setMany(entries: SetEntry[]): Promise<void> {
-    const kv: Record<string, unknown> = {};
+    // Pipeline mset for atomicity, then set TTLs in a second pipeline.
+    const setPipeline = this.redis.pipeline();
     for (const e of entries) {
-      kv[this.k(e.key)] = JSON.stringify(e.value ?? null);
+      setPipeline.set(this.k(e.key), JSON.stringify(e.value ?? null));
     }
-    await this.redis.mset(kv);
+    await setPipeline.exec();
+
+    const ttlPipeline = this.redis.pipeline();
+    let hasTtl = false;
     for (const e of entries) {
       if (e.ttl && e.ttl > 0) {
-        await this.redis.expire(
+        hasTtl = true;
+        ttlPipeline.expire(
           this.k(e.key),
           Math.max(1, Math.round(e.ttl / 1000)),
         );
       }
     }
+    if (hasTtl) {
+      await ttlPipeline.exec();
+    }
   }
-
   async get<Value>(key: string): Promise<Value | undefined> {
     const raw = await this.redis.get<string>(this.k(key));
     if (raw === null || raw === undefined) {
@@ -97,6 +104,8 @@ export class UpstashKeyvStore {
   async clear(): Promise<void> {
     let cursor = 0;
     const pattern = `${this.prefix}::*`;
+    const MAX_ITERATIONS = 100;
+    let iterations = 0;
     do {
       const [next, keys] = await this.redis.scan(cursor, {
         match: pattern,
@@ -106,11 +115,13 @@ export class UpstashKeyvStore {
       if (keys.length > 0) {
         await this.redis.unlink(...keys);
       }
+      iterations++;
+      if (iterations >= MAX_ITERATIONS) break;
     } while (cursor !== 0);
   }
 
   /** Minimal no-op event-emitter surface required by the Keyv adapter contract. */
-  on(event: string, listener: (...args: any[]) => void): this {
+  on(event: string, listener: (...args: unknown[]) => void): this {
     void event;
     void listener;
     return this;

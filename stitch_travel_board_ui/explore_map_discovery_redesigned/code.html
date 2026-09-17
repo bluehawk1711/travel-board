@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+    @layer base {
+      html, body {
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        background-color: #fbf9f6;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+      }
+      body {
+        overscroll-behavior-y: none;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .pb-safe { padding-bottom: env(safe-area-inset-bottom, 16px); }
+      .pt-safe { padding-top: env(safe-area-inset-top, 0px); }
+    }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    
+    /* Pin pulse effect */
+    @keyframes subtle-pulse {
+      0%, 100% { transform: scale(1); opacity: 0.9; }
+      50% { transform: scale(1.08); opacity: 1; }
+    }
+    .pulse-pin {
+      animation: subtle-pulse 2.2s infinite ease-in-out;
+    }
+  </style>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#fa5438", // Terracotta branding requested
+            "primary-dark": "#d63b22",
+            "primary-container": "#ffdad3",
+            "on-primary": "#ffffff",
+            surface: "#fbf9f6",
+            "surface-container": "#f2eee9",
+            "surface-container-high": "#eae5df",
+            "surface-container-lowest": "#ffffff",
+            "on-surface": "#1b1c1a",
+            "on-surface-variant": "#5b403b",
+            outline: "#8f706a",
+            "outline-variant": "#e4beb7",
+            secondary: "#8d4f00",
+            tertiary: "#026a46"
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-surface text-on-surface flex flex-col min-h-full selection:bg-[#fa5438]/20 antialiased">
+<!-- Main Explore Viewport Container -->
+<main class="relative flex-1 flex flex-col w-full overflow-x-hidden min-h-screen pb-24">
+<!-- MAP CANVAS (Full width visual interactive area) -->
+<div class="relative w-full h-[510px] overflow-hidden bg-slate-200 select-none">
+<!-- High-res realistic vector-styled Tokyo map layer -->
+<div class="absolute inset-0 w-full h-full bg-cover bg-center" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBEpwuGT8-V_buCPFgdrYyjVJ-Rb_TtkUXBaI5yZgpN-6eluY6LAqzICCNF0QlzN27jCVE944hl5NgpRYCDsSU1Sz9CZWiECT-4Fuu8hKFmoZPLg7_71RLzx4oKyYGF45qjMX6pl4hC8H1s5gMBIfDxu0U4RLAi1MfyHL_G3PISfZboX9ewQfKUd_EzOZTqUp_yoArlEecwNMA4j9xYTxle3U-tbognlW4jZ36wCQe1OfgATNjLVXND');"></div>
+<!-- Subtle artistic map tint for soft elevation & contrast -->
+<div class="absolute inset-0 bg-gradient-to-b from-black/25 via-transparent to-black/20 pointer-events-none"></div>
+<!-- FLOATING HEADER / TOP BAR OVERLAY -->
+<div class="absolute top-0 inset-x-0 z-30 pt-safe px-4 pt-2">
+<div class="flex items-center gap-2.5">
+<!-- Search Bar with Voice & Filter Actions -->
+<div class="flex-1 flex items-center bg-white/95 backdrop-blur-xl rounded-full px-3.5 h-12 shadow-[0_4px_20px_rgba(0,0,0,0.1)] border border-black/5 transition-all focus-within:ring-2 focus-within:ring-[#fa5438]">
+<span class="material-symbols-outlined text-[#8f706a] text-[22px] mr-2">search</span>
+<input aria-label="Search destinations, hotels, ramen..." class="w-full bg-transparent border-none outline-none font-medium text-[14px] text-on-surface placeholder:text-neutral-400 focus:ring-0 p-0" id="exploreSearchInput" placeholder="Search destinations, hotels, ramen..." type="text"/>
+<div class="flex items-center gap-1">
+<button aria-label="Voice search" class="w-8 h-8 flex items-center justify-center rounded-full text-neutral-500 hover:text-on-surface active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-[19px]">mic</span>
+</button>
+<button aria-label="Filter options" class="w-8 h-8 flex items-center justify-center rounded-full bg-[#f2eee9] text-on-surface hover:bg-[#eae5df] active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-[18px]">tune</span>
+</button>
+</div>
+</div>
+<!-- Alex's Avatar -->
+<a class="w-12 h-12 rounded-full p-0.5 bg-white/95 backdrop-blur-xl shadow-[0_4px_20px_rgba(0,0,0,0.1)] border border-black/5 flex-shrink-0 active:scale-95 transition-transform" data-path="profile" href="#">
+<img alt="Alex Profile" class="w-full h-full rounded-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1WGHciOArrD04qkdRuXQrtJCWb52e2h0SnP29E4xGovHgI-n0cIT_paggeXmC7nMkn7hZXmCW3noveHH6aOzSwq-b4ooELhYHlBNDVwVC6XeaNwaeNRnHm7NHqTB3RjCz6oE_JN7fkPotfKPz98y902B2kwApyPx2xcDpf7Ff28IFlohm2c7ngE6zVtFPCKNebNZeqFCfcUb2uBhdyiwUP9FzQbeGtWkpFwweyD0_PmQ_FxgwIXLANgxg"/>
+</a>
+</div>
+<!-- Floating Horizontal Category Chips -->
+<div class="mt-3 flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5" role="tablist">
+<!-- 1: All Places (Active) -->
+<button class="px-3.5 py-1.5 rounded-full bg-on-surface text-white text-[13px] font-semibold flex items-center gap-1.5 shadow-md flex-shrink-0 active:scale-95 transition-all">
+<span>🗺️</span>
+<span>All Places</span>
+</button>
+<!-- 2: Food & Drink -->
+<button class="px-3.5 py-1.5 rounded-full bg-white/95 backdrop-blur-md text-on-surface text-[13px] font-semibold flex items-center gap-1.5 shadow-[0_2px_8px_rgba(0,0,0,0.08)] border border-black/5 flex-shrink-0 hover:bg-white active:scale-95 transition-all">
+<span>🍜</span>
+<span>Food &amp; Drink</span>
+</button>
+<!-- 3: Stays -->
+<button class="px-3.5 py-1.5 rounded-full bg-white/95 backdrop-blur-md text-on-surface text-[13px] font-semibold flex items-center gap-1.5 shadow-[0_2px_8px_rgba(0,0,0,0.08)] border border-black/5 flex-shrink-0 hover:bg-white active:scale-95 transition-all">
+<span>🏨</span>
+<span>Stays</span>
+</button>
+<!-- 4: Sights -->
+<button class="px-3.5 py-1.5 rounded-full bg-white/95 backdrop-blur-md text-on-surface text-[13px] font-semibold flex items-center gap-1.5 shadow-[0_2px_8px_rgba(0,0,0,0.08)] border border-black/5 flex-shrink-0 hover:bg-white active:scale-95 transition-all">
+<span>⛩️</span>
+<span>Sights</span>
+</button>
+<!-- 5: Cafes -->
+<button class="px-3.5 py-1.5 rounded-full bg-white/95 backdrop-blur-md text-on-surface text-[13px] font-semibold flex items-center gap-1.5 shadow-[0_2px_8px_rgba(0,0,0,0.08)] border border-black/5 flex-shrink-0 hover:bg-white active:scale-95 transition-all">
+<span>☕</span>
+<span>Cafes</span>
+</button>
+</div>
+</div>
+<!-- MAP VIEW CONTROLS (Right aligned, cleanly grouped) -->
+<div class="absolute right-3.5 top-32 z-20 flex flex-col gap-2.5">
+<button aria-label="Recenter on current location" class="w-10 h-10 rounded-full bg-white/95 backdrop-blur-md text-on-surface shadow-[0_4px_12px_rgba(0,0,0,0.12)] border border-black/5 flex items-center justify-center hover:bg-white active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-[20px] text-[#fa5438]">my_location</span>
+</button>
+<button aria-label="Toggle 3D perspective" class="w-10 h-10 rounded-full bg-white/95 backdrop-blur-md text-on-surface shadow-[0_4px_12px_rgba(0,0,0,0.12)] border border-black/5 flex items-center justify-center hover:bg-white active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-[20px] text-neutral-700">layers</span>
+</button>
+<!-- Zoom Controller Group -->
+<div class="flex flex-col bg-white/95 backdrop-blur-md rounded-full shadow-[0_4px_12px_rgba(0,0,0,0.12)] border border-black/5 overflow-hidden">
+<button aria-label="Zoom in" class="w-10 h-9 flex items-center justify-center text-neutral-700 hover:bg-neutral-100 active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-[18px]">add</span>
+</button>
+<div class="w-6 h-[1px] bg-neutral-200 mx-auto"></div>
+<button aria-label="Zoom out" class="w-10 h-9 flex items-center justify-center text-neutral-700 hover:bg-neutral-100 active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-[18px]">remove</span>
+</button>
+</div>
+</div>
+<!-- BRANDED CUSTOM MAP PINS -->
+<!-- PIN 1: Tokyo Tower (Terracotta Pin - Active Focus) -->
+<div class="absolute left-1/2 -translate-x-1/2 top-48 z-20 flex flex-col items-center cursor-pointer group active:scale-95 transition-transform" onclick="selectLocation('Tokyo Tower')">
+<!-- Floating Label Pill -->
+<div class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#1b1c1a] text-white shadow-xl mb-1 pulse-pin border border-white/10">
+<span class="w-2 h-2 rounded-full bg-[#fa5438] animate-ping"></span>
+<span class="text-[12px] font-bold tracking-tight">Tokyo Tower</span>
+<span class="text-[11px] font-semibold text-amber-300 flex items-center">
+<span class="material-symbols-outlined text-[12px]" style="font-variation-settings: 'FILL' 1;">star</span>
+            4.8
+          </span>
+</div>
+<!-- Branded Terracotta Pin -->
+<div class="relative w-11 h-11 rounded-full bg-[#fa5438] text-white flex items-center justify-center shadow-[0_8px_20px_rgba(250,84,56,0.45)] ring-2 ring-white">
+<span class="material-symbols-outlined text-[22px]">tower</span>
+<div class="absolute -bottom-1.5 w-3 h-3 bg-[#fa5438] rotate-45 ring-r-2 ring-b-2 ring-white"></div>
+</div>
+<div class="w-5 h-1.5 bg-black/25 rounded-full blur-[2px] mt-1.5"></div>
+</div>
+<!-- PIN 2: Ichiran Ramen (Amber Fork & Knife) -->
+<div class="absolute left-8 top-32 z-10 flex flex-col items-center cursor-pointer active:scale-95 transition-transform" onclick="selectLocation('Ichiran Ramen')">
+<div class="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/95 backdrop-blur-md shadow-md mb-1 border border-black/5">
+<span class="text-[11px]">🍜</span>
+<span class="text-[11px] font-bold text-on-surface">Ichiran</span>
+<span class="text-[10px] font-bold text-amber-600">4.7</span>
+</div>
+<div class="relative w-8 h-8 rounded-full bg-amber-500 text-white flex items-center justify-center shadow-lg ring-2 ring-white">
+<span class="material-symbols-outlined text-[16px]">restaurant</span>
+<div class="absolute -bottom-1 w-2 h-2 bg-amber-500 rotate-45"></div>
+</div>
+</div>
+<!-- PIN 3: Senso-ji Temple (Purple Torii Gate / Temple) -->
+<div class="absolute right-12 top-28 z-10 flex flex-col items-center cursor-pointer active:scale-95 transition-transform" onclick="selectLocation('Senso-ji Temple')">
+<div class="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/95 backdrop-blur-md shadow-md mb-1 border border-black/5">
+<span class="text-[11px]">⛩️</span>
+<span class="text-[11px] font-bold text-on-surface">Senso-ji</span>
+<span class="text-[10px] font-bold text-purple-700">4.9</span>
+</div>
+<div class="relative w-8 h-8 rounded-full bg-purple-600 text-white flex items-center justify-center shadow-lg ring-2 ring-white">
+<span class="material-symbols-outlined text-[17px]">temple_buddhist</span>
+<div class="absolute -bottom-1 w-2 h-2 bg-purple-600 rotate-45"></div>
+</div>
+</div>
+<!-- PIN 4: Aman Tokyo (Teal Bed for Stays) -->
+<div class="absolute left-10 bottom-16 z-10 flex flex-col items-center cursor-pointer active:scale-95 transition-transform" onclick="selectLocation('Aman Tokyo')">
+<div class="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/95 backdrop-blur-md shadow-md mb-1 border border-black/5">
+<span class="text-[11px]">🏨</span>
+<span class="text-[11px] font-bold text-on-surface">Aman Tokyo</span>
+<span class="text-[10px] font-bold text-teal-700">4.9</span>
+</div>
+<div class="relative w-8 h-8 rounded-full bg-teal-600 text-white flex items-center justify-center shadow-lg ring-2 ring-white">
+<span class="material-symbols-outlined text-[17px]">hotel</span>
+<div class="absolute -bottom-1 w-2 h-2 bg-teal-600 rotate-45"></div>
+</div>
+</div>
+<!-- Live Area Density Pill (Bottom Left of Map) -->
+<div class="absolute left-4 bottom-7 z-10 flex items-center gap-2 px-3 py-1 rounded-full bg-white/90 backdrop-blur-md shadow-sm border border-black/5">
+<span class="flex h-2 w-2 relative">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#fa5438] opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-[#fa5438]"></span>
+</span>
+<span class="text-[11px] font-bold text-neutral-800">Minato City • Popular Right Now</span>
+</div>
+</div>
+<!-- ELEVATED BOTTOM SHEET / DISCOVERY DRAWER -->
+<div class="relative -mt-5 z-20 px-3.5">
+<div class="bg-white rounded-3xl shadow-[0_-6px_32px_rgba(40,25,20,0.12)] p-5 border border-black/[0.04]">
+<!-- Smooth drag pill handle -->
+<div class="w-12 h-1.5 bg-neutral-300 rounded-full mx-auto mb-4 cursor-grab active:cursor-grabbing"></div>
+<!-- FEATURED VENUE CARD: Tokyo Tower & Observation Deck -->
+<div class="space-y-3.5">
+<!-- Badges & Quick Action Icons -->
+<div class="flex items-start justify-between gap-2">
+<div class="flex items-center gap-2 flex-wrap">
+<span class="px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-900 border border-amber-200/60 text-[11px] font-bold flex items-center gap-1">
+<span>🔥</span> Most Saved in Tokyo
+              </span>
+<span class="px-2.5 py-0.5 rounded-full bg-neutral-100 text-neutral-700 text-[11px] font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px] text-amber-500" style="font-variation-settings: 'FILL' 1;">star</span>
+                4.8 (12.4k reviews)
+              </span>
+<span class="px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-600 text-[11px] font-medium flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[13px]">location_on</span>
+                Minato City
+              </span>
+</div>
+<!-- 1-Tap Save & Share Icons -->
+<div class="flex items-center gap-1 flex-shrink-0">
+<button aria-label="Bookmark place" class="w-9 h-9 rounded-full bg-neutral-100 flex items-center justify-center text-neutral-700 hover:text-[#fa5438] active:scale-90 transition-transform" id="favoriteBtn" onclick="toggleFavorite()">
+<span class="material-symbols-outlined text-[19px]" id="favoriteIcon">bookmark_border</span>
+</button>
+<button aria-label="Share place" class="w-9 h-9 rounded-full bg-neutral-100 flex items-center justify-center text-neutral-700 hover:text-black active:scale-90 transition-transform" onclick="sharePlace()">
+<span class="material-symbols-outlined text-[19px]">share</span>
+</button>
+</div>
+</div>
+<!-- Venue Title & Address -->
+<div>
+<h2 class="text-[20px] leading-tight font-extrabold text-on-surface">Tokyo Tower &amp; Observation Deck</h2>
+<p class="text-[12px] text-neutral-500 mt-1 flex items-center gap-1">
+<span>Landmark &amp; Observatory</span>
+<span>•</span>
+<span class="truncate">4 Chome-2-8 Shibakoen, Minato City, Tokyo</span>
+</p>
+</div>
+<!-- Crisp High-Res Imagery Carousel Preview -->
+<div class="flex gap-2.5 overflow-x-auto no-scrollbar py-0.5">
+<!-- Photo 1 -->
+<div class="relative flex-shrink-0 w-36 h-24 rounded-2xl overflow-hidden shadow-sm group">
+<img alt="Tokyo Tower night skyline" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB7KwxUMku0MsvxkToS7w4aFNyOX8txRKV6-G-5eS8NfQUHTqs27vK5TGhxpSDRv9t6sUgutgQSDF6bR-fRUowGiSJY6utbykCXWDUC_B_9TAAxk7-CuYrLKYE3R5hIgqnkEn-LncJv2yxlTCwrOobaVBCtOHK9mzHPIdSF45_1JF3x32oQ1M7EdGiiaUvPsXBAXczxw56Sib0ytwI5PPHvk5QW0-GoW62g5ZbLbgH28DGXhsoKxTmO"/>
+<div class="absolute bottom-1.5 left-2 px-1.5 py-0.5 rounded bg-black/60 backdrop-blur-xs text-white text-[10px] font-medium">Night View</div>
+</div>
+<!-- Photo 2 -->
+<div class="relative flex-shrink-0 w-32 h-24 rounded-2xl overflow-hidden shadow-sm group">
+<img alt="Tokyo Tower top deck observatory" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCQ8HDPW6k6lqS69ICgZWt8eJHLk2xSO-tTKfUvd5ENi-NTqaCpnTCsJLxUAXpeVE_cJOxzw252Nc0e96wo0MA0bXVVVnxI44PrZcpDwJ-yIS2zM1ht3RVmaWqP56wcaNOCQ0Qr5R6DOf9Zsfe5zt2viG63MXFhO_SnwPCia10IDYBZAD8Zq-38KkDdLp0TEozUHAnVHGldTmr8x-GgwEbF_pmdne31BENEAJYtuYQf4HWaw0XVz0pr"/>
+<div class="absolute bottom-1.5 left-2 px-1.5 py-0.5 rounded bg-black/60 backdrop-blur-xs text-white text-[10px] font-medium">Top Deck</div>
+</div>
+<!-- Photo 3 -->
+<div class="relative flex-shrink-0 w-32 h-24 rounded-2xl overflow-hidden shadow-sm group">
+<img alt="Sakura cherry blossoms in park near Tokyo Tower" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBDknx40QW7OqIOe2BnnhSefo6GuyAGouOg8ueGQD-z-m0ABBI0Xogkget6hACbxXly_WFfyX8asgHuGlX928PQiL_TDcqKPa0wpxYRzK4jp0tD2FbNpl1AJ_YwCL1Ofb5h7KvhxT6AL4m1m_lmKKq45ogChHJvTTcpxBp4GRj3g1XiwK_R7KQ4JuWQQtTY4K2isIX9vMAxetqlr0H4uWTrF2K9iEyczo9yFGTxLVQDflpQGKrQF2AT"/>
+<div class="absolute bottom-1.5 left-2 px-1.5 py-0.5 rounded bg-black/60 backdrop-blur-xs text-white text-[10px] font-medium">Cherry Park</div>
+</div>
+<!-- Photo 4: Counter -->
+<div class="flex-shrink-0 w-20 h-24 rounded-2xl bg-neutral-100 flex flex-col items-center justify-center text-neutral-600 gap-1 active:scale-95 transition-transform cursor-pointer hover:bg-neutral-200/70">
+<span class="material-symbols-outlined text-[20px]">photo_library</span>
+<span class="text-[11px] font-bold">+48 more</span>
+</div>
+</div>
+<!-- Primary CTA & Secondary Action Buttons -->
+<div class="flex gap-2.5 pt-1">
+<!-- Primary CTA: Bold Terracotta Button -->
+<button class="flex-1 h-12 rounded-2xl bg-[#fa5438] text-white font-bold text-[14px] flex items-center justify-center gap-2 shadow-[0_6px_20px_rgba(250,84,56,0.35)] hover:brightness-105 active:scale-[0.98] transition-all" id="addToTripBtn" onclick="addPlaceToTrip()">
+<span class="material-symbols-outlined text-[20px]">add_location_alt</span>
+<span>+ Add to Japan Trip</span>
+</button>
+<!-- Secondary CTA: Directions Button -->
+<button class="h-12 px-5 rounded-2xl bg-neutral-100 text-neutral-900 font-bold text-[14px] flex items-center justify-center gap-1.5 hover:bg-neutral-200/80 active:scale-[0.98] transition-all" onclick="openDirections()">
+<span class="material-symbols-outlined text-[18px] text-[#fa5438]">directions</span>
+<span>Directions</span>
+</button>
+</div>
+<!-- POPULAR NEARBY IN MINATO SECTION -->
+<div class="pt-4 border-t border-neutral-100">
+<div class="flex items-center justify-between mb-3">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[18px] text-[#fa5438]">explore_nearby</span>
+<h3 class="text-[15px] font-bold text-on-surface">Popular Nearby in Minato</h3>
+</div>
+<button class="text-[12px] font-bold text-[#fa5438] hover:underline">View all</button>
+</div>
+<!-- Horizontal Scroll of Compact Venue Cards with Instant 1-Tap Save -->
+<div class="flex gap-3 overflow-x-auto no-scrollbar pb-1">
+<!-- Item 1: Zojoji Temple -->
+<div class="flex-shrink-0 w-60 p-2.5 rounded-2xl bg-[#f2eee9]/60 hover:bg-[#f2eee9] border border-black/[0.04] transition-colors flex items-center gap-2.5 relative group cursor-pointer active:scale-98">
+<div class="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 relative">
+<img alt="Zojoji Temple gate with Tokyo Tower" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBoaSkJK8y5JbQ58cfVLrhcRoVUO90gKsRsq_sKnrV2Na0P58sfMS7q3WpGQjAYA9G-wdXUUITZLd1khJvZKrUvrLI0R8ZwmZlQxNRzP5iLW_dmLK8efdVVPmi1LQRnL9f936DNkH2rABV1Q08DvhUsjk9Fc4Q5PaGKinMrUNbgM63moZ0FNmAT5qdrTrXxnRLUqX8xJRUvubbFvD6v4PW52ge7JLHjyt0cDm_AkHwQVtuvjKTpmTIp"/>
+</div>
+<div class="min-w-0 flex-1 pr-6">
+<h4 class="text-[13px] font-bold text-on-surface truncate">Zojoji Temple</h4>
+<p class="text-[11px] text-neutral-500 truncate">4 min walk • Historic</p>
+<div class="flex items-center gap-1 mt-0.5 text-amber-700 text-[11px] font-bold">
+<span class="material-symbols-outlined text-[12px] text-amber-500" style="font-variation-settings: 'FILL' 1;">star</span>
+<span>4.7</span>
+</div>
+</div>
+<!-- 1-tap save bookmark -->
+<button aria-label="Save Zojoji" class="absolute top-2.5 right-2.5 w-7 h-7 rounded-full bg-white/90 shadow-sm flex items-center justify-center text-neutral-600 hover:text-[#fa5438] active:scale-90 transition-transform" onclick="toggleNearbyBookmark(this, 'Zojoji Temple')">
+<span class="material-symbols-outlined text-[16px]">bookmark_border</span>
+</button>
+</div>
+<!-- Item 2: Kissa Satie Cafe -->
+<div class="flex-shrink-0 w-60 p-2.5 rounded-2xl bg-[#f2eee9]/60 hover:bg-[#f2eee9] border border-black/[0.04] transition-colors flex items-center gap-2.5 relative group cursor-pointer active:scale-98">
+<div class="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 relative">
+<img alt="Kissa Satie Cafe matcha preparation" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB8akbHD-9sxKoMRdJNnVpK3zLHJOfwZ1nzF5HCpBEjRTqN2cU5jD4yJw0o8yCiGVDDZ3Gpf5-WSHjdWtXZP0QdgQRKea0PTcjyzOzvenPj3efoWi1PJKfCRXZOz6SM-KNnMuSg507seaxqXBTD0yY__Z7LPZ2T9yM4a9nyt0WwEBhEWchQkPvtvSXtqMKbNEJya0F59L3mlxERiqs0hPtKTyguQR_eEUdWzD8VG7iGK4Eh-VHwUjtV"/>
+</div>
+<div class="min-w-0 flex-1 pr-6">
+<h4 class="text-[13px] font-bold text-on-surface truncate">Kissa Satie Cafe</h4>
+<p class="text-[11px] text-neutral-500 truncate">6 min walk • Specialty Cafe</p>
+<div class="flex items-center gap-1 mt-0.5 text-amber-700 text-[11px] font-bold">
+<span class="material-symbols-outlined text-[12px] text-amber-500" style="font-variation-settings: 'FILL' 1;">star</span>
+<span>4.9</span>
+</div>
+</div>
+<!-- 1-tap save bookmark -->
+<button aria-label="Save Kissa Satie" class="absolute top-2.5 right-2.5 w-7 h-7 rounded-full bg-white/90 shadow-sm flex items-center justify-center text-neutral-600 hover:text-[#fa5438] active:scale-90 transition-transform" onclick="toggleNearbyBookmark(this, 'Kissa Satie Cafe')">
+<span class="material-symbols-outlined text-[16px]">bookmark_border</span>
+</button>
+</div>
+<!-- Item 3: Roppongi Hills -->
+<div class="flex-shrink-0 w-60 p-2.5 rounded-2xl bg-[#f2eee9]/60 hover:bg-[#f2eee9] border border-black/[0.04] transition-colors flex items-center gap-2.5 relative group cursor-pointer active:scale-98">
+<div class="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 relative">
+<img alt="Roppongi Hills skyline &amp; modern complex" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCQ8HDPW6k6lqS69ICgZWt8eJHLk2xSO-tTKfUvd5ENi-NTqaCpnTCsJLxUAXpeVE_cJOxzw252Nc0e96wo0MA0bXVVVnxI44PrZcpDwJ-yIS2zM1ht3RVmaWqP56wcaNOCQ0Qr5R6DOf9Zsfe5zt2viG63MXFhO_SnwPCia10IDYBZAD8Zq-38KkDdLp0TEozUHAnVHGldTmr8x-GgwEbF_pmdne31BENEAJYtuYQf4HWaw0XVz0pr"/>
+</div>
+<div class="min-w-0 flex-1 pr-6">
+<h4 class="text-[13px] font-bold text-on-surface truncate">Roppongi Hills</h4>
+<p class="text-[11px] text-neutral-500 truncate">12 min walk • Art &amp; Dining</p>
+<div class="flex items-center gap-1 mt-0.5 text-amber-700 text-[11px] font-bold">
+<span class="material-symbols-outlined text-[12px] text-amber-500" style="font-variation-settings: 'FILL' 1;">star</span>
+<span>4.6</span>
+</div>
+</div>
+<!-- 1-tap save bookmark -->
+<button aria-label="Save Roppongi Hills" class="absolute top-2.5 right-2.5 w-7 h-7 rounded-full bg-white/90 shadow-sm flex items-center justify-center text-neutral-600 hover:text-[#fa5438] active:scale-90 transition-transform" onclick="toggleNearbyBookmark(this, 'Roppongi Hills')">
+<span class="material-symbols-outlined text-[16px]">bookmark_border</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- TOAST NOTIFICATION FEEDBACK -->
+<div class="fixed bottom-24 inset-x-6 z-50 transform translate-y-20 opacity-0 pointer-events-none transition-all duration-300 flex justify-center" id="toastNotification">
+<div class="flex items-center gap-2 px-4 py-2.5 rounded-full bg-[#1b1c1a] text-white shadow-2xl text-[13px] font-semibold border border-white/10">
+<span class="material-symbols-outlined text-[18px] text-teal-400" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span id="toastText">Added Tokyo Tower to your Japan Itinerary!</span>
+</div>
+</div>
+</main>
+<!-- 5-DESTINATION BOTTOM NAVIGATION BAR WITH EXPLORE IN TERRACOTTA (#fa5438) -->
+<div class="fixed bottom-0 inset-x-0 z-40 pointer-events-none pb-safe">
+<div class="mx-3.5 mb-2 pointer-events-auto">
+<nav class="relative bg-white/95 backdrop-blur-2xl rounded-full shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-black/[0.06] px-2 py-1 flex items-center justify-around">
+<!-- 1: Home -->
+<a class="group relative flex flex-col items-center justify-center w-14 h-12 rounded-full text-neutral-500 transition-all hover:text-neutral-900 active:scale-95" data-path="home" href="#">
+<span class="material-symbols-outlined text-[23px] transition-transform">auto_stories</span>
+<span class="text-[10px] font-semibold mt-0.5 tracking-tight">Home</span>
+</a>
+<!-- 2: Explore (Actively highlighted in terracotta #fa5438) -->
+<a aria-current="page" class="group relative flex flex-col items-center justify-center w-14 h-12 rounded-full text-[#fa5438] font-bold active:scale-95 transition-all" data-path="explore" href="#">
+<span class="material-symbols-outlined text-[24px]" style="font-variation-settings: 'FILL' 1;">explore</span>
+<span class="text-[10px] font-bold mt-0.5 tracking-tight text-[#fa5438]">Explore</span>
+</a>
+<!-- 3: Center Action (+ Add / Create Trip) -->
+<div class="flex items-center justify-center px-1">
+<a class="w-12 h-12 rounded-full bg-[#fa5438] text-white flex items-center justify-center shadow-[0_6px_18px_rgba(250,84,56,0.4)] ring-4 ring-white active:scale-95 transition-transform hover:brightness-105" data-path="create-trip" href="#">
+<span class="material-symbols-outlined text-[26px]">add</span>
+</a>
+</div>
+<!-- 4: Trips -->
+<a class="group relative flex flex-col items-center justify-center w-14 h-12 rounded-full text-neutral-500 transition-all hover:text-neutral-900 active:scale-95" data-path="trips" href="#">
+<span class="material-symbols-outlined text-[23px] transition-transform">luggage</span>
+<span class="text-[10px] font-semibold mt-0.5 tracking-tight">Trips</span>
+</a>
+<!-- 5: Profile -->
+<a class="group relative flex flex-col items-center justify-center w-14 h-12 rounded-full text-neutral-500 transition-all hover:text-neutral-900 active:scale-95" data-path="profile" href="#">
+<span class="material-symbols-outlined text-[23px] transition-transform">account_circle</span>
+<span class="text-[10px] font-semibold mt-0.5 tracking-tight">Profile</span>
+</a>
+</nav>
+</div>
+<div class="w-full flex justify-center pb-1">
+<div class="w-32 h-1 bg-neutral-300 rounded-full"></div>
+</div>
+</div>
+<script>
+    function showToast(message) {
+      const toast = document.getElementById('toastNotification');
+      const toastText = document.getElementById('toastText');
+      if (!toast || !toastText) return;
+      toastText.textContent = message;
+      toast.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
+      toast.classList.add('translate-y-0', 'opacity-100');
+      setTimeout(() => {
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
+      }, 2600);
+    }
+
+    function toggleFavorite() {
+      const icon = document.getElementById('favoriteIcon');
+      if (!icon) return;
+      const isSaved = icon.textContent === 'bookmark';
+      if (isSaved) {
+        icon.textContent = 'bookmark_border';
+        icon.style.fontVariationSettings = "'FILL' 0";
+        icon.classList.remove('text-[#fa5438]');
+        showToast('Removed from saved places');
+      } else {
+        icon.textContent = 'bookmark';
+        icon.style.fontVariationSettings = "'FILL' 1";
+        icon.classList.add('text-[#fa5438]');
+        showToast('Saved to your Travel Board Wishlist! ✨');
+      }
+    }
+
+    function toggleNearbyBookmark(btn, placeName) {
+      const icon = btn.querySelector('.material-symbols-outlined');
+      if (!icon) return;
+      const isSaved = icon.textContent === 'bookmark';
+      if (isSaved) {
+        icon.textContent = 'bookmark_border';
+        icon.style.fontVariationSettings = "'FILL' 0";
+        icon.classList.remove('text-[#fa5438]');
+        showToast(`Removed ${placeName}`);
+      } else {
+        icon.textContent = 'bookmark';
+        icon.style.fontVariationSettings = "'FILL' 1";
+        icon.classList.add('text-[#fa5438]');
+        showToast(`Saved ${placeName} to your list! 📌`);
+      }
+    }
+
+    function addPlaceToTrip() {
+      const btn = document.getElementById('addToTripBtn');
+      if (!btn) return;
+      btn.innerHTML = '<span class="material-symbols-outlined text-[20px]">check</span><span>Saved to Japan Trip!</span>';
+      btn.classList.remove('bg-[#fa5438]');
+      btn.classList.add('bg-teal-700');
+      showToast('Tokyo Tower pinned to Day 2 in Japan Trip 🗼');
+      setTimeout(() => {
+        btn.innerHTML = '<span class="material-symbols-outlined text-[20px]">add_location_alt</span><span>+ Add to Japan Trip</span>';
+        btn.classList.remove('bg-teal-700');
+        btn.classList.add('bg-[#fa5438]');
+      }, 3500);
+    }
+
+    function openDirections() {
+      showToast('Opening directions in Apple & Google Maps... 📍');
+    }
+
+    function sharePlace() {
+      if (navigator.share) {
+        navigator.share({
+          title: 'Tokyo Tower & Observation Deck',
+          text: 'Check out Tokyo Tower on our Travel Board!',
+          url: window.location.href
+        }).catch(() => {});
+      } else {
+        showToast('Link copied to clipboard! 📋');
+      }
+    }
+
+    function selectLocation(name) {
+      showToast(`Selected ${name}`);
+    }
+  </script>
+</body></html>

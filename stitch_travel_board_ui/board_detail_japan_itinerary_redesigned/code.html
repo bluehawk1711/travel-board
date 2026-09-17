@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+    @layer base {
+      html, body {
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        background-color: #fbf9f6;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+      }
+      body {
+        overscroll-behavior-y: none;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .pb-safe { padding-bottom: env(safe-area-inset-bottom, 20px); }
+      .pt-safe { padding-top: env(safe-area-inset-top, 0px); }
+    }
+    ::-webkit-scrollbar { display: none; }
+  </style>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#b32109",
+            "primary-container": "#d63b22",
+            "primary-fixed": "#ffdad3",
+            "on-primary": "#ffffff",
+            "surface": "#fbf9f6",
+            "surface-container-lowest": "#ffffff",
+            "surface-container-low": "#f5f3f0",
+            "surface-container": "#efeeeb",
+            "surface-container-high": "#eae8e5",
+            "surface-container-highest": "#e4e2df",
+            "on-surface": "#1b1c1a",
+            "on-surface-variant": "#5b403b",
+            "secondary": "#8d4f00",
+            "secondary-container": "#ffa03b",
+            "secondary-fixed": "#ffdcc0",
+            "tertiary": "#026a46",
+            "tertiary-fixed": "#9ff4c6",
+            "tertiary-container": "#2c835d",
+            "on-tertiary-container": "#f6fff6",
+            "outline": "#8f706a",
+            "outline-variant": "#e4beb7",
+            "error": "#ba1a1a"
+          },
+          borderRadius: {
+            "DEFAULT": "0.375rem",
+            "lg": "0.625rem",
+            "xl": "1rem",
+            "2xl": "1.375rem",
+            "full": "9999px"
+          },
+          spacing: {
+            "margin": "1rem",
+            "space-xs": "0.25rem",
+            "space-sm": "0.5rem",
+            "space-md": "1rem",
+            "space-lg": "1.5rem"
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-surface text-on-surface flex flex-col min-h-screen selection:bg-primary/20 antialiased">
+<!-- Main Scrollable Canvas -->
+<main class="flex-1 flex flex-col w-full pb-36">
+<!-- 1. Hero Cover Header (Craft / Amie Inspired Editorial Header) -->
+<div class="relative w-full h-[370px] bg-neutral-900 overflow-hidden">
+<!-- Background Image -->
+<img alt="Tokyo sunset skyline with Mt Fuji" class="absolute inset-0 w-full h-full object-cover transform scale-105" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDybSd8iejJfIf1tI7aWxbq_lVPxuc_whYFyJCvxZubij-X9aNz6QYYjrIFp0mBYjkegRCaH4K9oGNRzPYTv_8II7sw9mAPadqFj94ta4Obz8iToQf_4991vJGceJAu21mteW1mgyGakFwmJr8AbF2Y3Me75_b9e2P0MR-tocVKq925UB0R6GZNBOcDjirmSAzrFIkk408OXvVUQFKTjozVh5WM4FuvoYrtwFIudryoQ61CJTgMW24g"/>
+<!-- Layered Vignette Gradient Scrim -->
+<div class="absolute inset-0 bg-gradient-to-b from-black/60 via-black/25 to-black/90"></div>
+<!-- Top Glass Floating Action Bar -->
+<header class="relative z-20 pt-safe px-margin flex items-center justify-between mt-3">
+<!-- Back button -->
+<button class="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md border border-white/20 text-white flex items-center justify-center active:scale-95 transition-transform shadow-sm" onclick="history.back()">
+<span class="material-symbols-outlined text-[20px]">arrow_back</span>
+</button>
+<!-- Live Collaborators Pill -->
+<div class="flex items-center gap-2 bg-black/40 backdrop-blur-md border border-white/20 px-2.5 py-1 rounded-full shadow-sm">
+<div class="flex items-center -space-x-2">
+<img alt="Alex" class="w-6 h-6 rounded-full object-cover ring-2 ring-black/50" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB1OFWRWudsj_gO4wCMGjF0t7iHb2nP0s9RkvGDhDmEFHHLRJCoyubrUcyz9RO0nuXhtrMlAwp-wCsE-PI0ZWOP6CikG1CSf8IIv0-7NJ8f6sgAixyMmIrdWkEMqrBwBGJjP6ogog4miU1XAjEErgk_GMjomv6B19AGitIRvkJm0ZVoETwM8UAXSeFUessv2Y9NCrlwm4XMQFhhAAL-eDjWk1oyBL7V33y63d_vqmF6flI17eNQ_Ime"/>
+<img alt="Elena" class="w-6 h-6 rounded-full object-cover ring-2 ring-black/50" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCrxM7c_h157k-zsJ3BUbcevUFNh1jov67fs5TctQ2xIi4XZRoIX0d4Vfx6pi9wcKBHRX9eylJ9UKqwtUSHrqfHH-OhmHiR9VLt02tBfg4aOC8WbuCB1wg290JsRef5xbzz2JSnzR3TXMvnWGf1zPtz8XoREz2irZSiFqlPkYDeVYq6bg0_Q85VjPAHVzZgYz7dOgFw8wjmgPrTfbow0XFgtaCGfvhaLtaLU92iWwwNNO0fnn2T2msK"/>
+<img alt="Sam" class="w-6 h-6 rounded-full object-cover ring-2 ring-black/50" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBnVXbLPD7dHdvMPkMcJJq9-vd5kheQKdeydhsGRPOcH06CjP-OrcTD66Fv9drHIuaKSH0V4Apro-UI7DkZ2lii_08SJFFS8EtdDRtRnW-UD--V1A2difbm6Bv4ePRVDAwk79n-8t0uYiXOzBydRew7BCt48bdFjGUvJTzh4h-pNTSS4VSuggEikxTI8s_HxJvSWvR3PHf0s55Uy5oxpSMyCkBHKZoq9Pi8yi4kVXJw09g_qWL4g-Ws"/>
+</div>
+<span class="text-[12px] font-semibold text-white/90 pr-1">Alex, Sam, Elena +2</span>
+</div>
+<!-- Action Pills -->
+<div class="flex items-center gap-2">
+<button class="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md border border-white/20 text-white flex items-center justify-center active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-[19px]">share</span>
+</button>
+<button class="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md border border-white/20 text-white flex items-center justify-center active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-[20px]">more_horiz</span>
+</button>
+</div>
+</header>
+<!-- Hero Title & Badges Scrim Content -->
+<div class="absolute bottom-0 inset-x-0 p-5 z-20 flex flex-col gap-2.5">
+<div class="flex flex-wrap items-center gap-2">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/20 backdrop-blur-md border border-white/25 text-[11px] font-semibold text-white">
+<span class="material-symbols-outlined text-[13px] text-tertiary-fixed">public</span>
+            Public Collaborative
+          </span>
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/15 backdrop-blur-md text-[11px] font-semibold text-white/90 border border-white/15">
+<span class="material-symbols-outlined text-[13px]">calendar_month</span>
+            8 Days • Oct 12–20
+          </span>
+</div>
+<h1 class="text-3xl font-extrabold tracking-tight text-white flex items-center gap-2">
+          Japan Adventure 🇯🇵
+        </h1>
+<div class="flex items-center gap-2 text-white/85 text-[13px] font-medium">
+<span class="material-symbols-outlined text-[15px] text-primary-fixed">near_me</span>
+<span>Tokyo • Kyoto • Osaka</span>
+<span class="w-1 h-1 rounded-full bg-white/50"></span>
+<span>Curated by Alex</span>
+</div>
+</div>
+</div>
+<!-- 2. Live Collaboration Status & Quick Actions Bar -->
+<div class="px-margin -mt-4 relative z-30 flex flex-col gap-2.5">
+<!-- Live Pulse Notification Card -->
+<div class="flex items-center justify-between px-3.5 py-2.5 rounded-2xl bg-surface-container-lowest border border-surface-container shadow-[0_4px_20px_-4px_rgba(0,0,0,0.06)]">
+<div class="flex items-center gap-2.5 min-w-0">
+<span class="relative flex h-3 w-3 shrink-0">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+<span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+</span>
+<p class="text-[13px] text-on-surface truncate">
+<strong class="font-semibold text-tertiary">3 co-planners live</strong>
+<span class="text-neutral-400 mx-1">•</span>
+<span class="text-on-surface-variant font-medium">Sam just added <strong>Tsukiji Market</strong></span>
+</p>
+</div>
+<!-- Quick Reaction Avatars / Emojis -->
+<div class="flex items-center gap-1 shrink-0 pl-2">
+<button class="w-7 h-7 rounded-full bg-surface-container-low hover:bg-surface-container text-xs flex items-center justify-center transition-transform active:scale-90">🍣</button>
+<button class="w-7 h-7 rounded-full bg-surface-container-low hover:bg-surface-container text-xs flex items-center justify-center transition-transform active:scale-90">❤️</button>
+</div>
+</div>
+<!-- Quick Action Buttons Bar -->
+<div class="grid grid-cols-3 gap-2">
+<button class="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-primary text-on-primary font-semibold text-xs shadow-sm active:scale-98 transition-all hover:bg-primary-container">
+<span class="material-symbols-outlined text-[16px]">add_location_alt</span>
+<span>+ Add Place</span>
+</button>
+<button class="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-surface-container-lowest border border-surface-container text-on-surface font-semibold text-xs shadow-sm active:scale-98 transition-all hover:bg-surface-container-low">
+<span class="material-symbols-outlined text-[16px] text-primary">group_add</span>
+<span>Share Board</span>
+</button>
+<button class="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-surface-container-lowest border border-surface-container text-on-surface font-semibold text-xs shadow-sm active:scale-98 transition-all hover:bg-surface-container-low">
+<span class="material-symbols-outlined text-[16px] text-secondary">picture_as_pdf</span>
+<span>Export PDF</span>
+</button>
+</div>
+</div>
+<!-- 3. View Switcher Segment Tabs (Amie / Craft Segmented Style) -->
+<div class="mt-4 px-margin">
+<div class="flex items-center gap-1.5 p-1 bg-surface-container-high/70 backdrop-blur-sm rounded-xl overflow-x-auto no-scrollbar">
+<button class="px-3.5 py-2 rounded-lg bg-surface-container-lowest text-on-surface font-bold text-xs shadow-sm whitespace-nowrap flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px] text-primary">view_timeline</span>
+          Itinerary
+        </button>
+<button class="px-3.5 py-2 rounded-lg text-on-surface-variant hover:text-on-surface font-semibold text-xs whitespace-nowrap flex items-center gap-1 transition-colors">
+<span class="material-symbols-outlined text-[15px]">pin_drop</span>
+          Places (18)
+        </button>
+<button class="px-3.5 py-2 rounded-lg text-on-surface-variant hover:text-on-surface font-semibold text-xs whitespace-nowrap flex items-center gap-1 transition-colors">
+<span class="material-symbols-outlined text-[15px]">route</span>
+          Map Route
+        </button>
+<button class="px-3.5 py-2 rounded-lg text-on-surface-variant hover:text-on-surface font-semibold text-xs whitespace-nowrap flex items-center gap-1 transition-colors">
+<span class="material-symbols-outlined text-[15px]">payments</span>
+          Expenses
+        </button>
+<button class="px-3.5 py-2 rounded-lg text-on-surface-variant hover:text-on-surface font-semibold text-xs whitespace-nowrap flex items-center gap-1 transition-colors">
+<span class="material-symbols-outlined text-[15px]">note_alt</span>
+          Notes
+        </button>
+</div>
+</div>
+<!-- 4. Itinerary Timeline Section -->
+<div class="mt-5 px-margin flex flex-col gap-6">
+<!-- DAY 01 -->
+<section class="flex flex-col gap-3">
+<!-- Day Header -->
+<div class="flex items-center justify-between border-b border-surface-container-high pb-2.5">
+<div>
+<div class="flex items-center gap-2">
+<span class="px-2 py-0.5 rounded-full bg-primary/10 text-primary font-bold text-[11px] tracking-wide uppercase">Day 01</span>
+<span class="text-xs text-on-surface-variant font-medium">Saturday, Oct 12</span>
+</div>
+<h2 class="text-base font-bold text-on-surface mt-0.5">Arrival &amp; Shibuya Neon Vibes</h2>
+</div>
+<button class="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-[18px]">add</span>
+</button>
+</div>
+<!-- Vertical Timeline Container -->
+<div class="relative pl-6 flex flex-col gap-4">
+<!-- Timeline Vertical Track Line -->
+<div class="absolute left-2.5 top-3 bottom-3 w-[2px] bg-gradient-to-b from-primary via-surface-variant to-secondary"></div>
+<!-- Timeline Item 1: Flight Arrival -->
+<div class="relative flex flex-col">
+<!-- Timeline Node Icon -->
+<div class="absolute -left-6 top-3 w-5 h-5 rounded-full bg-primary text-white flex items-center justify-center ring-4 ring-surface shadow-sm">
+<span class="material-symbols-outlined text-[12px]">flight_land</span>
+</div>
+<!-- Card Content -->
+<div class="bg-surface-container-lowest rounded-2xl p-3.5 border border-surface-container shadow-sm hover:shadow-md transition-shadow">
+<div class="flex items-start justify-between gap-2">
+<div>
+<div class="flex items-center gap-2">
+<span class="text-xs font-bold text-on-surface">09:30 AM</span>
+<span class="inline-flex items-center gap-0.5 px-2 py-0.2 rounded-full bg-tertiary-fixed text-tertiary text-[10px] font-bold">
+<span class="material-symbols-outlined text-[11px]">check_circle</span> On Time
+                    </span>
+</div>
+<h3 class="font-bold text-[15px] text-on-surface mt-0.5">Tokyo Haneda Airport (HND)</h3>
+</div>
+<button class="text-on-surface-variant hover:text-on-surface">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+<!-- Boarding Pass Snippet / Note -->
+<div class="mt-2.5 bg-surface-container-low/70 border border-dashed border-outline-variant/60 rounded-xl p-2.5 flex items-center justify-between text-xs">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-primary">confirmation_number</span>
+<span class="text-on-surface-variant font-medium">NH 106 • Terminal 3</span>
+</div>
+<div class="flex items-center gap-1 font-semibold text-primary">
+<span class="material-symbols-outlined text-[14px]">qr_code_2</span>
+<span>Boarding Pass</span>
+</div>
+</div>
+<div class="flex items-center justify-between mt-3 pt-2 border-t border-surface-container-low text-[11px] text-on-surface-variant">
+<span class="flex items-center gap-1">
+<img alt="Alex" class="w-4 h-4 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB1OFWRWudsj_gO4wCMGjF0t7iHb2nP0s9RkvGDhDmEFHHLRJCoyubrUcyz9RO0nuXhtrMlAwp-wCsE-PI0ZWOP6CikG1CSf8IIv0-7NJ8f6sgAixyMmIrdWkEMqrBwBGJjP6ogog4miU1XAjEErgk_GMjomv6B19AGitIRvkJm0ZVoETwM8UAXSeFUessv2Y9NCrlwm4XMQFhhAAL-eDjWk1oyBL7V33y63d_vqmF6flI17eNQ_Ime"/>
+                  Added by Alex
+                </span>
+<span class="font-semibold text-tertiary flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[13px]">train</span> Keikyu Line Express
+                </span>
+</div>
+</div>
+</div>
+<!-- Timeline Item 2: Hotel Gracery Shinjuku -->
+<div class="relative flex flex-col">
+<!-- Node -->
+<div class="absolute -left-6 top-3 w-5 h-5 rounded-full bg-secondary text-white flex items-center justify-center ring-4 ring-surface shadow-sm">
+<span class="material-symbols-outlined text-[12px]">hotel</span>
+</div>
+<!-- Card -->
+<div class="bg-surface-container-lowest rounded-2xl p-3.5 border border-surface-container shadow-sm hover:shadow-md transition-shadow">
+<div class="flex items-start justify-between gap-2">
+<div>
+<div class="flex items-center gap-2">
+<span class="text-xs font-bold text-secondary">14:00 Check-in</span>
+<span class="inline-flex items-center gap-0.5 px-2 py-0.2 rounded-full bg-secondary-fixed text-on-secondary-fixed text-[10px] font-bold">
+                      Confirmed #GR-8842
+                    </span>
+</div>
+<h3 class="font-bold text-[15px] text-on-surface mt-0.5">Hotel Gracery Shinjuku</h3>
+<p class="text-xs text-on-surface-variant">Kabukicho, Shinjuku • ¥9,200/night</p>
+</div>
+<span class="text-xs font-bold text-on-surface bg-surface-container px-2 py-0.5 rounded-lg">3 Nights</span>
+</div>
+<!-- Tip Callout -->
+<div class="mt-2.5 bg-amber-500/10 border border-amber-500/20 rounded-xl p-2 flex items-center gap-2 text-xs text-secondary font-medium">
+<span class="material-symbols-outlined text-[16px] shrink-0">lightbulb</span>
+<span>Godzilla terrace is accessible with your room key on 8F!</span>
+</div>
+<div class="flex items-center justify-between mt-3 pt-2 border-t border-surface-container-low text-[11px]">
+<div class="flex items-center -space-x-1.5">
+<img alt="Alex" class="w-5 h-5 rounded-full object-cover ring-1 ring-white" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB1OFWRWudsj_gO4wCMGjF0t7iHb2nP0s9RkvGDhDmEFHHLRJCoyubrUcyz9RO0nuXhtrMlAwp-wCsE-PI0ZWOP6CikG1CSf8IIv0-7NJ8f6sgAixyMmIrdWkEMqrBwBGJjP6ogog4miU1XAjEErgk_GMjomv6B19AGitIRvkJm0ZVoETwM8UAXSeFUessv2Y9NCrlwm4XMQFhhAAL-eDjWk1oyBL7V33y63d_vqmF6flI17eNQ_Ime"/>
+<img alt="Elena" class="w-5 h-5 rounded-full object-cover ring-1 ring-white" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCrxM7c_h157k-zsJ3BUbcevUFNh1jov67fs5TctQ2xIi4XZRoIX0d4Vfx6pi9wcKBHRX9eylJ9UKqwtUSHrqfHH-OhmHiR9VLt02tBfg4aOC8WbuCB1wg290JsRef5xbzz2JSnzR3TXMvnWGf1zPtz8XoREz2irZSiFqlPkYDeVYq6bg0_Q85VjPAHVzZgYz7dOgFw8wjmgPrTfbow0XFgtaCGfvhaLtaLU92iWwwNNO0fnn2T2msK"/>
+<span class="pl-3 text-on-surface-variant font-medium">2 rooms booked</span>
+</div>
+<button class="font-semibold text-primary flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[14px]">map</span> Open in Maps
+                </button>
+</div>
+</div>
+</div>
+<!-- Timeline Item 3: Shibuya Crossing & Sunset View (Rich Media Activity Card) -->
+<div class="relative flex flex-col">
+<!-- Node -->
+<div class="absolute -left-6 top-3 w-5 h-5 rounded-full bg-tertiary text-white flex items-center justify-center ring-4 ring-surface shadow-sm">
+<span class="material-symbols-outlined text-[12px]">explore</span>
+</div>
+<!-- Rich Card -->
+<div class="bg-surface-container-lowest rounded-2xl overflow-hidden border border-surface-container shadow-sm hover:shadow-md transition-shadow">
+<!-- Cover Image Preview -->
+<div class="relative w-full h-36 bg-surface-container">
+<img alt="Shibuya Crossing dusk crowd" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBC1_eO9uL3rOc9AUI96BQZu8EjaRG-KfZQJ0fBEeEhSSmIwX1vP2XxMztjGCi5Y0lsum68DL674W32dIwHSii8IE23nMuUuN0sWRGPr7QPrZ6-pHuUTvfUq-h28u-q7fWnNFrASFu-czE7NOLUROBHp4xwt3EdcI7Z_C_IRz43gkp7Uru2UBXvXLr3C_no1vJxHkqKJBi-9q7WJku4ZQEY2BzaPT4iPrQagb86kX5KKJY7CuiK4UgE"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/30"></div>
+<div class="absolute top-2.5 left-2.5 flex items-center gap-1.5">
+<span class="px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-white text-[11px] font-bold">
+                    17:00 • Golden Hour
+                  </span>
+<span class="px-2 py-0.5 rounded-full bg-tertiary/80 backdrop-blur-md text-white text-[10px] font-semibold">
+                    Top Highlight
+                  </span>
+</div>
+<div class="absolute top-2.5 right-2.5">
+<button class="w-7 h-7 rounded-full bg-black/50 backdrop-blur-md text-white flex items-center justify-center hover:bg-black/70">
+<span class="material-symbols-outlined text-[16px]">bookmark_border</span>
+</button>
+</div>
+<div class="absolute bottom-2 left-3 right-3 text-white">
+<h3 class="font-bold text-base leading-tight drop-shadow-sm">Shibuya Crossing &amp; Sunset View</h3>
+</div>
+</div>
+<!-- Body -->
+<div class="p-3.5 flex flex-col gap-2.5">
+<p class="text-xs text-on-surface-variant line-clamp-2">
+                  Meet by the Hachiko statue, head to Shibuya Sky observation roof for sunset photos over the iconic intersection.
+                </p>
+<!-- Tags & Meta -->
+<div class="flex items-center gap-1.5 flex-wrap">
+<span class="px-2 py-0.5 rounded-md bg-surface-container text-on-surface text-[11px] font-medium flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px] text-amber-500" style="font-variation-settings: 'FILL' 1;">star</span>
+                    4.9 (42k)
+                  </span>
+<span class="px-2 py-0.5 rounded-md bg-surface-container text-on-surface text-[11px] font-medium">Walking Tour</span>
+<span class="px-2 py-0.5 rounded-md bg-emerald-50 text-tertiary text-[11px] font-semibold">Free Access</span>
+</div>
+<!-- Collaborative Note Pill -->
+<div class="bg-surface-container-low p-2 rounded-xl flex items-start gap-2">
+<img alt="Elena" class="w-5 h-5 rounded-full object-cover shrink-0 mt-0.5" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCrxM7c_h157k-zsJ3BUbcevUFNh1jov67fs5TctQ2xIi4XZRoIX0d4Vfx6pi9wcKBHRX9eylJ9UKqwtUSHrqfHH-OhmHiR9VLt02tBfg4aOC8WbuCB1wg290JsRef5xbzz2JSnzR3TXMvnWGf1zPtz8XoREz2irZSiFqlPkYDeVYq6bg0_Q85VjPAHVzZgYz7dOgFw8wjmgPrTfbow0XFgtaCGfvhaLtaLU92iWwwNNO0fnn2T2msK"/>
+<div class="text-[11px] text-on-surface-variant flex-1">
+<strong class="text-on-surface font-semibold">Elena:</strong> Book Shibuya Sky tickets 2 weeks in advance for the 17:30 slot!
+                  </div>
+</div>
+<!-- Card Actions -->
+<div class="flex items-center justify-between pt-1 border-t border-surface-container-low text-xs">
+<span class="text-[11px] text-on-surface-variant font-medium flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">chat_bubble_outline</span> 4 team comments
+                  </span>
+<div class="flex items-center gap-2">
+<button class="font-semibold text-primary text-xs flex items-center gap-0.5 hover:underline">
+<span class="material-symbols-outlined text-[14px]">explore</span> Route in Maps
+                    </button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Timeline Item 4: Dinner at Ichiran -->
+<div class="relative flex flex-col">
+<!-- Node -->
+<div class="absolute -left-6 top-3 w-5 h-5 rounded-full bg-primary text-white flex items-center justify-center ring-4 ring-surface shadow-sm">
+<span class="material-symbols-outlined text-[12px]">ramen_dining</span>
+</div>
+<!-- Card -->
+<div class="bg-surface-container-lowest rounded-2xl p-3.5 border border-surface-container shadow-sm hover:shadow-md transition-shadow">
+<div class="flex items-start justify-between gap-2">
+<div>
+<div class="flex items-center gap-2">
+<span class="text-xs font-bold text-primary">20:00 Dinner</span>
+<span class="inline-flex items-center gap-0.5 text-[11px] font-bold text-amber-600">
+<span class="material-symbols-outlined text-[13px]" style="font-variation-settings: 'FILL' 1;">star</span> 4.7
+                    </span>
+</div>
+<h3 class="font-bold text-[15px] text-on-surface mt-0.5">Ichiran Ramen Shibuya</h3>
+<p class="text-xs text-on-surface-variant">Tonkotsu Ramen Solo Booths • ~¥1,100</p>
+</div>
+<button class="text-on-surface-variant hover:text-on-surface">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+<!-- Sam recommendation quote -->
+<div class="mt-2.5 bg-orange-50/70 border border-orange-200/50 rounded-xl p-2.5 flex items-start gap-2.5">
+<img alt="Sam" class="w-6 h-6 rounded-full object-cover shrink-0 ring-1 ring-orange-200 mt-0.5" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBnVXbLPD7dHdvMPkMcJJq9-vd5kheQKdeydhsGRPOcH06CjP-OrcTD66Fv9drHIuaKSH0V4Apro-UI7DkZ2lii_08SJFFS8EtdDRtRnW-UD--V1A2difbm6Bv4ePRVDAwk79n-8t0uYiXOzBydRew7BCt48bdFjGUvJTzh4h-pNTSS4VSuggEikxTI8s_HxJvSWvR3PHf0s55Uy5oxpSMyCkBHKZoq9Pi8yi4kVXJw09g_qWL4g-Ws"/>
+<div class="text-xs text-on-surface">
+<span class="font-bold text-secondary">Sam’s pick:</span>
+<span class="text-on-surface-variant italic">“Rich broth + extra garlic + firm noodles on the order sheet!”</span>
+</div>
+</div>
+<div class="flex items-center justify-between mt-3 pt-2 border-t border-surface-container-low text-[11px]">
+<span class="text-on-surface-variant font-medium">Walk-in queue (~15-20 min)</span>
+<div class="flex items-center gap-3">
+<button class="text-error font-semibold flex items-center gap-0.5 hover:underline">
+<span class="material-symbols-outlined text-[13px]">delete</span>
+</button>
+<button class="text-primary font-bold flex items-center gap-0.5 hover:underline">
+<span class="material-symbols-outlined text-[13px]">swap_vert</span> Move
+                  </button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- DAY 02 Preview & Header -->
+<section class="flex flex-col gap-3 pt-2">
+<div class="flex items-center justify-between border-b border-surface-container-high pb-2.5">
+<div>
+<div class="flex items-center gap-2">
+<span class="px-2 py-0.5 rounded-full bg-secondary/10 text-secondary font-bold text-[11px] tracking-wide uppercase">Day 02</span>
+<span class="text-xs text-on-surface-variant font-medium">Sunday, Oct 13</span>
+</div>
+<h2 class="text-base font-bold text-on-surface mt-0.5">Historic Temples &amp; Harajuku</h2>
+</div>
+<span class="text-xs font-semibold text-on-surface-variant bg-surface-container px-2.5 py-1 rounded-full">2 Stops</span>
+</div>
+<!-- Add Stop Placeholder Button for Day 2 -->
+<button class="w-full py-3.5 border-2 border-dashed border-outline-variant/60 rounded-2xl bg-surface-container-lowest hover:bg-surface-container-low text-on-surface-variant font-semibold text-xs flex items-center justify-center gap-2 transition-all active:scale-98">
+<span class="material-symbols-outlined text-[18px] text-primary">add_circle</span>
+<span>Add Stop for Day 2</span>
+</button>
+</section>
+</div>
+</main>
+<!-- 5. Floating Proactive AI Assistant Banner (Docked above bottom bar) -->
+<aside aria-label="AI Assistant" class="fixed bottom-20 inset-x-0 z-40 px-margin flex justify-center pointer-events-none">
+<div class="pointer-events-auto w-full max-w-md bg-neutral-900/90 backdrop-blur-xl border border-white/15 rounded-2xl p-3 shadow-[0_12px_36px_rgba(0,0,0,0.35)] flex items-center justify-between gap-3 text-white animate-fade-in">
+<div class="flex items-center gap-2.5 min-w-0">
+<div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-primary via-secondary to-amber-400 flex items-center justify-center text-white shrink-0 shadow-sm">
+<span class="material-symbols-outlined text-[17px]">auto_awesome</span>
+</div>
+<div class="min-w-0">
+<p class="text-xs font-bold leading-tight truncate flex items-center gap-1.5">
+<span>AI Assistant</span>
+<span class="text-[10px] font-normal px-1.5 py-0.2 rounded bg-white/20 text-white/90">Smart Route</span>
+</p>
+<p class="text-[11px] text-white/75 truncate mt-0.5">
+            1 transit optimization available for Day 2
+          </p>
+</div>
+</div>
+<button class="px-3 py-1.5 rounded-xl bg-white text-neutral-900 font-bold text-xs shrink-0 hover:bg-neutral-100 active:scale-95 transition-all shadow-sm" onclick="triggerAiOptimization()">
+        Review
+      </button>
+</div>
+</aside>
+<!-- 6. Bottom Navigation Bar (5-Tab Trips Context) -->
+<nav class="fixed bottom-0 inset-x-0 z-50 bg-surface/95 backdrop-blur-xl border-t border-surface-container-high pb-safe">
+<div class="flex items-center justify-around h-16 px-2">
+<!-- Tab 1: Explore -->
+<button class="flex flex-col items-center justify-center flex-1 py-1 text-on-surface-variant hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined text-[22px]">explore</span>
+<span class="text-[10px] font-semibold mt-0.5">Explore</span>
+</button>
+<!-- Tab 2: Board (Active) -->
+<button class="flex flex-col items-center justify-center flex-1 py-1 text-primary transition-colors">
+<span class="material-symbols-outlined text-[22px]" style="font-variation-settings: 'FILL' 1;">dashboard_customize</span>
+<span class="text-[10px] font-bold mt-0.5">Board</span>
+</button>
+<!-- Tab 3: Timeline / Itinerary -->
+<button class="flex flex-col items-center justify-center flex-1 py-1 text-on-surface-variant hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined text-[22px]">calendar_today</span>
+<span class="text-[10px] font-semibold mt-0.5">Schedule</span>
+</button>
+<!-- Tab 4: Chat / Live Sync -->
+<button class="relative flex flex-col items-center justify-center flex-1 py-1 text-on-surface-variant hover:text-on-surface transition-colors">
+<div class="relative">
+<span class="material-symbols-outlined text-[22px]">forum</span>
+<span class="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-primary"></span>
+</div>
+<span class="text-[10px] font-semibold mt-0.5">Live Chat</span>
+</button>
+<!-- Tab 5: Profile -->
+<button class="flex flex-col items-center justify-center flex-1 py-1 text-on-surface-variant hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined text-[22px]">account_circle</span>
+<span class="text-[10px] font-semibold mt-0.5">Profile</span>
+</button>
+</div>
+</nav>
+<!-- iOS Home Bar Indicator Spacer -->
+<div class="fixed bottom-0 inset-x-0 z-50 pointer-events-none pb-safe">
+<div class="w-full flex justify-center pb-1">
+<div class="w-32 h-1 bg-on-surface/20 rounded-full"></div>
+</div>
+</div>
+<script>
+    function triggerAiOptimization() {
+      alert("✨ AI Route Planner: Moving 'Meiji Jingu Shrine' 30 mins earlier avoids rush hour traffic and saves 24 minutes on transit between Shinjuku & Harajuku!");
+    }
+  </script>
+</body></html>

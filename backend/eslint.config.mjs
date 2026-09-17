@@ -6,7 +6,17 @@ import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
   {
-    ignores: ['eslint.config.mjs'],
+    ignores: [
+      'eslint.config.mjs',
+      'eslint.config.mts',
+      // Build output and generated files — never linted (types can't resolve
+      // in compiled artifacts, which produces false unsafe-* errors in IDEs).
+      'dist/**',
+      'build/**',
+      'coverage/**',
+      'node_modules/**',
+      'drizzle/**',
+    ],
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,

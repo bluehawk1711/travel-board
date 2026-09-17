@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{width:100%;margin:0;padding:0;background-color:#fbf9f6;font-family:'Plus Jakarta Sans',sans-serif;}body{overscroll-behavior-y:none;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: 'class', theme: { extend: { colors: { 'surface-dim': '#dbdad7', 'surface-container-high': '#eae8e5', 'secondary-container': '#ffa03b', 'secondary': '#8d4f00', 'on-primary-fixed-variant': '#8f1000', 'secondary-fixed': '#ffdcc0', 'surface-container': '#efeeeb', 'on-tertiary-fixed': '#002113', 'on-secondary': '#ffffff', 'on-tertiary-fixed-variant': '#005235', 'on-primary-fixed': '#3f0300', 'on-surface': '#1b1c1a', 'surface-container-lowest': '#ffffff', 'outline-variant': '#e4beb7', 'on-primary': '#ffffff', 'tertiary-fixed': '#9ff4c6', 'inverse-surface': '#30312f', 'on-tertiary': '#ffffff', 'inverse-on-surface': '#f2f0ed', 'surface-container-low': '#f5f3f0', 'tertiary-container': '#2c835d', 'on-secondary-fixed': '#2d1600', 'primary-container': '#d63b22', 'on-secondary-fixed-variant': '#6b3b00', 'surface-container-highest': '#e4e2df', 'surface-tint': '#b6230c', 'surface-bright': '#fbf9f6', 'on-tertiary-container': '#f6fff6', 'on-secondary-container': '#6c3b00', 'on-error': '#ffffff', 'primary-fixed': '#ffdad3', 'error': '#ba1a1a', 'primary-fixed-dim': '#ffb4a6', 'on-primary-container': '#fffbff', 'on-background': '#1b1c1a', 'on-error-container': '#93000a', 'outline': '#8f706a', 'inverse-primary': '#ffb4a6', 'primary': '#b32109', 'surface-variant': '#e4e2df', 'tertiary-fixed-dim': '#83d8ab', 'tertiary': '#026a46', 'on-surface-variant': '#5b403b', 'surface': '#fbf9f6', 'secondary-fixed-dim': '#ffb875', 'error-container': '#ffdad6', 'background': '#fbf9f6' }, borderRadius: { 'DEFAULT': '0.25rem', 'lg': '0.5rem', 'xl': '0.75rem', 'full': '9999px' }, spacing: { 'margin-tablet': '2rem', 'space-lg': '1.5rem', 'gutter': '1rem', 'gutter-compact': '0.75rem', 'space-xl': '2rem', 'space-sm': '0.5rem', 'margin': '1rem', 'space-xs': '0.25rem', 'space-md': '1rem' }, fontFamily: { 'headline-md': ['Plus Jakarta Sans'], 'headline-sm': ['Plus Jakarta Sans'], 'display-lg': ['Plus Jakarta Sans'], 'body-sm': ['Plus Jakarta Sans'], 'title-md': ['Plus Jakarta Sans'], 'headline-lg': ['Plus Jakarta Sans'], 'label-md': ['Plus Jakarta Sans'], 'label-lg': ['Plus Jakarta Sans'], 'title-lg': ['Plus Jakarta Sans'], 'label-sm': ['Plus Jakarta Sans'], 'display-lg-mobile': ['Plus Jakarta Sans'], 'body-md': ['Plus Jakarta Sans'], 'body-lg': ['Plus Jakarta Sans'] }, fontSize: { 'headline-md': ['24px', { lineHeight: '30px', letterSpacing: '-0.015em', fontWeight: '700' }], 'headline-sm': ['20px', { lineHeight: '26px', letterSpacing: '-0.01em', fontWeight: '600' }], 'display-lg': ['44px', { lineHeight: '52px', letterSpacing: '-0.03em', fontWeight: '800' }], 'body-sm': ['12px', { lineHeight: '16px', fontWeight: '400' }], 'title-md': ['16px', { lineHeight: '22px', fontWeight: '600' }], 'headline-lg': ['30px', { lineHeight: '38px', letterSpacing: '-0.02em', fontWeight: '700' }], 'label-md': ['12px', { lineHeight: '16px', letterSpacing: '0.02em', fontWeight: '600' }], 'label-lg': ['14px', { lineHeight: '18px', letterSpacing: '0.01em', fontWeight: '600' }], 'title-lg': ['18px', { lineHeight: '24px', fontWeight: '600' }], 'label-sm': ['10px', { lineHeight: '14px', letterSpacing: '0.04em', fontWeight: '700' }], 'display-lg-mobile': ['34px', { lineHeight: '40px', letterSpacing: '-0.025em', fontWeight: '800' }], 'body-md': ['14px', { lineHeight: '20px', fontWeight: '400' }], 'body-lg': ['16px', { lineHeight: '24px', fontWeight: '400' }] } } } };</script><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-surface text-on-surface min-h-full flex flex-col antialiased"><header class="fixed top-0 w-full z-50 pt-safe bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(84,42,30,0.05)]"><div class="h-16 px-gutter flex items-center justify-between"><div class="flex items-center gap-space-sm"><button aria-label="Go back" class="w-11 h-11 -ml-space-xs flex items-center justify-center rounded-full text-on-surface hover:bg-surface-container-high/60 transition-colors" onclick="window.history.back()"><span class="material-symbols-outlined text-[24px]">arrow_back</span></button><img alt="Brand logo. - Primary color: #fa5438 - Font: plusJakartaSans - Mode: light - Roundness: rounded-md" class="h-7 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1Xluasy3R1z_ELew3U82wsQe1_gDZiG6w1LK7OcWGElSYo_hDjxxurj_M9QB1intnG-FZlNRTN6ZGE0Hj_IqaAHRswV24WYh9ammCn9n_dykyXmvam-El2XPNehfeDyTkUYOdYfBcTm22dJDkfCgM9DhV4_j9E60sdN22KiupLVTcp7LYZM6VTsL4E5ai0QcRhz99UXRNUb138xE-QzHTZ10fVB2qnn2zJif-ijwsgdjs46gh0qlfJcGfI"/><h1 class="font-title-lg text-title-lg text-on-surface truncate max-w-[180px]">Live Chat Room</h1></div><div class="flex items-center gap-space-xs"><button aria-label="More options" class="w-11 h-11 flex items-center justify-center rounded-full text-on-surface-variant hover:text-on-surface transition-colors"><span class="material-symbols-outlined text-[24px]">more_vert</span></button><div class="w-11 h-11 flex items-center justify-center"><img alt="Profile" class="w-8 h-8 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1WGHciOArrD04qkdRuXQrtJCWb52e2h0SnP29E4xGovHgI-n0cIT_paggeXmC7nMkn7hZXmCW3noveHH6aOzSwq-b4ooELhYHlBNDVwVC6XeaNwaeNRnHm7NHqTB3RjCz6oE_JN7fkPotfKPz98y902B2kwApyPx2xcDpf7Ff28IFlohm2c7ngE6zVtFPCKNebNZeqFCfcUb2uBhdyiwUP9FzQbeGtWkpFwweyD0_PmQ_FxgwIXLANgxg"/></div></div></div></header><main class="flex-1 flex flex-col relative w-full pt-16 pb-safe bg-surface"><div class="flex flex-col w-full">
+<!-- Interactive Elena DM Canvas -->
+<div class="flex flex-col w-full pb-28">
+<!-- Secondary Context Sub-Bar (Participant details & Call Actions) -->
+<section class="sticky top-0 z-20 w-full px-margin py-space-sm bg-surface-container-low/95 backdrop-blur-md shadow-sm flex items-center justify-between">
+<div class="flex items-center gap-space-sm min-w-0">
+<div class="relative shrink-0">
+<img class="w-10 h-10 rounded-full object-cover shadow-sm" data-alt="Close-up portrait of Elena, a 28-year-old female travel photographer with wind-swept brunette hair wearing a burnt terracotta linen shirt, warm golden-hour lighting, Kyoto tea house backdrop in soft bokeh, editorial portrait photography." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCwybMwWiBVGGMZjDX-WpsgzZMF0GDEkqCpHdt59Sx3W9sFyIz74aTlnsKYRdEF_dCvFmPbD8FDImAtjgp6zCEGsFmChKI2LjTiYwV8FjBpSoEnxk9h5Kq6wgVho89zlW8Li67R4IQZLgWmNo1fIbD7SbuDlOrKoJ1g_dI9i0bUS_MNB819MUkuJtGoTkg6ad46YnF9WkNA8cs34DwlEnJjMi2D5zgBw5-piHGD11Hhn7ZgNnUEb1zE"/>
+<span class="absolute bottom-0 right-0 w-3 h-3 bg-tertiary-container rounded-full ring-2 ring-surface-container-low" title="Online now"></span>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-space-xs">
+<h2 class="font-title-md text-title-md text-on-surface truncate">Elena Rostova</h2>
+<span class="font-label-sm text-label-sm text-on-surface-variant shrink-0">@elena_travels</span>
+</div>
+<p class="font-body-sm text-body-sm text-tertiary flex items-center gap-1 truncate">
+<span class="inline-block w-1.5 h-1.5 rounded-full bg-tertiary"></span>
+            Active now • Kyoto, Japan
+          </p>
+</div>
+</div>
+<div class="flex items-center gap-1 shrink-0 text-on-surface-variant">
+<button aria-label="Audio call" class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-surface-container-high transition-colors" type="button">
+<span class="material-symbols-outlined text-[20px]">call</span>
+</button>
+<button aria-label="Video call" class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-surface-container-high transition-colors" type="button">
+<span class="material-symbols-outlined text-[20px]">videocam</span>
+</button>
+</div>
+</section>
+<!-- Shared Context Banner -->
+<div class="px-margin pt-space-sm">
+<div class="w-full bg-surface-container rounded-xl p-space-sm shadow-sm flex items-center justify-between gap-space-sm">
+<div class="flex items-center gap-space-xs min-w-0">
+<div class="w-8 h-8 rounded-lg bg-secondary-fixed flex items-center justify-center text-on-secondary-fixed shrink-0">
+<span class="material-symbols-outlined text-[18px]">flight_takeoff</span>
+</div>
+<div class="min-w-0">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-secondary">Co-planning</span>
+<p class="font-title-md text-title-md text-on-surface truncate">Autumn Foliage Tour 2026</p>
+</div>
+</div>
+<button class="shrink-0 px-space-sm py-1 rounded-full bg-surface-container-lowest text-primary hover:bg-surface-bright shadow-sm flex items-center gap-0.5 transition-transform active:scale-95" type="button">
+<span class="font-label-md text-label-md">View Board</span>
+<span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Timeline / Chat Stream -->
+<div class="flex flex-col gap-space-md px-margin pt-space-md">
+<!-- Date Divider -->
+<div class="flex items-center justify-center my-space-xs">
+<span class="px-space-md py-0.5 rounded-full bg-surface-container-highest text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
+          Today • October 14
+        </span>
+</div>
+<!-- 1. Elena's Message -->
+<div class="flex items-end gap-space-xs max-w-[85%] self-start">
+<img class="w-7 h-7 rounded-full object-cover mb-1 shrink-0" data-alt="Miniature circular avatar profile of young woman photographer smiling with vintage 35mm rangefinder camera in Kyoto street." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCkRDjJQsjnZt96lbh-t7Bv5iFLsiahB5brSWsS_uwBswRorY9F4A_4sBEoEMBMh2gX83lLymL4nJ4ztwlKh1pwFOVEdogMTDPP_Pp-gyXmPQG_ZiC2-jyV6fFwOtwKebnzJm_FEnQyT2A2d99BYXORsWwvhvD6dd7qUYqCGNXeYlK-O5lcWiopbZJagLnK25HghRyIlh9Pz6HQDAgbHhlMp1n_2hoYZ3dlB0U2Fd7gz5XxF5JQpOU5"/>
+<div class="flex flex-col gap-1">
+<div class="bg-surface-container-lowest text-on-surface rounded-2xl rounded-bl-sm p-space-md shadow-sm">
+<p class="font-body-md text-body-md leading-relaxed">
+              Hey Alex! Found this incredible hidden kissaten in Gion for morning matcha and egg sando 🍵
+            </p>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant ml-1">09:22 AM</span>
+</div>
+</div>
+<!-- 2. Shared Place Card Attachment -->
+<div class="max-w-[88%] ml-8 self-start">
+<div class="bg-surface-container-lowest rounded-2xl overflow-hidden shadow-md">
+<!-- Place Image with Badge -->
+<div class="relative h-44 w-full">
+<div class="w-full h-full bg-cover bg-center" data-alt="Interior of an authentic wooden Japanese kissaten coffee house in Kyoto with warm sunlight pouring through shoji screens, retro brass siphon coffee makers on dark cedar counter, matcha drink and fluffy egg sandwich served on ceramic ware." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDSQon5IodoJQiebO5XaJ2r6HFtp5b2fmOMvakwYyeBc1ZPO5x9YadWvUVdIx8oWPHW21tjgB5P19_oRkGvgp9w9OljwJaNxL-yLx0aDhKZs57mMzResD66isuPCdnLzlZIOcUUnLF_tNnB4IufXrnIi2yuLtkxVGTuhdVcDhb25ni4KHt9jXD7vcKDO6X48XzMSVGTui7aG3CP8xQOxf9tL0hWMhshOk7IcVpCa_yT_IBJZRIWsy4K')"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-inverse-surface/80 via-transparent to-black/20"></div>
+<div class="absolute top-space-sm left-space-sm">
+<span class="px-space-sm py-0.5 rounded-full bg-inverse-surface/75 backdrop-blur-md text-inverse-on-surface font-label-sm text-label-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px] text-secondary-container" style="font-variation-settings: 'FILL' 1;">star</span>
+                4.8 (340+ reviews)
+              </span>
+</div>
+<div class="absolute bottom-space-sm left-space-sm right-space-sm text-inverse-on-surface">
+<p class="font-headline-sm text-headline-sm leading-tight text-white drop-shadow-sm">Kissa Master Kyoto</p>
+<p class="font-body-sm text-body-sm text-surface-container-high flex items-center gap-1 mt-0.5">
+<span class="material-symbols-outlined text-[14px]">local_cafe</span>
+                Traditional Kissaten • 0.4 mi from Hotel Gracery
+              </p>
+</div>
+</div>
+<!-- Place Metadata & Action Buttons -->
+<div class="p-space-sm bg-surface-container-low flex items-center gap-space-xs">
+<button class="flex-1 py-2 px-space-sm rounded-full bg-primary text-on-primary font-label-md text-label-md flex items-center justify-center gap-1 shadow-sm active:scale-95 transition-all" id="save-btn" onclick="toggleSaveState(this)" type="button">
+<span class="material-symbols-outlined text-[16px]">bookmark_add</span>
+<span>Save to Board</span>
+</button>
+<a class="flex-1 py-2 px-space-sm rounded-full bg-surface-container text-on-surface font-label-md text-label-md flex items-center justify-center gap-1 hover:bg-surface-container-high active:scale-95 transition-all" href="#directions">
+<span class="material-symbols-outlined text-[16px] text-secondary">near_me</span>
+<span>Directions</span>
+</a>
+</div>
+</div>
+</div>
+<!-- 3. Alex's Message (User, Right-Aligned) -->
+<div class="flex items-end gap-space-xs max-w-[85%] self-end">
+<div class="flex flex-col items-end gap-1">
+<div class="bg-primary text-on-primary rounded-2xl rounded-br-sm p-space-md shadow-md">
+<p class="font-body-md text-body-md leading-relaxed">
+              Looks unreal! Added it right next to our morning Yasaka Shrine walk.
+            </p>
+</div>
+<div class="flex items-center gap-1 mr-1">
+<span class="font-label-sm text-label-sm text-on-surface-variant">09:25 AM</span>
+<span class="material-symbols-outlined text-[14px] text-tertiary">done_all</span>
+</div>
+</div>
+</div>
+<!-- 4. Shared Mini-Itinerary Snippet Card (Sent by Alex) -->
+<div class="max-w-[88%] self-end">
+<div class="bg-surface-container-lowest rounded-2xl p-space-md shadow-md flex flex-col gap-space-sm">
+<!-- Card Header -->
+<div class="flex items-center justify-between pb-space-xs">
+<div class="flex items-center gap-space-xs">
+<span class="w-2.5 h-2.5 rounded-full bg-primary-container"></span>
+<h3 class="font-title-md text-title-md text-on-surface">Day 4 Draft: Kyoto Stroll</h3>
+</div>
+<span class="px-2 py-0.5 rounded-full bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-label-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">sync</span>
+              Synced
+            </span>
+</div>
+<!-- Time slot items -->
+<div class="flex flex-col gap-2">
+<!-- Slot 1 -->
+<div class="flex items-center gap-space-sm p-2 rounded-xl bg-surface-container-low">
+<div class="px-2 py-1 rounded bg-secondary-fixed text-on-secondary-fixed font-label-sm text-label-sm font-bold">
+                08:30 AM
+              </div>
+<div class="min-w-0 flex-1">
+<p class="font-title-md text-title-md text-on-surface truncate">Kissa Master</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Breakfast &amp; Hand-drip siphon</p>
+</div>
+<span class="material-symbols-outlined text-secondary text-[18px]">restaurant</span>
+</div>
+<!-- Connector dot trail -->
+<div class="flex items-center ml-7 py-0.5">
+<span class="w-1 h-3 rounded-full bg-surface-container-highest"></span>
+</div>
+<!-- Slot 2 -->
+<div class="flex items-center gap-space-sm p-2 rounded-xl bg-surface-container-low">
+<div class="px-2 py-1 rounded bg-surface-container-high text-on-surface font-label-sm text-label-sm font-bold">
+                10:00 AM
+              </div>
+<div class="min-w-0 flex-1">
+<p class="font-title-md text-title-md text-on-surface truncate">Yasaka Shrine &amp; Gion</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Autumn morning walk &amp; lanterns</p>
+</div>
+<span class="material-symbols-outlined text-tertiary text-[18px]">temple_buddhist</span>
+</div>
+</div>
+<!-- Card Footer collaborators -->
+<div class="pt-space-xs flex items-center justify-between">
+<div class="flex items-center -space-x-2">
+<div class="w-6 h-6 rounded-full bg-primary text-on-primary font-label-sm text-label-sm flex items-center justify-center ring-2 ring-surface-container-lowest">
+                A
+              </div>
+<img class="w-6 h-6 rounded-full object-cover ring-2 ring-surface-container-lowest" data-alt="Miniature circular crop portrait of Elena smiling, co-traveler avatar." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA3SyUZ-jSDtryUpyPLr6bid5UKc2XWTblXCEaZdcXaAmx0-glwE45qf4mqHZbwRQAq4Q-klvFQT7FkrX0qbaaNQ04XaXBOE3leNzzhcbO5QfC2Ck4B5YoQ4-HQmS-DrUl_Kbi84ltOKm9XvcJsbkyw7w7y0YTJjFVKXOqEqIfTouV2bO8XOBCGlpN9tNQMamXEKXMH0uZg7Aughq8yHVN_Fdg12WybnH43XR-heHwXTXie4USDrpMv"/>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Synced with Alex &amp; Elena</span>
+</div>
+</div>
+</div>
+<!-- 5. Elena's Response -->
+<div class="flex items-end gap-space-xs max-w-[85%] self-start">
+<img class="w-7 h-7 rounded-full object-cover mb-1 shrink-0" data-alt="Small thumbnail of Elena smiling in Kyoto with film camera strap around neck." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD4T8MV5Z9hXTKDYnYZ8FEtW5U8cnpsz0ICd3WB14Y0mNBBxJA5DFM-oFrsUCHxsC6et5PUB-2hgGpaG3-7VDe2PO7T9_FJY9sP61ZmzTQjmI9UAswOxHr_4BaHpTGjZz8NTzny0dUeWF_x-Je902uAcxHyG5y3gOEDMkgVFhWGgsrjjhFZSyh3PfEaH2wZsRB75W7msMHB0TqzODsoRLKReHTxmaoWWGt6xHekEveGk76lC0p4ica1"/>
+<div class="flex flex-col gap-1">
+<div class="bg-surface-container-lowest text-on-surface rounded-2xl rounded-bl-sm p-space-md shadow-sm">
+<p class="font-body-md text-body-md leading-relaxed">
+              Perfect timing! I can bring my film camera for this morning session 📷
+            </p>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant ml-1">09:28 AM</span>
+</div>
+</div>
+<!-- Micro Interactive Audio Draft / Wave Preview Bar -->
+<div class="hidden max-w-[88%] ml-8 self-start" id="audio-preview">
+<div class="bg-surface-container rounded-2xl p-space-sm flex items-center gap-space-sm shadow-sm">
+<button class="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center shrink-0" type="button">
+<span class="material-symbols-outlined text-[18px]">play_arrow</span>
+</button>
+<div class="flex items-center gap-1 flex-1 h-6">
+<span class="w-1 h-3 rounded-full bg-primary/60"></span>
+<span class="w-1 h-5 rounded-full bg-primary"></span>
+<span class="w-1 h-2 rounded-full bg-primary/40"></span>
+<span class="w-1 h-6 rounded-full bg-primary"></span>
+<span class="w-1 h-4 rounded-full bg-primary/70"></span>
+<span class="w-1 h-2 rounded-full bg-primary/30"></span>
+<span class="w-1 h-5 rounded-full bg-primary"></span>
+<span class="w-1 h-3 rounded-full bg-primary/50"></span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">0:14</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Persistent Floating Bottom Action & Input Bar -->
+<div class="fixed bottom-0 left-0 w-full z-40 px-margin pb-safe pt-2 bg-gradient-to-t from-surface via-surface/95 to-transparent backdrop-blur-lg">
+<div class="w-full bg-surface-container-lowest rounded-full p-1.5 shadow-xl flex items-center gap-1 mb-2">
+<!-- Media Actions -->
+<button aria-label="Add attachment" class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors active:scale-95" type="button">
+<span class="material-symbols-outlined text-[22px]">add</span>
+</button>
+<button aria-label="Take photo" class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors active:scale-95" type="button">
+<span class="material-symbols-outlined text-[22px]">photo_camera</span>
+</button>
+<!-- Input Field Container -->
+<div class="flex-1 flex items-center px-space-xs min-w-0">
+<input class="w-full bg-transparent text-on-surface placeholder:text-on-surface-variant font-body-md text-body-md focus:outline-none px-1" id="chat-input" placeholder="Message Elena..." type="text"/>
+<button aria-label="Insert emoji" class="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors" type="button">
+<span class="material-symbols-outlined text-[20px]">mood</span>
+</button>
+</div>
+<!-- Audio / Send Dynamic Action Button -->
+<div class="flex items-center gap-1">
+<button aria-label="Voice memo" class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors active:scale-95" id="mic-btn" onclick="toggleVoiceWave()" type="button">
+<span class="material-symbols-outlined text-[22px]">mic</span>
+</button>
+<button aria-label="Send message" class="w-10 h-10 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-md active:scale-90 transition-transform" id="send-btn" onclick="sendCustomMessage()" type="button">
+<span class="material-symbols-outlined text-[20px]">send</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<script>
+  function toggleSaveState(button) {
+    const isSaved = button.getAttribute('data-saved') === 'true';
+    if (!isSaved) {
+      button.setAttribute('data-saved', 'true');
+      button.classList.remove('bg-primary', 'text-on-primary');
+      button.classList.add('bg-tertiary-container', 'text-on-tertiary-container');
+      button.innerHTML = '<span class="material-symbols-outlined text-[16px]">check_circle</span><span>Saved!</span>';
+    } else {
+      button.setAttribute('data-saved', 'false');
+      button.classList.remove('bg-tertiary-container', 'text-on-tertiary-container');
+      button.classList.add('bg-primary', 'text-on-primary');
+      button.innerHTML = '<span class="material-symbols-outlined text-[16px]">bookmark_add</span><span>Save to Board</span>';
+    }
+  }
+
+  function toggleVoiceWave() {
+    const preview = document.getElementById('audio-preview');
+    if (preview.classList.contains('hidden')) {
+      preview.classList.remove('hidden');
+      preview.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } else {
+      preview.classList.add('hidden');
+    }
+  }
+
+  function sendCustomMessage() {
+    const input = document.getElementById('chat-input');
+    const value = input.value.trim();
+    if (!value) return;
+
+    const stream = document.querySelector('.flex.flex-col.gap-space-md');
+    const newMsgWrapper = document.createElement('div');
+    newMsgWrapper.className = 'flex items-end gap-space-xs max-w-[85%] self-end transition-all transform translate-y-2 opacity-0';
+
+    newMsgWrapper.innerHTML = `
+      <div class="flex flex-col items-end gap-1">
+        <div class="bg-primary text-on-primary rounded-2xl rounded-br-sm p-space-md shadow-md">
+          <p class="font-body-md text-body-md leading-relaxed">${escapeHTML(value)}</p>
+        </div>
+        <div class="flex items-center gap-1 mr-1">
+          <span class="font-label-sm text-label-sm text-on-surface-variant">Just now</span>
+          <span class="material-symbols-outlined text-[14px] text-tertiary">check</span>
+        </div>
+      </div>
+    `;
+
+    stream.appendChild(newMsgWrapper);
+    input.value = '';
+
+    requestAnimationFrame(() => {
+      newMsgWrapper.classList.remove('translate-y-2', 'opacity-0');
+      newMsgWrapper.scrollIntoView({ behavior: 'smooth' });
+    });
+  }
+
+  function escapeHTML(str) {
+    return str.replace(/[&<>'"]/g, 
+      tag => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        "'": '&#39;',
+        '"': '&quot;'
+      }[tag] || tag)
+    );
+  }
+
+  document.getElementById('chat-input').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+      sendCustomMessage();
+    }
+  });
+</script></main></body></html>

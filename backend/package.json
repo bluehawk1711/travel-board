@@ -27,10 +27,10 @@
     "@nestjs/jwt": "^12.0.1",
     "@nestjs/passport": "^12.0.0",
     "@nestjs/platform-express": "^11.0.1",
-    "@nestjs/platform-socket.io": "^12.0.1",
+    "@nestjs/platform-socket.io": "^11.0.0",
     "@nestjs/schedule": "^12.0.1",
     "@nestjs/throttler": "^6.5.0",
-    "@nestjs/websockets": "^12.0.1",
+    "@nestjs/websockets": "^11.0.0",
     "@upstash/redis": "^1.38.3",
     "bcryptjs": "^3.0.3",
     "cache-manager": "^7.2.9",
@@ -39,18 +39,23 @@
     "class-validator": "^0.15.1",
     "compression": "^1.8.1",
     "cookie-parser": "^1.4.7",
-    "csrf-csrf": "^4.0.3",
     "dotenv": "^17.4.2",
     "drizzle-orm": "^0.45.2",
+    "google-auth-library": "^11.0.2",
     "helmet": "^8.3.0",
     "keyv": "^5.6.0",
+    "nestjs-pino": "^5.1.0",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
     "pg": "^8.23.0",
+    "pino": "^10.3.1",
+    "pino-http": "^11.0.0",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.1"
+    "resend": "^6.28.0",
+    "rxjs": "^7.8.1",
+    "socket.io": "4.8.3"
   },
   "devDependencies": {
     "@eslint/css": "^2.0.0",
@@ -80,6 +85,7 @@
     "jest": "^30.0.0",
     "jiti": "^2.7.0",
     "prettier": "^3.4.2",
+    "socket.io-client": "^4.8.3",
     "source-map-support": "^0.5.21",
     "supertest": "^7.0.0",
     "ts-jest": "^29.2.5",
@@ -101,6 +107,9 @@
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
     },
+    "transformIgnorePatterns": [
+      "node_modules[\\\\/](?!.*@nestjs)"
+    ],
     "collectCoverageFrom": [
       "**/*.(t|j)s"
     ],

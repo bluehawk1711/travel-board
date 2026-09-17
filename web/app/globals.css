@@ -1,26 +1,132 @@
 @import "tailwindcss";
 
+/*
+ * Terra Nova Travel design tokens — see
+ * `stitch_travel_board_ui/terra_nova_travel/DESIGN.md`.
+ * Warm parchment surfaces, terracotta accents, sunset-tinted elevation.
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #faf9f6;
+  --foreground: #191716;
+
+  --card: #ffffff;
+  --card-foreground: #191716;
+  --popover: #ffffff;
+  --popover-foreground: #191716;
+  /* Terracotta (primary action) */
+  --primary: #fa5438;
+  --primary-foreground: #ffffff;
+  /* Warm sand containers */
+  --secondary: #f4f2ed;
+  --secondary-foreground: #191716;
+  --muted: #f4f2ed;
+  --muted-foreground: #6a645d;
+  /* Tinted terracotta for hover/selected states */
+  --accent: #ffece8;
+  --accent-foreground: #d93d22;
+  --destructive: #ba1a1a;
+  --destructive-foreground: #ffffff;
+  /* Confirmed / success (trip status) */
+  --success: #0e7453;
+  --success-foreground: #ffffff;
+  --success-container: #e3f7ee;
+  /* Hairline warm separators */
+  --border: #ece8e1;
+  --input: #ece8e1;
+  --ring: #fa5438;
+  --radius: 1rem;
+
+  /* Warm tinted ambient elevation (never neutral gray) */
+  --shadow-card: 0 8px 24px -4px rgba(28, 20, 16, 0.06),
+    0 2px 6px -1px rgba(28, 20, 16, 0.04);
+  --shadow-nav: 0 12px 36px -4px rgba(35, 23, 18, 0.12),
+    0 2px 8px 0 rgba(35, 23, 18, 0.04);
+  --shadow-fab: 0 10px 24px -2px rgba(250, 84, 56, 0.42);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-success-container: var(--success-container);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --font-sans: var(--font-jakarta);
   --font-mono: var(--font-geist-mono);
+  --radius-sm: calc(var(--radius) - 8px);
+  --radius-md: calc(var(--radius) - 4px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --shadow-card: var(--shadow-card);
+  --shadow-nav: var(--shadow-nav);
+  --shadow-fab: var(--shadow-fab);
+
+  /*
+   * Legacy zinc remap → Terra Nova warm neutrals. Existing screens styled with
+   * zinc-* utilities inherit the warm parchment/terracotta palette without a
+   * per-file sweep; adjust or remove as screens are redesigned.
+   */
+  --color-zinc-50: var(--secondary);
+  --color-zinc-100: var(--secondary);
+  --color-zinc-200: var(--border);
+  --color-zinc-300: var(--border);
+  --color-zinc-400: var(--muted-foreground);
+  --color-zinc-500: var(--muted-foreground);
+  --color-zinc-600: var(--muted-foreground);
+  --color-zinc-700: var(--foreground);
+  --color-zinc-800: var(--card);
+  --color-zinc-900: var(--foreground);
+  --color-zinc-950: var(--foreground);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #141210;
+    --foreground: #faf9f6;
+    --card: #1c1917;
+    --card-foreground: #faf9f6;
+    --popover: #1c1917;
+    --popover-foreground: #faf9f6;
+    --primary: #fa5438;
+    --primary-foreground: #ffffff;
+    --secondary: #221f1d;
+    --secondary-foreground: #faf9f6;
+    --muted: #221f1d;
+    --muted-foreground: #a8a29b;
+    --accent: #3a1a13;
+    --accent-foreground: #ffb4a6;
+    --destructive: #ffb4ab;
+    --destructive-foreground: #690005;
+    --success: #4fb98c;
+    --success-foreground: #002113;
+    --success-container: #12352a;
+    --border: #2e2a27;
+    --input: #2e2a27;
+    --ring: #fa5438;
   }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-jakarta), "Plus Jakarta Sans", ui-sans-serif, system-ui,
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
 }

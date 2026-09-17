@@ -1,6 +1,9 @@
-import { relations } from 'drizzle-orm';
+import { relations, sql } from 'drizzle-orm';
 import {
+  bigint,
+  boolean,
   date,
+  doublePrecision,
   index,
   integer,
   pgEnum,
@@ -46,26 +49,43 @@ export const followTargetTypeEnum = pgEnum('follow_target_type', [
   'BOARD',
 ]);
 
+/** Chat conversation types: direct 1:1, group, or per-board collaboration room. */
+export const conversationTypeEnum = pgEnum('conversation_type', [
+  'DIRECT',
+  'GROUP',
+  'BOARD',
+]);
+
 // ─────────────────────────────────────────────────────────────
 // users
 // ─────────────────────────────────────────────────────────────
 
-export const users = pgTable('users', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  email: text('email').notNull().unique(),
-  /** Null for OAuth-only accounts (e.g. Google login). */
-  passwordHash: text('password_hash'),
-  name: text('name').notNull(),
-  avatarUrl: text('avatar_url'),
-  bio: text('bio'),
-  createdAt: timestamp('created_at', { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  /** Not auto-maintained by Drizzle — services must set it on update. */
-  updatedAt: timestamp('updated_at', { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-});
+export const users = pgTable(
+  'users',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    email: text('email').notNull().unique(),
+    /** Null for OAuth-only accounts (e.g. Google login). */
+    passwordHash: text('password_hash'),
+    name: text('name').notNull(),
+    avatarUrl: text('avatar_url'),
+    bio: text('bio'),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    /** Not auto-maintained by Drizzle — services must set it on update. */
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    // Trigram GIN index for ILIKE '%query%' search on name (H4).
+    // Requires: CREATE EXTENSION IF NOT EXISTS pg_trgm;
+    index('users_name_trgm_idx')
+      .using('gin', sql`${table.name} gin_trgm_ops`)
+      .concurrently(),
+  ],
+);
 
 // ─────────────────────────────────────────────────────────────
 // boards
@@ -100,6 +120,11 @@ export const boards = pgTable(
       table.visibility,
       table.createdAt,
     ),
+    // Trigram GIN index for ILIKE '%query%' search on title (H4).
+    // Requires: CREATE EXTENSION IF NOT EXISTS pg_trgm;
+    index('boards_title_trgm_idx')
+      .using('gin', sql`${table.title} gin_trgm_ops`)
+      .concurrently(),
   ],
 );
 
@@ -178,6 +203,9 @@ export const boardItems = pgTable(
     url: text('url'),
     /** 0-based ordering within the section. */
     position: integer('position').notNull().default(0),
+    /** Coordinates copied from the Places result — drives the board map view. */
+    lat: doublePrecision('lat'),
+    lng: doublePrecision('lng'),
     /** Per-item date for ITINERARY boards (features.md §7). */
     date: date('date'),
     createdAt: timestamp('created_at', { withTimezone: true })
@@ -239,6 +267,85 @@ export const refreshTokens = pgTable(
     index('refresh_tokens_user_id_idx').on(table.userId),
     index('refresh_tokens_token_hash_idx').on(table.tokenHash),
   ],
+);
+
+// ─────────────────────────────────────────────────────────────
+// conversations  (1:1 DMs, group chats, and per-board chat rooms)
+// ─────────────────────────────────────────────────────────────
+
+export const conversations = pgTable(
+  'conversations',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    type: conversationTypeEnum('type').notNull().default('DIRECT'),
+    /** Set for BOARD conversations only. */
+    boardId: uuid('board_id').references(() => boards.id, {
+      onDelete: 'cascade',
+    }),
+    /** Group chat name; null for DIRECT / BOARD conversations. */
+    name: text('name'),
+    createdBy: uuid('created_by').references(() => users.id, {
+      onDelete: 'set null',
+    }),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    /** Last activity (message sent) — used to sort the conversation list. */
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [index('conversations_updated_at_idx').on(table.updatedAt)],
+);
+
+// ─────────────────────────────────────────────────────────────
+// conversation_members
+// ─────────────────────────────────────────────────────────────
+
+export const conversationMembers = pgTable(
+  'conversation_members',
+  {
+    conversationId: uuid('conversation_id')
+      .notNull()
+      .references(() => conversations.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    /** messages.id the user has read up to (inclusive); null = nothing read. */
+    lastReadMessageId: bigint('last_read_message_id', { mode: 'number' }),
+    joinedAt: timestamp('joined_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.conversationId, table.userId] }),
+    index('conversation_members_user_id_idx').on(table.userId),
+  ],
+);
+
+// ─────────────────────────────────────────────────────────────
+// messages  (chat history — Postgres is the source of truth)
+// ─────────────────────────────────────────────────────────────
+
+export const messages = pgTable(
+  'messages',
+  {
+    /** Sequential identity — used for cursor pagination and read-tracking. */
+    id: bigint('id', { mode: 'number' })
+      .generatedAlwaysAsIdentity()
+      .primaryKey(),
+    conversationId: uuid('conversation_id')
+      .notNull()
+      .references(() => conversations.id, { onDelete: 'cascade' }),
+    senderId: uuid('sender_id').references(() => users.id, {
+      onDelete: 'set null',
+    }),
+    body: text('body').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [index('messages_conversation_id_idx').on(table.conversationId)],
 );
 
 // ─────────────────────────────────────────────────────────────
@@ -328,6 +435,9 @@ export const usersRelations = relations(users, ({ many }) => ({
   comments: many(comments),
   refreshTokens: many(refreshTokens),
   following: many(follows),
+  conversationsCreated: many(conversations),
+  chatMemberships: many(conversationMembers),
+  sentMessages: many(messages),
 }));
 
 export const boardsRelations = relations(boards, ({ one, many }) => ({
@@ -376,6 +486,41 @@ export const refreshTokensRelations = relations(refreshTokens, ({ one }) => ({
   user: one(users, { fields: [refreshTokens.userId], references: [users.id] }),
 }));
 
+// ─────────────────────────────────────────────────────────────
+// password_reset_tokens  (for forgot / reset password flow)
+// ─────────────────────────────────────────────────────────────
+
+export const passwordResetTokens = pgTable(
+  'password_reset_tokens',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    /** SHA-256 hash of the raw token — never store the token itself. */
+    tokenHash: text('token_hash').notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    usedAt: timestamp('used_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index('password_reset_tokens_user_id_idx').on(table.userId),
+    index('password_reset_tokens_token_hash_idx').on(table.tokenHash),
+  ],
+);
+
+export const passwordResetTokensRelations = relations(
+  passwordResetTokens,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [passwordResetTokens.userId],
+      references: [users.id],
+    }),
+  }),
+);
+
 export const followsRelations = relations(follows, ({ one }) => ({
   follower: one(users, {
     fields: [follows.followerId],
@@ -391,6 +536,72 @@ export const likesRelations = relations(likes, ({ one }) => ({
 export const commentsRelations = relations(comments, ({ one }) => ({
   board: one(boards, { fields: [comments.boardId], references: [boards.id] }),
   user: one(users, { fields: [comments.userId], references: [users.id] }),
+}));
+
+export const conversationsRelations = relations(
+  conversations,
+  ({ one, many }) => ({
+    board: one(boards, {
+      fields: [conversations.boardId],
+      references: [boards.id],
+    }),
+    creator: one(users, {
+      fields: [conversations.createdBy],
+      references: [users.id],
+    }),
+    members: many(conversationMembers),
+    messages: many(messages),
+  }),
+);
+
+export const conversationMembersRelations = relations(
+  conversationMembers,
+  ({ one }) => ({
+    conversation: one(conversations, {
+      fields: [conversationMembers.conversationId],
+      references: [conversations.id],
+    }),
+    user: one(users, {
+      fields: [conversationMembers.userId],
+      references: [users.id],
+    }),
+  }),
+);
+
+export const messagesRelations = relations(messages, ({ one }) => ({
+  conversation: one(conversations, {
+    fields: [messages.conversationId],
+    references: [conversations.id],
+  }),
+  sender: one(users, { fields: [messages.senderId], references: [users.id] }),
+}));
+
+// ─────────────────────────────────────────────────────────────
+// user_settings
+// ─────────────────────────────────────────────────────────────
+
+export const themeModeEnum = pgEnum('theme_mode', ['SYSTEM', 'LIGHT', 'DARK']);
+
+/** Per-user preferences (1:1 with users). Created on first read or signup. */
+export const userSettings = pgTable('user_settings', {
+  userId: uuid('user_id')
+    .primaryKey()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  themeMode: themeModeEnum('theme_mode').notNull().default('SYSTEM'),
+  notificationsEnabled: boolean('notifications_enabled').notNull().default(true),
+  emailUpdates: boolean('email_updates').notNull().default(false),
+  /** ISO 4217 currency code used for budget display. */
+  currency: text('currency').notNull().default('USD'),
+  updatedAt: timestamp('updated_at', { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export const userSettingsRelations = relations(userSettings, ({ one }) => ({
+  user: one(users, {
+    fields: [userSettings.userId],
+    references: [users.id],
+  }),
 }));
 
 // ─────────────────────────────────────────────────────────────
@@ -410,3 +621,10 @@ export type Like = typeof likes.$inferSelect;
 export type Comment = typeof comments.$inferSelect;
 export type RefreshToken = typeof refreshTokens.$inferSelect;
 export type NewRefreshToken = typeof refreshTokens.$inferInsert;
+export type Conversation = typeof conversations.$inferSelect;
+export type NewConversation = typeof conversations.$inferInsert;
+export type ConversationMember = typeof conversationMembers.$inferSelect;
+export type Message = typeof messages.$inferSelect;
+export type NewMessage = typeof messages.$inferInsert;
+export type UserSettingsRow = typeof userSettings.$inferSelect;
+export type NewUserSettings = typeof userSettings.$inferInsert;

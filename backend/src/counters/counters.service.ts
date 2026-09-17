@@ -37,23 +37,32 @@ export class CountersService {
     boardId: string,
     userId: string,
   ): Promise<{ liked: boolean; likeCount: number }> {
-    const existing = await this.db.query.likes.findFirst({
-      where: and(eq(likes.boardId, boardId), eq(likes.userId, userId)),
+    // Transaction prevents race: two concurrent toggles will serialize on the
+    // same row lock (default PG isolation: read committed + explicit tx).
+    const liked = await this.db.transaction(async (tx) => {
+      const existing = await tx.query.likes.findFirst({
+        where: and(eq(likes.boardId, boardId), eq(likes.userId, userId)),
+      });
+
+      if (existing) {
+        await tx
+          .delete(likes)
+          .where(and(eq(likes.boardId, boardId), eq(likes.userId, userId)));
+        return false;
+      }
+      await tx.insert(likes).values({ boardId, userId });
+      return true;
     });
 
-    if (existing) {
-      await this.db
-        .delete(likes)
-        .where(and(eq(likes.boardId, boardId), eq(likes.userId, userId)));
-      await this.redis.srem(likesKey(boardId), userId);
-      await this.redis.zincrby(trendingKey, -1, boardId);
-    } else {
-      await this.db.insert(likes).values({ boardId, userId });
+    if (liked) {
       await this.redis.sadd(likesKey(boardId), userId);
       await this.redis.zincrby(trendingKey, 1, boardId);
+    } else {
+      await this.redis.srem(likesKey(boardId), userId);
+      await this.redis.zincrby(trendingKey, -1, boardId);
     }
     await this.markDirty(boardId);
-    return { liked: !existing, likeCount: await this.likeCount(boardId) };
+    return { liked, likeCount: await this.likeCount(boardId) };
   }
 
   /** Redis SCARD with a Postgres fallback when Redis is unreachable. */
@@ -82,26 +91,33 @@ export class CountersService {
     boardId: string,
     userId: string,
   ): Promise<{ saved: boolean; saveCount: number }> {
-    const existing = await this.db.query.boardSaves.findFirst({
-      where: and(
-        eq(boardSaves.boardId, boardId),
-        eq(boardSaves.userId, userId),
-      ),
+    const saved = await this.db.transaction(async (tx) => {
+      const existing = await tx.query.boardSaves.findFirst({
+        where: and(
+          eq(boardSaves.boardId, boardId),
+          eq(boardSaves.userId, userId),
+        ),
+      });
+
+      if (existing) {
+        await tx
+          .delete(boardSaves)
+          .where(
+            and(eq(boardSaves.boardId, boardId), eq(boardSaves.userId, userId)),
+          );
+        return false;
+      }
+      await tx.insert(boardSaves).values({ boardId, userId });
+      return true;
     });
 
-    if (existing) {
-      await this.db
-        .delete(boardSaves)
-        .where(
-          and(eq(boardSaves.boardId, boardId), eq(boardSaves.userId, userId)),
-        );
-      await this.redis.srem(savesKey(boardId), userId);
-    } else {
-      await this.db.insert(boardSaves).values({ boardId, userId });
+    if (saved) {
       await this.redis.sadd(savesKey(boardId), userId);
+    } else {
+      await this.redis.srem(savesKey(boardId), userId);
     }
     await this.markDirty(boardId);
-    return { saved: !existing, saveCount: await this.saveCount(boardId) };
+    return { saved, saveCount: await this.saveCount(boardId) };
   }
 
   async saveCount(boardId: string): Promise<number> {
@@ -137,7 +153,7 @@ export class CountersService {
     try {
       locked = await this.redis.set('lock:cron:counters-reconcile', '1', {
         nx: true,
-        ex: 240,
+        ex: 600, // 10 minutes (L6)
       });
     } catch {
       return; // Redis down — skip this run, write-through keeps Postgres correct
