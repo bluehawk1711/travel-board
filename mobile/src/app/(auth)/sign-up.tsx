@@ -15,6 +15,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { api, ApiError } from '@/lib/api';
+import { useMutation } from '@tanstack/react-query';
 import { useAuthStore } from '@/lib/auth-store';
 import { queryClient } from '@/lib/query-client';
 import { GoogleButton } from '@/components/google-button';
@@ -28,7 +29,13 @@ export default function SignUpScreen() {
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+
+  // Registration runs through a React Query mutation.
+  const signUpMutation = useMutation({
+    mutationFn: (vars: { name: string; email: string; password: string }) =>
+      api.register(vars.name, vars.email, vars.password),
+  });
+  const submitting = signUpMutation.isPending;
 
   const submit = useCallback(async () => {
     if (!name.trim() || !email.trim() || !password) {
@@ -43,14 +50,13 @@ export default function SignUpScreen() {
       setError('Passwords do not match');
       return;
     }
-    setSubmitting(true);
     setError(null);
     try {
-      const tokens = await api.register(
-        name.trim(),
-        email.trim().toLowerCase(),
+      const tokens = await signUpMutation.mutateAsync({
+        name: name.trim(),
+        email: email.trim().toLowerCase(),
         password,
-      );
+      });
       await setSession(tokens);
       queryClient.clear();
       router.replace('/(tabs)');
@@ -58,10 +64,8 @@ export default function SignUpScreen() {
       setError(
         err instanceof ApiError ? err.message : 'Something went wrong — try again',
       );
-    } finally {
-      setSubmitting(false);
     }
-  }, [name, email, password, confirm, router]);
+  }, [name, email, password, confirm, router, setSession, signUpMutation]);
 
   const inputStyle = [
     styles.input,

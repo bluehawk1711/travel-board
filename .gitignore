@@ -1,2 +1,19 @@
 .agents
 .claude
+
+# dependencies
+node_modules/
+
+# env files (only *.example are committed)
+.env
+.env.*
+!.env.example
+
+# logs & scratch output
+*.log
+*.txt
+
+# build output
+dist/
+.next/
+.expo/

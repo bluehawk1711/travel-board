@@ -19,8 +19,8 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"],`n      "@shared": ["../shared/index.ts"],`n      "@shared/*": ["../shared/*"],
-      "@shared/*": ["../shared/*"]
+      "@/*": ["./*"],
+      "@travel-board/shared": ["../shared/index.ts"]
     }
   },
   "include": [

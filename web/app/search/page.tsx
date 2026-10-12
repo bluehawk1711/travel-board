@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { fetchExploreFeed } from "@/lib/api";
 import { SearchResults } from "@/components/search-results";
 
-export const dynamic = "force-dynamic";
+// Cache Components: `searchParams` + the optional feed fetch stream at request
+// time behind the segment's loading.tsx Suspense boundary.
 
 export const metadata: Metadata = {
   title: "Search",

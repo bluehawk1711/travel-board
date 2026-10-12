@@ -15,14 +15,14 @@ import type {
   SearchUser,
   UserBoardsResult,
 } from './types';
-import type { UserSettings } from '@shared';
+import type { UserSettings } from '@travel-board/shared';
 
 /**
  * NestJS API base URL. Set `NEXT_PUBLIC_API_URL` in `web/.env.local`
  * (see `.env.example`); defaults to the local backend.
  */
 export const API_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
+  process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
 
 /** Page size passed to `GET /explore` (API clamps to 50). */
 export const FEED_PAGE_SIZE = 20;
@@ -347,6 +347,39 @@ export function deleteBoard(boardId: string): Promise<{ deleted: boolean }> {
 }
 
 // ── Password reset ────────────────────────────────────
+
+export interface AuthTokensResponse {
+  accessToken: string;
+  refreshToken: string;
+  user: { id: string; name: string };
+}
+
+/** POST /auth/login — access token in memory, refresh token in httpOnly cookie. */
+export function login(
+  email: string,
+  password: string,
+): Promise<AuthTokensResponse> {
+  return fetch(`${API_URL}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+    credentials: 'include',
+  }).then((r) => parseResponse<AuthTokensResponse>(r));
+}
+
+/** POST /auth/register — creates the account and returns a session. */
+export function signup(
+  name: string,
+  email: string,
+  password: string,
+): Promise<AuthTokensResponse> {
+  return fetch(`${API_URL}/auth/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, email, password }),
+    credentials: 'include',
+  }).then((r) => parseResponse<AuthTokensResponse>(r));
+}
 
 export function forgotPassword(
   email: string,

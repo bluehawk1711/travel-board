@@ -1,40 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Rss } from "lucide-react";
-import { fetchFollowingFeed } from "@/lib/api";
-import { getAccessToken } from "@/lib/auth";
-import type { ExploreResult } from "@/lib/types";
+import { useFollowingFeed } from "@/lib/queries";
+import { useSignedIn } from "@/hooks/use-signed-in";
 import { BoardCard } from "./board-card";
 import { Button } from "@/components/ui/button";
 
 export function FollowingFeed() {
-  const [result, setResult] = useState<ExploreResult | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [signedIn, setSignedIn] = useState(false);
-
-  useEffect(() => {
-    if (!getAccessToken()) {
-      setLoading(false);
-      return;
-    }
-    setSignedIn(true);
-    let cancelled = false;
-    void fetchFollowingFeed(24, 0)
-      .then((data) => {
-        if (!cancelled) setResult(data);
-      })
-      .catch(() => {
-        if (!cancelled) setResult({ items: [], hasMore: false });
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  // Auth state resolves through useSyncExternalStore (no effect, no hydration
+  // mismatch); the feed itself is fetched by React Query.
+  const signedIn = useSignedIn();
+  const { data: result, isPending } = useFollowingFeed();
 
   return (
     <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">
@@ -66,7 +43,7 @@ export function FollowingFeed() {
             </Button>
           </div>
         </div>
-      ) : loading ? (
+      ) : isPending ? (
         <div className="mt-10 text-center text-sm text-zinc-400">
           Loading your feed…
         </div>

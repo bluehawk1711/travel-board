@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { DrizzleModule } from '../db/dbProvider';
+import { NotificationsModule } from '../notifications/notifications.module';
 import { ChatController } from './chat.controller';
 import { ChatService } from './chat.service';
 import { ChatGateway } from './chat.gateway';
@@ -9,6 +10,7 @@ import { ChatGateway } from './chat.gateway';
 @Module({
   imports: [
     DrizzleModule,
+    NotificationsModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

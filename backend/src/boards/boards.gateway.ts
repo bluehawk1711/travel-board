@@ -66,7 +66,7 @@ export interface BoardChangeEvent {
 @WebSocketGateway({
   cors: {
     // Decorators run before DI — read env directly (mirrors main.ts fallback).
-    origin: process.env.FRONTEND_URL ?? 'http://localhost:3001',
+    origin: process.env.FRONTEND_URL ?? 'http://localhost:3000',
     credentials: true,
   },
 })

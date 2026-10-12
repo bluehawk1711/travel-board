@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useMutation } from "@tanstack/react-query";
 import { CheckCircle2, CalendarDays, Layers, MapPin } from "lucide-react";
 import type { DateRange } from "react-day-picker";
 import Stepper03, { type Step } from "@/components/shadcn-space/stepper/stepper-03";
@@ -9,8 +10,9 @@ import IconAutocomplete from "@/components/shadcn-space/autocomplete/autocomplet
 import RangeCalendar from "@/components/shadcn-space/calendar/calendar-14";
 import { ValidationInputField } from "@/components/shadcn-space/input/input-19";
 import { Button } from "@/components/ui/button";
-import { createBoard } from "@/lib/board-edit";
-import { ApiError, API_URL } from "@/lib/api";
+import { createBoard, type CreateBoardPayload } from "@/lib/board-edit";
+import { API_URL } from "@/lib/api";
+import { useDestinationOptions } from "@/lib/queries";
 
 const STEPS: Step[] = [
   {
@@ -43,35 +45,31 @@ export default function OnboardingPage() {
     "ITINERARY",
   );
   const [error, setError] = useState<string | null>(null);
-  const [creating, setCreating] = useState(false);
+
+  // Suggest real destinations from the explore feed so the autocomplete has
+  // options without a dedicated endpoint (React Query-cached, 5 min stale).
+  const { data: feedDestinationValues } = useDestinationOptions();
+  const feedDestinations = useMemo(
+    () =>
+      (feedDestinationValues ?? []).map((value) => ({
+        id: value,
+        label: value,
+      })),
+    [feedDestinationValues],
+  );
+
+  const createMutation = useMutation({
+    mutationFn: (payload: CreateBoardPayload) => createBoard(payload),
+    onSuccess: (board) => {
+      router.push(`/boards/${board.id}`);
+    },
+    onError: (err: Error) => {
+      setError(err.message || "Couldn't create the board — check that you're signed in.");
+    },
+  });
 
   // Suggest real destinations from the explore feed so the autocomplete has
   // options without a dedicated endpoint.
-  const [feedDestinations, setFeedDestinations] = useState<
-    { id: string; label: string }[]
-  >([]);
-  useEffect(() => {
-    let cancelled = false;
-    void fetch(new URL("/explore?sort=newest&limit=50&offset=0", API_URL))
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data: { items?: { destination?: string | null }[] } | null) => {
-        if (cancelled || !data?.items) return;
-        const seen = new Set<string>();
-        const options: { id: string; label: string }[] = [];
-        for (const item of data.items) {
-          if (item.destination && !seen.has(item.destination)) {
-            seen.add(item.destination);
-            options.push({ id: item.destination, label: item.destination });
-          }
-        }
-        setFeedDestinations(options);
-      })
-      .catch(() => undefined);
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
   const destinationOptions =
     feedDestinations.length > 0
       ? feedDestinations
@@ -108,32 +106,23 @@ export default function OnboardingPage() {
     ];
   });
 
-  const handleFinish = async () => {
+  const handleFinish = () => {
     if (!destination.trim()) {
       setError("Pick a destination first.");
       return;
     }
-    setCreating(true);
     setError(null);
-    try {
-      const board = await createBoard({
-        title: `${destination.trim()} trip`,
-        destination: destination.trim(),
-        boardType,
-        visibility: "PUBLIC",
-        startDate: dateRange?.from?.toISOString(),
-        endDate: dateRange?.to?.toISOString(),
-      });
-      router.push(`/boards/${board.id}`);
-    } catch (err) {
-      setError(
-        err instanceof ApiError
-          ? err.message
-          : "Couldn't create the board — check that you're signed in.",
-      );
-      setCreating(false);
-    }
+    createMutation.mutate({
+      title: `${destination.trim()} trip`,
+      destination: destination.trim(),
+      boardType,
+      visibility: "PUBLIC",
+      startDate: dateRange?.from?.toISOString(),
+      endDate: dateRange?.to?.toISOString(),
+    });
   };
+
+  const creating = createMutation.isPending;
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-10">

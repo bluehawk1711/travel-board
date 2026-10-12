@@ -11,18 +11,19 @@ import {
   X,
 } from "lucide-react";
 import {
-  API_URL,
-  authFetch,
   createDirectConversation,
   createGroupConversation,
-  fetchConversation,
-  fetchConversations,
-  fetchMe,
-  fetchPresence,
-  listMessages,
-  searchUsers,
   sendChatMessage,
 } from "@/lib/api";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  conversationListQueryOptions,
+  conversationQueryOptions,
+  meQueryOptions,
+  messagesQueryOptions,
+  presenceQueryOptions,
+  useUserSearch,
+} from "@/lib/queries";
 import {
   conversationTitle,
   type ChatMessage,
@@ -112,6 +113,7 @@ export function ChatView({
 }: {
   initialTargetUserId?: string;
 }) {
+  const queryClient = useQueryClient();
   const [me, setMe] = useState<AuthUser | null>(null);
   const [rows, setRows] = useState<ListRow[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -132,10 +134,38 @@ export function ChatView({
   // New-chat modal state
   const [mode, setMode] = useState<"direct" | "group">("direct");
   const [userQuery, setUserQuery] = useState("");
-  const [userResults, setUserResults] = useState<SearchUser[]>([]);
+  const [debouncedUserQuery, setDebouncedUserQuery] = useState("");
   const [picked, setPicked] = useState<SearchUser[]>([]);
   const [groupName, setGroupName] = useState("");
   const [creating, setCreating] = useState(false);
+
+  // User search goes through React Query (debounced below).
+  const { data: userSearchData } = useUserSearch(debouncedUserQuery);
+  const userResults = userSearchData?.users ?? [];
+
+  // Writes also run through React Query mutations so every call site shares
+  // one cache/invalidation story.
+  const sendMutation = useMutation({
+    mutationFn: ({
+      conversationId,
+      body,
+    }: {
+      conversationId: string;
+      body: string;
+    }) => sendChatMessage(conversationId, body),
+  });
+  const createDirectMutation = useMutation({
+    mutationFn: (userId: string) => createDirectConversation(userId),
+  });
+  const createGroupMutation = useMutation({
+    mutationFn: ({
+      name,
+      memberIds,
+    }: {
+      name: string | null;
+      memberIds: string[];
+    }) => createGroupConversation(name, memberIds),
+  });
 
   const liveRef = useRef<{ socket: Socket; remove: () => void } | null>(null);
   const activeIdRef = useRef<string | null>(null);
@@ -158,16 +188,47 @@ export function ChatView({
   }, [activeId]);
 
   // ── Boot: identity + conversation list ───────────────────
+  // Opening a conversation loads detail + first page of messages through the
+  // React Query cache. Declared before the boot effect that calls it.
+  const openConversation = useCallback(
+    async (conversationId: string) => {
+      setActiveId(conversationId);
+      setMobileListOpen(false);
+      setError(null);
+      setLoadingConv(true);
+      try {
+        const [conv, page] = await Promise.all([
+          queryClient.fetchQuery(conversationQueryOptions(conversationId)),
+          queryClient.fetchQuery({
+            ...messagesQueryOptions(conversationId),
+            staleTime: 0,
+          }),
+        ]);
+        setActiveConv(conv);
+        setMessages(page.items);
+        setHasMore(page.hasMore);
+        setNextCursor(page.nextCursor);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Couldn't open chat");
+      } finally {
+        setLoadingConv(false);
+      }
+    },
+    [queryClient],
+  );
+
   useEffect(() => {
     let cancelled = false;
     async function boot() {
       setLoadingList(true);
       setError(null);
       try {
-        const { user } = await fetchMe();
+        const user = await queryClient.fetchQuery(meQueryOptions);
         if (cancelled) return;
         setMe(user);
-        const summaries = await fetchConversations();
+        const summaries = await queryClient.fetchQuery(
+          conversationListQueryOptions,
+        );
         if (cancelled) return;
         setRows(
           summaries.map((s) => ({
@@ -186,7 +247,9 @@ export function ChatView({
             void openConversation(existing.id);
           } else {
             try {
-              const conv = await createDirectConversation(initialTargetUserId);
+              const conv = await createDirectMutation.mutateAsync(
+                initialTargetUserId,
+              );
               if (cancelled) return;
               setRows((prev) => [
                 {
@@ -223,27 +286,6 @@ export function ChatView({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialTargetUserId]);
-
-  const openConversation = useCallback(async (conversationId: string) => {
-    setActiveId(conversationId);
-    setMobileListOpen(false);
-    setError(null);
-    setLoadingConv(true);
-    try {
-      const [conv, page] = await Promise.all([
-        fetchConversation(conversationId),
-        listMessages(conversationId),
-      ]);
-      setActiveConv(conv);
-      setMessages(page.items);
-      setHasMore(page.hasMore);
-      setNextCursor(page.nextCursor);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Couldn't open chat");
-    } finally {
-      setLoadingConv(false);
-    }
-  }, []);
 
   // ── Live socket wiring for the active conversation ───────
   useEffect(() => {
@@ -331,7 +373,7 @@ export function ChatView({
     if (ids.length === 0) return;
     async function refreshPresence() {
       try {
-        const data = await fetchPresence(ids);
+        const data = await queryClient.fetchQuery(presenceQueryOptions(ids));
         if (!cancelled) setPresence(data);
       } catch {
         // presence is best-effort
@@ -349,7 +391,10 @@ export function ChatView({
     if (!activeId || !nextCursor || loadedOlder) return;
     setLoadedOlder(true);
     try {
-      const page = await listMessages(activeId, nextCursor);
+      const page = await queryClient.fetchQuery({
+        ...messagesQueryOptions(activeId, nextCursor),
+        staleTime: 0,
+      });
       setMessages((prev) => [...page.items, ...prev]);
       setHasMore(page.hasMore);
       setNextCursor(page.nextCursor);
@@ -380,7 +425,7 @@ export function ChatView({
             return;
           }
         }
-        const message = await sendChatMessage(conversationId, body);
+        const message = await sendMutation.mutateAsync({ conversationId, body });
         setMessages((prev) =>
           prev.some((m) => m.id === message.id) ? prev : [...prev, message],
         );
@@ -402,7 +447,9 @@ export function ChatView({
 
   const refreshList = useCallback(async () => {
     try {
-      const summaries = await fetchConversations();
+      const summaries = await queryClient.fetchQuery(
+        conversationListQueryOptions,
+      );
       setRows(
         summaries.map((s) => ({
           ...s,
@@ -412,21 +459,24 @@ export function ChatView({
     } catch {
       // keep current list
     }
-  }, []);
+  }, [queryClient]);
 
   // ── New chat modal helpers ───────────────────────────────
-  const runUserSearch = async (q: string) => {
+  // Debounce keystrokes; the request itself runs through `useUserSearch`.
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setDebouncedUserQuery(userQuery.trim());
+    }, 300);
+    return () => window.clearTimeout(timer);
+  }, [userQuery]);
+
+  const runUserSearch = (q: string) => {
     setUserQuery(q);
-    if (!q.trim()) {
-      setUserResults([]);
-      return;
-    }
-    try {
-      const { users } = await searchUsers(q.trim());
-      setUserResults(users);
-    } catch {
-      setUserResults([]);
-    }
+  };
+
+  const clearUserSearch = () => {
+    setUserQuery("");
+    setDebouncedUserQuery("");
   };
 
   const togglePicked = (user: SearchUser) => {
@@ -440,12 +490,11 @@ export function ChatView({
   const startDirect = async (user: SearchUser) => {
     setCreating(true);
     try {
-      const conv = await createDirectConversation(user.id);
+      const conv = await createDirectMutation.mutateAsync(user.id);
       await refreshList();
       setNewChatOpen(false);
       setPicked([]);
-      setUserQuery("");
-      setUserResults([]);
+      clearUserSearch();
       await openConversation(conv.id);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't start chat");
@@ -458,16 +507,15 @@ export function ChatView({
     if (picked.length === 0) return;
     setCreating(true);
     try {
-      const conv = await createGroupConversation(
-        groupName.trim() || null,
-        picked.map((p) => p.id),
-      );
+      const conv = await createGroupMutation.mutateAsync({
+        name: groupName.trim() || null,
+        memberIds: picked.map((p) => p.id),
+      });
       await refreshList();
       setNewChatOpen(false);
       setPicked([]);
       setGroupName("");
-      setUserQuery("");
-      setUserResults([]);
+      clearUserSearch();
       await openConversation(conv.id);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't create group");

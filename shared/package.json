@@ -1,0 +1,11 @@
+{
+  "name": "@travel-board/shared",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Travel Board shared brand & design tokens (consumed by web and mobile)",
+  "main": "./index.ts",
+  "types": "./index.ts",
+  "exports": {
+    ".": "./index.ts"
+  }
+}

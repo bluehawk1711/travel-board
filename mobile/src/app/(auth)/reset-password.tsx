@@ -15,6 +15,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { api, ApiError } from '@/lib/api';
+import { useMutation } from '@tanstack/react-query';
 import { useAuthStore } from '@/lib/auth-store';
 import { queryClient } from '@/lib/query-client';
 
@@ -26,7 +27,13 @@ export default function ResetPasswordScreen() {
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+
+  // Password reset runs through a React Query mutation.
+  const resetMutation = useMutation({
+    mutationFn: (vars: { token: string; password: string }) =>
+      api.resetPassword(vars.token, vars.password),
+  });
+  const submitting = resetMutation.isPending;
 
   const submit = useCallback(async () => {
     if (!token) {
@@ -41,10 +48,9 @@ export default function ResetPasswordScreen() {
       setError('Passwords do not match');
       return;
     }
-    setSubmitting(true);
     setError(null);
     try {
-      const tokens = await api.resetPassword(token, password);
+      const tokens = await resetMutation.mutateAsync({ token, password });
       await setSession(tokens);
       queryClient.clear();
       router.replace('/(tabs)');
@@ -52,10 +58,8 @@ export default function ResetPasswordScreen() {
       setError(
         err instanceof ApiError ? err.message : 'Something went wrong — try again',
       );
-    } finally {
-      setSubmitting(false);
     }
-  }, [token, password, confirm, router]);
+  }, [token, password, confirm, router, setSession, resetMutation]);
 
   const inputStyle = [
     styles.input,

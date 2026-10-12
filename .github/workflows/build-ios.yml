@@ -1,0 +1,114 @@
+name: Build iOS
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'mobile/**'
+      - '.github/workflows/build-ios.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: build-ios-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  build-ios:
+    name: Build iOS (simulator archive)
+    runs-on: macos-latest
+    timeout-minutes: 90
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Restore node_modules cache
+        uses: actions/cache@v4
+        with:
+          path: mobile/node_modules
+          key: ios-node-modules-${{ runner.os }}-${{ hashFiles('mobile/pnpm-lock.yaml') }}
+          restore-keys: |
+            ios-node-modules-${{ runner.os }}-
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
+          working-directory: mobile
+
+      - name: Install Expo CLI
+        run: npm install -g expo-cli@latest
+
+      - name: Generate native project (prebuild)
+        run: npx expo prebuild --platform ios --no-install
+        env:
+          EXPO_NO_TELEMETRY: '1'
+
+      - name: Install CocoaPods
+        run: cd ios && pod install --repo-update
+        env:
+          COCOAPODS_DISABLE_STATS: 'true'
+
+      - name: Build iOS simulator app
+        run: |
+          cd ios
+          WORKSPACE=$(basename $(find . -maxdepth 1 -name "*.xcworkspace" | head -1) .xcworkspace)
+          SCHEME="$WORKSPACE"
+          if [ -z "$WORKSPACE" ]; then
+            echo "No xcworkspace found"; exit 1
+          fi
+          echo "Building workspace=$WORKSPACE scheme=$SCHEME"
+          xcodebuild -workspace "$WORKSPACE.xcworkspace" \
+            -scheme "$SCHEME" \
+            -sdk iphonesimulator \
+            -configuration Release \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            | xcpretty || true
+        env:
+          EXPO_PUBLIC_API_URL: ${{ secrets.EXPO_PUBLIC_API_URL }}
+          EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: ${{ secrets.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID }}
+          EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: ${{ secrets.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID }}
+          EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID: ${{ secrets.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID }}
+
+      - name: Package .app bundle
+        run: |
+          cd ios
+          APP_PATH=$(find build/Build/Products -name "*.app" -maxdepth 3 | head -n 1)
+          if [ -z "$APP_PATH" ]; then
+            echo "No .app bundle found"; exit 1
+          fi
+          zip -r TravelBoard-simulator.zip "$APP_PATH"
+
+      - name: Upload iOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: travel-board-ios-simulator
+          path: mobile/ios/TravelBoard-simulator.zip
+          retention-days: 14
+
+      - name: Summary
+        run: |
+          {
+            echo "## iOS build"
+            echo ""
+            echo "- Simulator .app uploaded as \`travel-board-ios-simulator\`"
+            echo "- Device/App Store builds need signing config — extend this workflow with an export when ready."
+          } >> "$GITHUB_STEP_SUMMARY"

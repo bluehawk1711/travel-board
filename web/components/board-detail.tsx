@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Socket } from "socket.io-client";
 import { Bookmark, Home, Images, MessagesSquare, Pencil, Trash2, Users } from "lucide-react";
 import { deleteBoard, fetchBoard, toggleBoardLike, toggleBoardSave, uploadImage } from "@/lib/api";
@@ -16,6 +17,7 @@ import {
   type BoardPresenceEvent,
 } from "@/lib/board-types";
 import { getBoardSocket } from "@/lib/socket";
+import { queryKeys } from "@/lib/queries";
 import { cn } from "@/lib/utils";
 import AnimatedLikeButton from "@/components/shadcn-space/button/button-20";
 import EventCard from "@/components/shadcn-space/card/card-24";
@@ -87,21 +89,124 @@ export function BoardDetailView({
   initialBoard: BoardDetail;
 }) {
   const router = useRouter();
-  const [board, setBoard] = useState<BoardDetail>(initialBoard);
+  const queryClient = useQueryClient();
+  const boardKey = queryKeys.board(initialBoard.id);
+
+  // Board detail lives in the React Query cache; socket events, the editor and
+  // the like/save mutations all write through it, so every surface (stats row,
+  // dock, editor) reads one source of truth.
+  const { data: board } = useQuery({
+    queryKey: boardKey,
+    queryFn: () => fetchBoard(initialBoard.id),
+    initialData: initialBoard,
+  });
+
+  /** Write-through cache setter (accepts a value or an updater function). */
+  const setBoard = useCallback(
+    (update: BoardDetail | ((prev: BoardDetail) => BoardDetail)) => {
+      queryClient.setQueryData<BoardDetail>(boardKey, (prev) =>
+        prev ? (typeof update === "function" ? update(prev) : update) : prev,
+      );
+    },
+    [queryClient, boardKey],
+  );
+
   const [joined, setJoined] = useState(false);
   const [editors, setEditors] = useState<string[]>([]);
   const [deleted, setDeleted] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const [editing, setEditing] = useState(false);
   const [membersOpen, setMembersOpen] = useState(false);
-  const [uploadingCover, setUploadingCover] = useState(false);
+  // Like/save/cover/delete are mutations that write through the cache, with an
+  // optimistic flip on like/save and rollback if the request fails.
+  const likeMutation = useMutation({
+    mutationFn: () => toggleBoardLike(board.id),
+    onMutate: () => {
+      const previous = queryClient.getQueryData<BoardDetail>(boardKey);
+      if (previous) {
+        setBoard({
+          ...previous,
+          liked: !previous.liked,
+          likeCount: Math.max(
+            0,
+            previous.likeCount + (previous.liked ? -1 : 1),
+          ),
+        });
+      }
+      return { previous };
+    },
+    onError: (_error, _vars, context) => {
+      if (context?.previous) {
+        setBoard(context.previous);
+      }
+    },
+    onSuccess: (result) => {
+      setBoard((prev) => ({
+        ...prev,
+        liked: result.liked,
+        likeCount: result.likeCount,
+      }));
+    },
+  });
 
-  // Like/save are lifted here so the stats row stays in sync with the
-  // animated like button and the dock's save action.
-  const [liked, setLiked] = useState(initialBoard.liked);
-  const [likeCount, setLikeCount] = useState(initialBoard.likeCount);
-  const [saved, setSaved] = useState(initialBoard.saved);
-  const [saveCount, setSaveCount] = useState(initialBoard.saveCount);
+  const saveMutation = useMutation({
+    mutationFn: () => toggleBoardSave(board.id),
+    onMutate: () => {
+      const previous = queryClient.getQueryData<BoardDetail>(boardKey);
+      if (previous) {
+        setBoard({
+          ...previous,
+          saved: !previous.saved,
+          saveCount: Math.max(
+            0,
+            previous.saveCount + (previous.saved ? -1 : 1),
+          ),
+        });
+      }
+      return { previous };
+    },
+    onError: (_error, _vars, context) => {
+      if (context?.previous) {
+        setBoard(context.previous);
+      }
+    },
+    onSuccess: (result) => {
+      setBoard((prev) => ({
+        ...prev,
+        saved: result.saved,
+        saveCount: result.saveCount,
+      }));
+    },
+  });
+
+  const coverMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const { url } = await uploadImage(file);
+      await updateBoard(board.id, { coverImageUrl: url });
+      return url;
+    },
+    onSuccess: (url) => {
+      setBoard((prev) => ({ ...prev, coverImageUrl: url }));
+      void queryClient.invalidateQueries({ queryKey: queryKeys.myBoards });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: () => deleteBoard(board.id),
+    onSuccess: () => {
+      setDeleted(true);
+      void queryClient.invalidateQueries({ queryKey: queryKeys.myBoards });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.followingFeed,
+      });
+    },
+  });
+
+  const liked = board.liked;
+  const likeCount = board.likeCount;
+  const saved = board.saved;
+  const saveCount = board.saveCount;
+  const uploadingCover = coverMutation.isPending;
 
   // Holds the socket + subscribed handlers so unmount can leave cleanly.
   const liveRef = useRef<{
@@ -111,21 +216,6 @@ export function BoardDetailView({
 
   useEffect(() => {
     let cancelled = false;
-
-    async function refresh() {
-      try {
-        const fresh = await fetchBoard(board.id);
-        if (!cancelled) {
-          setBoard(fresh);
-          setLiked(fresh.liked);
-          setLikeCount(fresh.likeCount);
-          setSaved(fresh.saved);
-          setSaveCount(fresh.saveCount);
-        }
-      } catch {
-        // keep current view on refetch failure
-      }
-    }
 
     getBoardSocket()
       .then((socket) => {
@@ -148,7 +238,7 @@ export function BoardDetailView({
             return;
           }
           if (event.type === "board:updated") {
-            void refresh();
+            void queryClient.invalidateQueries({ queryKey: boardKey });
             return;
           }
           setBoard((prev) => applyBoardChange(prev, event));
@@ -189,55 +279,34 @@ export function BoardDetailView({
         h.remove();
       }
     };
-  }, [board.id]);
+  }, [boardKey, board.id, queryClient, setBoard]);
 
-  const handleLike = async () => {
-    try {
-      // Optimistic flip lives inside AnimatedLikeButton; here we persist.
-      const result = await toggleBoardLike(board.id);
-      setLiked(result.liked);
-      setLikeCount(result.likeCount);
-      setBoard((prev) => ({ ...prev, likeCount: result.likeCount }));
-    } catch {
-      // anonymous or failed — keep current state
-    }
+  const handleLike = () => {
+    // Optimistic flip lives inside the mutation; the animated button reflects
+    // the cached board so it stays in sync with the stats row.
+    likeMutation.mutate();
   };
 
-  const handleSave = async () => {
-    try {
-      const result = await toggleBoardSave(board.id);
-      setSaved(result.saved);
-      setSaveCount(result.saveCount);
-      setBoard((prev) => ({ ...prev, saveCount: result.saveCount }));
-    } catch {
-      // anonymous or failed — keep current state
-    }
+  const handleSave = () => {
+    saveMutation.mutate();
   };
 
-  const handleDelete = async () => {
-    if (!window.confirm("Are you sure you want to delete this board? This cannot be undone.")) return;
-    try {
-      await deleteBoard(board.id);
-      setDeleted(true);
-    } catch {
-      // ignore
+  const handleDelete = () => {
+    if (
+      !window.confirm(
+        "Are you sure you want to delete this board? This cannot be undone.",
+      )
+    ) {
+      return;
     }
+    deleteMutation.mutate();
   };
 
   const handleCoverUpload = useCallback(
-    async (file: File) => {
-      setUploadingCover(true);
-      try {
-        const { url } = await uploadImage(file);
-        await updateBoard(board.id, { coverImageUrl: url });
-        setBoard((prev) => ({ ...prev, coverImageUrl: url }));
-      } catch {
-        // ignore
-      } finally {
-        setUploadingCover(false);
-      }
+    (file: File) => {
+      coverMutation.mutate(file);
     },
-    [board.id],
+    [coverMutation],
   );
 
   const tripStart = formatTripDate(board.startDate);

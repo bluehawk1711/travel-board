@@ -6,6 +6,7 @@ import {
   doublePrecision,
   index,
   integer,
+  jsonb,
   pgEnum,
   pgTable,
   primaryKey,
@@ -80,10 +81,11 @@ export const users = pgTable(
   },
   (table) => [
     // Trigram GIN index for ILIKE '%query%' search on name (H4).
-    // Requires: CREATE EXTENSION IF NOT EXISTS pg_trgm;
-    index('users_name_trgm_idx')
-      .using('gin', sql`${table.name} gin_trgm_ops`)
-      .concurrently(),
+    // Requires: CREATE EXTENSION IF NOT EXISTS pg_trgm; (scripts/seed.ts does
+    // this — Drizzle cannot express extensions).
+    // NOTE: no `.concurrently()` — drizzle-kit runs migrations inside a
+    // transaction and Postgres forbids CONCURRENTLY there.
+    index('users_name_trgm_idx').using('gin', sql`${table.name} gin_trgm_ops`),
   ],
 );
 
@@ -121,10 +123,12 @@ export const boards = pgTable(
       table.createdAt,
     ),
     // Trigram GIN index for ILIKE '%query%' search on title (H4).
-    // Requires: CREATE EXTENSION IF NOT EXISTS pg_trgm;
-    index('boards_title_trgm_idx')
-      .using('gin', sql`${table.title} gin_trgm_ops`)
-      .concurrently(),
+    // Requires: CREATE EXTENSION IF NOT EXISTS pg_trgm; (see scripts/seed.ts).
+    // No `.concurrently()` — it cannot run inside a migration transaction.
+    index('boards_title_trgm_idx').using(
+      'gin',
+      sql`${table.title} gin_trgm_ops`,
+    ),
   ],
 );
 
@@ -588,7 +592,9 @@ export const userSettings = pgTable('user_settings', {
     .primaryKey()
     .references(() => users.id, { onDelete: 'cascade' }),
   themeMode: themeModeEnum('theme_mode').notNull().default('SYSTEM'),
-  notificationsEnabled: boolean('notifications_enabled').notNull().default(true),
+  notificationsEnabled: boolean('notifications_enabled')
+    .notNull()
+    .default(true),
   emailUpdates: boolean('email_updates').notNull().default(false),
   /** ISO 4217 currency code used for budget display. */
   currency: text('currency').notNull().default('USD'),
@@ -600,6 +606,92 @@ export const userSettings = pgTable('user_settings', {
 export const userSettingsRelations = relations(userSettings, ({ one }) => ({
   user: one(users, {
     fields: [userSettings.userId],
+    references: [users.id],
+  }),
+}));
+
+// ─────────────────────────────────────────────────────────────
+// push_tokens  (device push tokens for FCM / Expo push)
+// ─────────────────────────────────────────────────────────────
+
+export const pushTokens = pgTable(
+  'push_tokens',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    /** Device push token (Expo push token on mobile, FCM vapid subscription on web). */
+    token: text('token').notNull().unique(),
+    /** Platform: EXPO | FCM | WEB_PUSH */
+    platform: text('platform').notNull().default('EXPO'),
+    /** Last time this token was verified/used. */
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [index('push_tokens_user_id_idx').on(table.userId)],
+);
+
+export const pushTokensRelations = relations(pushTokens, ({ one }) => ({
+  user: one(users, {
+    fields: [pushTokens.userId],
+    references: [users.id],
+  }),
+}));
+
+// ─────────────────────────────────────────────────────────────
+// notifications
+// ─────────────────────────────────────────────────────────────
+
+export const notificationTypes = pgEnum('notification_type', [
+  'NEW_FOLLOWER',
+  'NEW_BOARD_FOLLOWER',
+  'NEW_COMMENT',
+  'NEW_LIKE',
+  'NEW_SAVE',
+  'NEW_CHAT_MESSAGE',
+  'MENTION',
+]);
+
+export const notifications = pgTable(
+  'notifications',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    type: notificationTypes('type').notNull(),
+    /** Actor user id (who triggered the notification). */
+    actorId: uuid('actor_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    /** Target entity id (board id, comment id, conversation id, etc.) */
+    targetId: uuid('target_id'),
+    /** Target entity type (BOARD, COMMENT, CONVERSATION, USER). */
+    targetType: text('target_type'),
+    /** Optional metadata as JSON (e.g. comment excerpt, board title). */
+    metadata: jsonb('metadata'),
+    /** Whether the user has read this notification. */
+    read: boolean('read').notNull().default(false),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index('notifications_user_id_idx').on(table.userId),
+    index('notifications_user_read_idx').on(table.userId, table.read),
+    index('notifications_created_idx').on(table.createdAt),
+  ],
+);
+
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  user: one(users, {
+    fields: [notifications.userId],
+    references: [users.id],
+  }),
+  actor: one(users, {
+    fields: [notifications.actorId],
     references: [users.id],
   }),
 }));
@@ -628,3 +720,7 @@ export type Message = typeof messages.$inferSelect;
 export type NewMessage = typeof messages.$inferInsert;
 export type UserSettingsRow = typeof userSettings.$inferSelect;
 export type NewUserSettings = typeof userSettings.$inferInsert;
+export type PushToken = typeof pushTokens.$inferSelect;
+export type NewPushToken = typeof pushTokens.$inferInsert;
+export type Notification = typeof notifications.$inferSelect;
+export type NewNotification = typeof notifications.$inferInsert;

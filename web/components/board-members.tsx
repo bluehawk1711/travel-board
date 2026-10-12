@@ -1,17 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { UserPlus, Trash2, Shield, Eye, Pencil } from "lucide-react";
 import {
   addBoardMember,
   fetchBoardMembers,
   removeBoardMember,
-  searchUsers,
   updateBoardMemberRole,
-  type BoardMember,
 } from "@/lib/api";
-import type { SearchUser } from "@/lib/types";
+import { queryKeys, useUserSearch } from "@/lib/queries";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -44,96 +43,75 @@ function RoleIcon({ role }: { role: string }) {
 }
 
 export function BoardMembers({ boardId, isOwner, open, onOpenChange }: BoardMembersProps) {
-  const [members, setMembers] = useState<BoardMember[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<"EDITOR" | "VIEWER">("VIEWER");
   const [inviteSearch, setInviteSearch] = useState("");
-  const [searchResults, setSearchResults] = useState<SearchUser[]>([]);
-  const [inviting, setInviting] = useState(false);
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const loadMembers = useCallback(async () => {
-    setLoading(true);
-    try {
-      const data = await fetchBoardMembers(boardId);
-      setMembers(data.members);
-    } catch {
-      setError("Couldn't load members");
-    } finally {
-      setLoading(false);
-    }
-  }, [boardId]);
+  // Members load via React Query while the sheet is open.
+  const membersQuery = useQuery({
+    queryKey: queryKeys.boardMembers(boardId),
+    queryFn: () => fetchBoardMembers(boardId),
+    enabled: open,
+    staleTime: 15_000,
+  });
+  const members = membersQuery.data?.members ?? [];
 
+  // Debounced user search via React Query.
   useEffect(() => {
-    if (open) {
-      void loadMembers();
+    const t = setTimeout(() => setDebouncedSearch(inviteSearch.trim()), 300);
+    return () => clearTimeout(t);
+  }, [inviteSearch]);
+  const searchQuery = useUserSearch(debouncedSearch);
+  const searchResults = debouncedSearch.trim().length >= 2 ? searchQuery.data?.users ?? [] : [];
+
+  const invalidateMembers = () =>
+    void queryClient.invalidateQueries({ queryKey: queryKeys.boardMembers(boardId) });
+
+  const inviteMutation = useMutation({
+    mutationFn: (email: string) => addBoardMember(boardId, email, inviteRole),
+    onSuccess: () => {
       setInviteEmail("");
       setInviteSearch("");
-      setSearchResults([]);
-      setError(null);
-    }
-  }, [open, loadMembers]);
+      setDebouncedSearch("");
+      invalidateMembers();
+    },
+    onError: (err: Error) => setError(err.message || "Couldn't add member"),
+  });
+
+  const roleMutation = useMutation({
+    mutationFn: ({ userId, role }: { userId: string; role: "EDITOR" | "VIEWER" }) =>
+      updateBoardMemberRole(boardId, userId, role),
+    onSuccess: invalidateMembers,
+    onError: (err: Error) => setError(err.message || "Couldn't change role"),
+  });
+
+  const removeMutation = useMutation({
+    mutationFn: (userId: string) => removeBoardMember(boardId, userId),
+    onSuccess: invalidateMembers,
+    onError: (err: Error) => setError(err.message || "Couldn't remove member"),
+  });
 
   const handleSearch = (q: string) => {
     setInviteSearch(q);
     setInviteEmail("");
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (!q.trim()) {
-      setSearchResults([]);
-      return;
-    }
-    debounceRef.current = setTimeout(async () => {
-      try {
-        const { users } = await searchUsers(q.trim());
-        setSearchResults(users);
-      } catch {
-        setSearchResults([]);
-      }
-    }, 300);
   };
 
-  useEffect(() => {
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-    };
-  }, []);
-
-  const handleInvite = async (email: string) => {
-    setInviting(true);
+  const handleInvite = (email: string) => {
     setError(null);
-    try {
-      await addBoardMember(boardId, email, inviteRole);
-      setInviteEmail("");
-      setInviteSearch("");
-      setSearchResults([]);
-      await loadMembers();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Couldn't add member");
-    } finally {
-      setInviting(false);
-    }
+    inviteMutation.mutate(email);
   };
 
-  const handleRoleChange = async (userId: string, newRole: "EDITOR" | "VIEWER") => {
-    try {
-      await updateBoardMemberRole(boardId, userId, newRole);
-      setMembers((prev) =>
-        prev.map((m) => (m.userId === userId ? { ...m, role: newRole } : m)),
-      );
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Couldn't change role");
-    }
+  const handleRoleChange = (userId: string, role: "EDITOR" | "VIEWER") => {
+    setError(null);
+    roleMutation.mutate({ userId, role });
   };
 
-  const handleRemove = async (userId: string) => {
-    try {
-      await removeBoardMember(boardId, userId);
-      setMembers((prev) => prev.filter((m) => m.userId !== userId));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Couldn't remove member");
-    }
+  const handleRemove = (userId: string) => {
+    setError(null);
+    removeMutation.mutate(userId);
   };
 
   return (
@@ -167,11 +145,11 @@ export function BoardMembers({ boardId, isOwner, open, onOpenChange }: BoardMemb
                       <li key={user.id}>
                         <button
                           type="button"
-                          disabled={inviting}
+                          disabled={inviteMutation.isPending}
                           onClick={() => {
                             setInviteEmail(user.email);
                             setInviteSearch(user.name);
-                            setSearchResults([]);
+                            setDebouncedSearch("");
                           }}
                           className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800"
                         >
@@ -217,11 +195,11 @@ export function BoardMembers({ boardId, isOwner, open, onOpenChange }: BoardMemb
               <Button
                 size="sm"
                 className="h-7 flex-1"
-                disabled={!inviteEmail || inviting}
+                disabled={!inviteEmail || inviteMutation.isPending}
                 onClick={() => void handleInvite(inviteEmail)}
               >
                 <UserPlus className="mr-1 size-3" />
-                {inviting ? "Adding…" : "Add"}
+                {!inviteMutation.isPending ? "Add" : "Adding…"}
               </Button>
             </div>
           </div>
@@ -232,7 +210,7 @@ export function BoardMembers({ boardId, isOwner, open, onOpenChange }: BoardMemb
         )}
 
         <ScrollArea className="min-h-0 flex-1 px-5 py-3">
-          {loading ? (
+          {membersQuery.isPending ? (
             <p className="py-8 text-center text-sm text-zinc-400">Loading members…</p>
           ) : members.length === 0 ? (
             <p className="py-8 text-center text-sm text-zinc-400">No members yet.</p>

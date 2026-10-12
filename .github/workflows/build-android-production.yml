@@ -1,0 +1,144 @@
+name: Build Android Production
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+concurrency:
+  group: build-android-production-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  build-android-production:
+    name: Build Android AAB (Play Store)
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    env:
+      EXPO_PUBLIC_API_URL: ${{ secrets.EXPO_PUBLIC_API_URL }}
+      EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: ${{ secrets.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID }}
+      EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: ${{ secrets.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID }}
+      EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID: ${{ secrets.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID }}
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Restore node_modules cache
+        uses: actions/cache@v4
+        with:
+          path: mobile/node_modules
+          key: android-prod-node-modules-${{ runner.os }}-${{ hashFiles('mobile/pnpm-lock.yaml') }}
+          restore-keys: |
+            android-prod-node-modules-${{ runner.os }}-
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Install Expo CLI
+        run: npm install -g expo-cli@latest
+
+      - name: Generate native project (prebuild)
+        run: npx expo prebuild --platform android --no-install
+        env:
+          EXPO_NO_TELEMETRY: '1'
+
+      - name: Prepare release signing
+        working-directory: mobile
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          STORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASS: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          KS=android/app/release.keystore
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "::error::ANDROID_KEYSTORE_BASE64 is empty - cannot produce a signed release AAB"
+            exit 1
+          fi
+          echo "$KEYSTORE_BASE64" | base64 --decode > "$KS"
+          for VAR in STORE_PASS ALIAS KEY_PASS; do
+            if [ -z "${!VAR}" ]; then
+              echo "::error::$VAR is empty - set the ANDROID_* secrets in the repo"
+              exit 1
+            fi
+          done
+          if ! keytool -list -keystore "$KS" -storepass "$STORE_PASS" -alias "$ALIAS" >/dev/null 2>&1; then
+            echo "::error::Keystore credentials check failed - password or alias does not match"
+            exit 1
+          fi
+          echo "Signing credentials verified (alias: $ALIAS)"
+          cat >> android/app/build.gradle <<'EOF'
+
+          android {
+              signingConfigs {
+                  release {
+                      storeFile file(findProperty('ANDROID_KEYSTORE_FILE') ?: 'release.keystore')
+                      storePassword findProperty('ANDROID_KEYSTORE_PASSWORD') ?: ''
+                      keyAlias findProperty('ANDROID_KEY_ALIAS') ?: ''
+                      keyPassword findProperty('ANDROID_KEY_PASSWORD') ?: ''
+                  }
+              }
+              buildTypes {
+                  release {
+                      signingConfig signingConfigs.release
+                  }
+              }
+          }
+          EOF
+          echo "Signing config injected into app/build.gradle"
+
+      - name: Build Android AAB
+        working-directory: mobile/android
+        run: |
+          chmod +x gradlew
+          ./gradlew bundleRelease \
+            -Dorg.gradle.jvmargs="-Xmx4g -XX:MaxMetaspaceSize=1g" \
+            -PANDROID_KEYSTORE_FILE="${{ github.workspace }}/mobile/android/app/release.keystore" \
+            -PANDROID_KEYSTORE_PASSWORD="${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" \
+            -PANDROID_KEY_ALIAS="${{ secrets.ANDROID_KEY_ALIAS }}" \
+            -PANDROID_KEY_PASSWORD="${{ secrets.ANDROID_KEY_PASSWORD }}" \
+            --no-daemon --parallel --build-cache
+
+      - name: Remove decoded keystore
+        if: always()
+        run: rm -f mobile/android/app/release.keystore
+
+      - name: Upload AAB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: travel-board-android-aab
+          path: mobile/android/app/build/outputs/bundle/release/*.aab
+          retention-days: 30
+
+      - name: Summary
+        run: |
+          {
+            echo "## Android production build"
+            echo ""
+            echo "- AAB uploaded as \`travel-board-android-aab\`"
+            echo "- Upload it to the Play Console manually."
+          } >> "$GITHUB_STEP_SUMMARY"

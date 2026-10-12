@@ -1,7 +1,0 @@
-app/layout.tsx(3,21): error TS2307: Cannot find module '@shared' or its corresponding type declarations.
-app/settings/page.tsx(10,29): error TS2307: Cannot find module '@shared' or its corresponding type declarations.
-app/settings/page.tsx(256,35): error TS7006: Parameter 'mode' implicitly has an 'any' type.
-lib/api.ts(221,44): error TS2304: Cannot find name 'UserSettings'.
-lib/api.ts(226,25): error TS2304: Cannot find name 'UserSettings'.
-lib/api.ts(227,12): error TS2304: Cannot find name 'UserSettings'.
-lib/types.ts(35,46): error TS2307: Cannot find module '@shared' or its corresponding type declarations.

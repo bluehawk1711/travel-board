@@ -17,14 +17,14 @@ import type {
   TokensResponse,
   UserBoardsResult,
 } from './types';
-import type { UserSettings } from '@shared';
+import type { UserSettings } from '@travel-board/shared';
 
 /**
  * NestJS API base URL. Set `EXPO_PUBLIC_API_URL` in `mobile/.env` (see
  * `.env.example`); defaults to the local backend for simulators/web.
  */
 export const API_URL =
-  process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
+  process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:4000';
 
 const ACCESS_TOKEN_KEY = 'auth.accessToken';
 const REFRESH_TOKEN_KEY = 'auth.refreshToken';

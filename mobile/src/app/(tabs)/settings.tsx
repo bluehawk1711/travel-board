@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -34,20 +34,11 @@ export default function SettingsScreen() {
 
   const user = meQuery.data?.user;
 
-  const [name, setName] = useState('');
-  const [bio, setBio] = useState('');
-  const [saving, setSaving] = useState(false);
+  const [name, setName] = useState(user?.name ?? '');
+  const [bio, setBio] = useState(user?.bio ?? '');
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [avatarError, setAvatarError] = useState<string | null>(null);
-
-  // Sync fields once loaded — via useEffect to avoid extra render cycle.
-  useEffect(() => {
-    if (user) {
-      setName(user.name);
-      setBio(user.bio ?? '');
-    }
-  }, [user]);
 
   // Cleanup saved timer on unmount.
   useEffect(() => {
@@ -56,29 +47,46 @@ export default function SettingsScreen() {
     };
   }, []);
 
-  const handleSave = useCallback(async () => {
+  // Profile saves run through React Query mutations.
+  const profileMutation = useMutation({
+    mutationFn: (patch: { name: string; bio?: string }) =>
+      api.updateMyProfile(patch),
+    onSuccess: async () => {
+      setSaved(true);
+      await queryClient.invalidateQueries({ queryKey: ['me'] });
+      savedTimerRef.current = setTimeout(() => setSaved(false), 2000);
+    },
+    onError: (err: Error) => {
+      setError(err instanceof ApiError ? err.message : 'Something went wrong');
+    },
+  });
+  const saving = profileMutation.isPending;
+
+  const handleSave = useCallback(() => {
     if (!name.trim()) {
       setError('Name is required');
       return;
     }
-    setSaving(true);
     setError(null);
-    try {
-      await api.updateMyProfile({
-        name: name.trim(),
-        bio: bio.trim() || undefined,
-      });
-      setSaved(true);
-      queryClient.invalidateQueries({ queryKey: ['me'] });
-      savedTimerRef.current = setTimeout(() => setSaved(false), 2000);
-    } catch (err) {
-      setError(
-        err instanceof ApiError ? err.message : 'Something went wrong',
-      );
-    } finally {
-      setSaving(false);
-    }
-  }, [name, bio, queryClient]);
+    profileMutation.mutate({ name: name.trim(), bio: bio.trim() || undefined });
+  }, [name, bio, profileMutation]);
+
+  const avatarMutation = useMutation({
+    mutationFn: async (asset: {
+      uri: string;
+      name: string;
+      type: string;
+    }) => {
+      const { url } = await api.uploadImage(asset);
+      await api.updateMyProfile({ avatarUrl: url });
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['me'] });
+    },
+    onError: (err: Error) => {
+      setAvatarError(err instanceof ApiError ? err.message : 'Avatar upload failed');
+    },
+  });
 
   const handleAvatarUpload = useCallback(async () => {
     setAvatarError(null);
@@ -92,19 +100,15 @@ export default function SettingsScreen() {
       if (result.canceled || !result.assets?.[0]) return;
 
       const asset = result.assets[0];
-      const { url } = await api.uploadImage({
+      avatarMutation.mutate({
         uri: asset.uri,
         name: asset.fileName ?? 'avatar.jpg',
         type: asset.mimeType ?? 'image/jpeg',
       });
-      await api.updateMyProfile({ avatarUrl: url });
-      queryClient.invalidateQueries({ queryKey: ['me'] });
-    } catch (err) {
-      setAvatarError(
-        err instanceof ApiError ? err.message : 'Avatar upload failed',
-      );
+    } catch {
+      setAvatarError('Avatar upload failed');
     }
-  }, [queryClient]);
+  }, [avatarMutation]);
 
   const handleSignOut = useCallback(async () => {
     await signOut();
@@ -126,24 +130,28 @@ export default function SettingsScreen() {
     queryFn: api.getSettings,
   });
   const settings = settingsQuery.data;
-  const [settingsSaving, setSettingsSaving] = useState(false);
   const [settingsSaved, setSettingsSaved] = useState(false);
 
-  const saveSettings = useCallback(
-    async (patch: Parameters<typeof api.updateSettings>[0]) => {
-      setSettingsSaving(true);
-      try {
-        const updated = await api.updateSettings(patch);
-        queryClient.setQueryData(['me', 'settings'], updated);
-        setSettingsSaved(true);
-        savedTimerRef.current = setTimeout(() => setSettingsSaved(false), 2000);
-      } catch {
-        // Keep silent — surfaced on next fetch; settings are non-critical.
-      } finally {
-        setSettingsSaving(false);
-      }
+  const settingsMutation = useMutation({
+    mutationFn: (patch: NonNullable<
+      Parameters<typeof api.updateSettings>[0]
+    >) => api.updateSettings(patch),
+    onSuccess: (updated) => {
+      queryClient.setQueryData(['me', 'settings'], updated);
+      setSettingsSaved(true);
+      savedTimerRef.current = setTimeout(() => setSettingsSaved(false), 2000);
     },
-    [queryClient],
+    onError: () => {
+      // Silent — settings are non-critical and surfaced on next fetch.
+    },
+  });
+  const settingsSaving = settingsMutation.isPending;
+
+  const saveSettings = useCallback(
+    (patch: Parameters<typeof api.updateSettings>[0]) => {
+      settingsMutation.mutate(patch);
+    },
+    [settingsMutation],
   );
 
   return (

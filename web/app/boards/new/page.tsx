@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useMutation } from "@tanstack/react-query";
 import type { DateRange } from "react-day-picker";
 import IconAutocomplete from "@/components/shadcn-space/autocomplete/autocomplete-06";
 import RangeCalendar from "@/components/shadcn-space/calendar/calendar-14";
@@ -9,8 +10,8 @@ import { AutoGrowTextarea } from "@/components/shadcn-space/textarea/textarea-05
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { createBoard } from "@/lib/board-edit";
-import { ApiError, API_URL } from "@/lib/api";
+import { createBoard, type CreateBoardPayload } from "@/lib/board-edit";
+import { useDestinationOptions } from "@/lib/queries";
 import { cn } from "@/lib/utils";
 
 export default function NewBoardPage() {
@@ -23,61 +24,43 @@ export default function NewBoardPage() {
     "ITINERARY",
   );
   const [visibility, setVisibility] = useState<"PUBLIC" | "PRIVATE">("PUBLIC");
-  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [destinationOptions, setDestinationOptions] = useState<
-    { id: string; label: string }[]
-  >([]);
-  useEffect(() => {
-    let cancelled = false;
-    void fetch(new URL("/explore?sort=newest&limit=50&offset=0", API_URL))
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data: { items?: { destination?: string | null }[] } | null) => {
-        if (cancelled || !data?.items) return;
-        const seen = new Set<string>();
-        const options: { id: string; label: string }[] = [];
-        for (const item of data.items) {
-          if (item.destination && !seen.has(item.destination)) {
-            seen.add(item.destination);
-            options.push({ id: item.destination, label: item.destination });
-          }
-        }
-        setDestinationOptions(options);
-      })
-      .catch(() => undefined);
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  // Destination suggestions come from the newest public boards (React Query).
+  const { data: destinations } = useDestinationOptions();
+  const destinationOptions = useMemo(
+    () => (destinations ?? []).map((value) => ({ id: value, label: value })),
+    [destinations],
+  );
 
-  const submit = async () => {
+  const createMutation = useMutation({
+    mutationFn: (payload: CreateBoardPayload) => createBoard(payload),
+    onSuccess: (board) => {
+      router.push(`/boards/${board.id}`);
+    },
+    onError: (err: Error) => {
+      setError(err.message || "Couldn't create the board — check that you're signed in.");
+    },
+  });
+
+  const submit = () => {
     if (!title.trim()) {
       setError("Give your board a title.");
       return;
     }
-    setSubmitting(true);
     setError(null);
-    try {
-      const board = await createBoard({
-        title: title.trim(),
-        description: description.trim() || undefined,
-        destination: destination.trim() || undefined,
-        boardType,
-        visibility,
-        startDate: dateRange?.from?.toISOString(),
-        endDate: dateRange?.to?.toISOString(),
-      });
-      router.push(`/boards/${board.id}`);
-    } catch (err) {
-      setError(
-        err instanceof ApiError
-          ? err.message
-          : "Couldn't create the board — check that you're signed in.",
-      );
-      setSubmitting(false);
-    }
+    createMutation.mutate({
+      title: title.trim(),
+      description: description.trim() || undefined,
+      destination: destination.trim() || undefined,
+      boardType,
+      visibility,
+      startDate: dateRange?.from?.toISOString(),
+      endDate: dateRange?.to?.toISOString(),
+    });
   };
+
+  const submitting = createMutation.isPending;
 
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-10">

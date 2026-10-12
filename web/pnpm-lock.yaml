@@ -17,6 +17,12 @@ importers:
       '@dnd-kit/utilities':
         specifier: ^3.2.2
         version: 3.2.2(react@19.2.8)
+      '@tanstack/react-query':
+        specifier: ^5.103.0
+        version: 5.103.0(react@19.2.8)
+      '@travel-board/shared':
+        specifier: file:../shared
+        version: file:../shared
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -1332,6 +1338,17 @@ packages:
 
   '@tailwindcss/postcss@4.3.3':
     resolution: {integrity: sha512-JTSZZGQi1AyKirbLN3azmjVzef92tcX7h+iSqPdaeStyFpGpDlKvvpxeOE8njhbUanbRwr3z8DyzhICWnMtQeg==}
+
+  '@tanstack/query-core@5.103.0':
+    resolution: {integrity: sha512-PfafnHQHEu7mZDsSalxSW/EBxPgF77k3atIJeQbqbb1Z7DmK2mH6YLJyqrvbbDk5M6Ua/egs7LLEs04a8robxA==}
+
+  '@tanstack/react-query@5.103.0':
+    resolution: {integrity: sha512-Kn/cvTrNwFYpS/q1MYghMsVTSinmAKV1U2AnM3/x07PiczvC+nMoySqNpQK1jgDzVCOIHk5LlF2FhTlJKQmPAQ==}
+    peerDependencies:
+      react: ^18 || ^19
+
+  '@travel-board/shared@file:../shared':
+    resolution: {directory: ../shared, type: directory}
 
   '@tybys/wasm-util@0.10.3':
     resolution: {integrity: sha512-F3fo1MYrRJYL3zER0OUOmkutjr1Vp23m7OsSgp7nq4SP6OqX6C/56XFIPAl5bt3zaBRjmW7SGz3u/6LwFpYcOg==}
@@ -4230,6 +4247,15 @@ snapshots:
       '@tailwindcss/oxide': 4.3.3
       postcss: 8.5.26
       tailwindcss: 4.3.3
+
+  '@tanstack/query-core@5.103.0': {}
+
+  '@tanstack/react-query@5.103.0(react@19.2.8)':
+    dependencies:
+      '@tanstack/query-core': 5.103.0
+      react: 19.2.8
+
+  '@travel-board/shared@file:../shared': {}
 
   '@tybys/wasm-util@0.10.3':
     dependencies:

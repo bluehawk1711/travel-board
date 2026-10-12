@@ -13,30 +13,39 @@ import { BoardForm, type BoardFormValues } from '@/components/board-form';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { api, ApiError } from '@/lib/api';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 export default function CreateBoardScreen() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+
+  // Board creation runs through a React Query mutation so the boards list
+  // cache can be invalidated in one place.
+  const createMutation = useMutation({
+    mutationFn: (values: BoardFormValues) => api.createBoard(values),
+    onSuccess: async ({ board }) => {
+      await queryClient.invalidateQueries({ queryKey: ['boards', 'mine'] });
+      router.replace(`/board/${board.id}`);
+    },
+    onError: (err: Error) => {
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : 'Something went wrong — try again',
+      );
+    },
+  });
 
   const submit = useCallback(
-    async (values: BoardFormValues) => {
-      setSubmitting(true);
+    (values: BoardFormValues) => {
       setError(null);
-      try {
-        const { board } = await api.createBoard(values);
-        router.replace(`/board/${board.id}`);
-      } catch (err) {
-        setError(
-          err instanceof ApiError
-            ? err.message
-            : 'Something went wrong — try again',
-        );
-        setSubmitting(false);
-      }
+      createMutation.mutate(values);
     },
-    [router],
+    [createMutation],
   );
+
+  const submitting = createMutation.isPending;
 
   return (
     <KeyboardAvoidingView

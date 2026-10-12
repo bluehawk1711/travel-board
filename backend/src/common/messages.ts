@@ -67,6 +67,13 @@ export const MESSAGES = {
     UPDATED: 'Settings updated successfully',
     INVALID_CURRENCY: 'Unsupported currency code',
   },
+  PUSH: {
+    TOKEN_REGISTERED: 'Push token registered',
+    TOKEN_REMOVED: 'Push token removed',
+  },
+  NOTIFICATIONS: {
+    READ: 'Notifications marked as read',
+  },
   COMMON: {
     UPDATED: 'Updated successfully',
     DELETED: 'Deleted successfully',

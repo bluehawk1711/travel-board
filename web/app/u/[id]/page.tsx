@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { fetchProfile, fetchUserBoards, ApiError } from "@/lib/api";
+import type { PublicProfile, UserBoardsResult } from "@/lib/types";
 import { UserProfileView } from "@/components/user-profile";
 
-export const dynamic = "force-dynamic";
+// Cache Components: profile data + metadata stream at request time behind the
+// segment's loading.tsx Suspense boundary.
 
 export async function generateMetadata({
   params,
@@ -25,12 +27,23 @@ export default async function UserProfilePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const { user, boards } = await loadProfile(id);
+  return <UserProfileView initialProfile={user} initialBoards={boards} />;
+}
+
+/**
+ * Data loading is kept outside the JSX so render errors aren't swallowed by a
+ * try/catch (React only catches rendering errors in error boundaries).
+ */
+async function loadProfile(
+  id: string,
+): Promise<{ user: PublicProfile; boards: UserBoardsResult }> {
   try {
     const [{ user }, boards] = await Promise.all([
       fetchProfile(id),
       fetchUserBoards(id, 24, 0),
     ]);
-    return <UserProfileView initialProfile={user} initialBoards={boards} />;
+    return { user, boards };
   } catch (err) {
     if (err instanceof ApiError && err.status === 404) {
       notFound();

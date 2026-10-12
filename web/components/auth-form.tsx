@@ -4,17 +4,12 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Loader2, LogIn, UserPlus } from "lucide-react";
-import { API_URL, ApiError } from "@/lib/api";
+import { useMutation } from "@tanstack/react-query";
+import { API_URL, login, signup } from "@/lib/api";
 import { notifyAuthChanged, storeTokens } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
-interface TokensResponse {
-  accessToken: string;
-  refreshToken: string;
-  user: { id: string; name: string };
-}
 
 export function AuthForm({ mode }: { mode: "login" | "signup" }) {
   const router = useRouter();
@@ -22,45 +17,38 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
 
   const isSignup = mode === "signup";
 
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setBusy(true);
-    try {
-      const body = isSignup
-        ? JSON.stringify({ name, email, password })
-        : JSON.stringify({ email, password });
-      const response = await fetch(new URL(`/auth/${mode}`, API_URL), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body,
-        credentials: "include",
-      });
-      if (!response.ok) {
-        const data = (await response.json().catch(() => null)) as {
-          message?: string | string[];
-        } | null;
-        const message = Array.isArray(data?.message)
-          ? data!.message.join(", ")
-          : data?.message ?? `Request failed (${response.status})`;
-        throw new ApiError(message, response.status);
-      }
-      const tokens = (await response.json()) as TokensResponse;
-      // Access token stored in memory for Socket.IO; refresh token is in httpOnly cookie.
+  const authMutation = useMutation({
+    mutationFn: (payload: {
+      name: string;
+      email: string;
+      password: string;
+    }) =>
+      isSignup
+        ? signup(payload.name, payload.email, payload.password)
+        : login(payload.email, payload.password),
+    onSuccess: (tokens) => {
+      // Access token stored in memory for Socket.IO; refresh token is in an
+      // httpOnly cookie set by the API.
       storeTokens(tokens.accessToken, "");
       notifyAuthChanged("login");
       router.push("/");
       router.refresh();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
-    } finally {
-      setBusy(false);
-    }
+    },
+    onError: (err: Error) => {
+      setError(err.message || "Something went wrong");
+    },
+  });
+
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    authMutation.mutate({ name, email, password });
   };
+
+  const busy = authMutation.isPending;
 
   const continueWithGoogle = () => {
     // Backend redirects to FRONTEND_URL/auth/callback with tokens in the URL.

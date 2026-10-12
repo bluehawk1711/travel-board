@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Plus } from "lucide-react";
-import { fetchMyBoards, type MyBoard } from "@/lib/board-edit";
-import { ApiError } from "@/lib/api";
+import { type MyBoard } from "@/lib/board-edit";
+import { useMyBoards } from "@/lib/queries";
 import { Button } from "@/components/ui/button";
 import FloatingPill from "@/components/shadcn-space/pagination/pagination-01";
 
@@ -56,29 +56,11 @@ function MyBoardCard({ board }: { board: MyBoard }) {
 }
 
 export default function MyBoardsPage() {
-  const [boards, setBoards] = useState<MyBoard[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  const { data: boards, error, isPending } = useMyBoards();
 
-  useEffect(() => {
-    let cancelled = false;
-    fetchMyBoards()
-      .then((data) => {
-        if (!cancelled) setBoards(data);
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          setError(
-            err instanceof ApiError
-              ? err.message
-              : "Couldn't load your boards.",
-          );
-        }
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const message =
+    error instanceof Error ? error.message : "Couldn't load your boards.";
 
   const totalPages = boards ? Math.max(1, Math.ceil(boards.length / PAGE_SIZE)) : 1;
   const pageItems = useMemo(
@@ -106,12 +88,12 @@ export default function MyBoardsPage() {
 
       {error ? (
         <div className="rounded-2xl border border-dashed border-zinc-300 py-20 text-center dark:border-zinc-700">
-          <p className="text-zinc-600 dark:text-zinc-400">{error}</p>
+          <p className="text-zinc-600 dark:text-zinc-400">{message}</p>
           <p className="mt-2 text-xs text-zinc-400">
             Make sure you&apos;re signed in (Google OAuth via the API).
           </p>
         </div>
-      ) : boards === null ? (
+      ) : isPending ? (
         <div className="py-20 text-center text-sm text-zinc-500">Loading…</div>
       ) : boards.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-zinc-300 py-20 text-center dark:border-zinc-700">

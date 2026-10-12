@@ -15,33 +15,37 @@ import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { api, ApiError } from '@/lib/api';
+import { useQuery } from '@tanstack/react-query';
 import type { SearchUser } from '@/lib/types';
 
 export default function SearchScreen() {
   const theme = useTheme();
   const router = useRouter();
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<SearchUser[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [searched, setSearched] = useState(false);
+  const [submittedQuery, setSubmittedQuery] = useState('');
 
-  const doSearch = useCallback(async () => {
+  // User search runs through React Query, keyed by the submitted term.
+  const searchQuery = useQuery({
+    queryKey: ['users', 'search', submittedQuery],
+    queryFn: () => api.searchUsers(submittedQuery),
+    enabled: submittedQuery.length > 0,
+  });
+
+  const results = searchQuery.data?.users ?? [];
+  const loading = searchQuery.isFetching;
+  const searched = submittedQuery.length > 0;
+  const queryError = searchQuery.error;
+  const error =
+    queryError instanceof ApiError
+      ? queryError.message
+      : queryError
+        ? 'Search failed'
+        : null;
+
+  const doSearch = useCallback(() => {
     const q = query.trim();
     if (!q) return;
-    setLoading(true);
-    setError(null);
-    setSearched(true);
-    try {
-      const { users } = await api.searchUsers(q);
-      setResults(users);
-    } catch (err) {
-      setError(
-        err instanceof ApiError ? err.message : 'Search failed',
-      );
-    } finally {
-      setLoading(false);
-    }
+    setSubmittedQuery(q);
   }, [query]);
 
   return (

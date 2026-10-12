@@ -1,7 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -16,14 +15,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import type { Socket } from 'socket.io-client';
 
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { api } from '@/lib/api';
 import { getBoardSocket } from '@/lib/socket';
 
 interface Message {
-  id: string;
+  /** Message ids are numeric in the API but arrive as strings over JSON. */
+  id: number | string;
   body: string;
   senderId: string;
   createdAt: string;
@@ -41,24 +40,32 @@ export default function ChatViewScreen() {
   const queryClient = useQueryClient();
 
   const [input, setInput] = useState('');
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [myId, setMyId] = useState<string | null>(null);
+  /**
+   * Messages received over the socket (and optimistic sends) since the query
+   * snapshot was taken, tagged with their conversation so switching chats
+   * never leaks the previous buffer. Merged (deduped) with the fetched page
+   * below so the React Query cache stays the source of truth for history.
+   */
+  const [liveMessages, setLiveMessages] = useState<{
+    conversationId: string | undefined;
+    items: Message[];
+  }>({ conversationId: undefined, items: [] });
   const [typingUserIds, setTypingUserIds] = useState<string[]>([]);
   const flatListRef = useRef<FlatList>(null);
   const myIdRef = useRef<string | null>(null);
   const typingSentAtRef = useRef(0);
+  /** Last message id marked read — avoids re-emitting on every render. */
+  const lastReadIdRef = useRef<number | string | null>(null);
 
   // Get current user — cache via query client to avoid redundant calls.
   const meQuery = useQuery({
     queryKey: ['me'],
     queryFn: api.me,
   });
+  const myId = meQuery.data?.user.id ?? null;
   useEffect(() => {
-    if (meQuery.data) {
-      myIdRef.current = meQuery.data.user.id;
-      setMyId(meQuery.data.user.id);
-    }
-  }, [meQuery.data]);
+    myIdRef.current = myId;
+  }, [myId]);
 
   // Fetch conversation details + messages
   const convQuery = useQuery({
@@ -73,23 +80,38 @@ export default function ChatViewScreen() {
     enabled: Boolean(id),
   });
 
-  useEffect(() => {
-    if (messagesQuery.data) {
-      setMessages(messagesQuery.data.items);
-      // Opened the screen — mark everything currently loaded as read.
-      const last = messagesQuery.data.items.at(-1);
-      if (id && last) {
-        getBoardSocket()
-          .then((socket) => {
-            socket.emit('message:read', {
-              conversationId: id,
-              lastMessageId: Number(last.id),
-            });
-          })
-          .catch(() => {});
+  // Fetched history + locally received messages, deduped by id.
+  // The query's item type uses `id: string`; live socket/send payloads are
+  // cast to it (the backend emits numeric ids — deduping coerces via String).
+  // Live messages are keyed by conversation so switching chats doesn't leak
+  // the previous conversation's buffer into the merged list.
+  const messages = useMemo(() => {
+    const fetched: Message[] = messagesQuery.data?.items ?? [];
+    const merged = [...fetched];
+    if (liveMessages.conversationId === id) {
+      for (const msg of liveMessages.items) {
+        if (!merged.some((m) => String(m.id) === String(msg.id))) {
+          merged.push(msg);
+        }
       }
     }
-  }, [messagesQuery.data, id]);
+    return merged;
+  }, [messagesQuery.data, liveMessages, id]);
+
+  // Mark loaded messages read once per conversation open / new batch.
+  useEffect(() => {
+    const last = messages.at(-1);
+    if (!id || !last || lastReadIdRef.current === last.id) return;
+    lastReadIdRef.current = last.id;
+    getBoardSocket()
+      .then((socket) => {
+        socket.emit('message:read', {
+          conversationId: id,
+          lastMessageId: Number(last.id),
+        });
+      })
+      .catch(() => {});
+  }, [messages, id]);
 
   // Socket for realtime — cleanup runs outside .then() via ref.
   const socketRef = useRef<Socket | null>(null);
@@ -107,8 +129,12 @@ export default function ChatViewScreen() {
 
         const onMessage = (msg: Message) => {
           if (msg.senderId !== myIdRef.current) {
-            setMessages((prev) =>
-              prev.some((m) => m.id === msg.id) ? prev : [...prev, msg],
+            setLiveMessages((prev) =>
+              prev.conversationId !== id
+                ? { conversationId: id, items: [msg] }
+                : prev.items.some((m) => String(m.id) === String(msg.id))
+                  ? prev
+                  : { ...prev, items: [...prev.items, msg] },
             );
             // Screen is open — mark newly received messages read immediately.
             socket.emit('message:read', {
@@ -163,7 +189,13 @@ export default function ChatViewScreen() {
     setInput('');
     try {
       const msg = await api.sendMessage(id, body);
-      setMessages((prev) => [...prev, msg]);
+      setLiveMessages((prev) =>
+        prev.conversationId !== id
+          ? { conversationId: id, items: [msg] }
+          : prev.items.some((m) => String(m.id) === String(msg.id))
+            ? prev
+            : { ...prev, items: [...prev.items, msg] },
+      );
     } catch {
       // silent
     }

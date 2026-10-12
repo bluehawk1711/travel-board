@@ -15,6 +15,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { api, ApiError } from '@/lib/api';
+import { useMutation } from '@tanstack/react-query';
 import { useAuthStore } from '@/lib/auth-store';
 import { queryClient } from '@/lib/query-client';
 import { GoogleButton } from '@/components/google-button';
@@ -26,17 +27,25 @@ export default function SignInScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+
+  // Auth calls run through React Query mutations.
+  const signInMutation = useMutation({
+    mutationFn: (vars: { email: string; password: string }) =>
+      api.login(vars.email, vars.password),
+  });
+  const submitting = signInMutation.isPending;
 
   const submit = useCallback(async () => {
     if (!email.trim() || !password) {
       setError('Enter your email and password');
       return;
     }
-    setSubmitting(true);
     setError(null);
     try {
-      const tokens = await api.login(email.trim().toLowerCase(), password);
+      const tokens = await signInMutation.mutateAsync({
+        email: email.trim().toLowerCase(),
+        password,
+      });
       await setSession(tokens);
       queryClient.clear();
       router.replace('/(tabs)');
@@ -44,10 +53,8 @@ export default function SignInScreen() {
       setError(
         err instanceof ApiError ? err.message : 'Something went wrong — try again',
       );
-    } finally {
-      setSubmitting(false);
     }
-  }, [email, password, router]);
+  }, [email, password, router, setSession, signInMutation]);
 
   const inputStyle = [
     styles.input,

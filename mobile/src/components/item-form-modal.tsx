@@ -1,5 +1,6 @@
 import * as ImagePicker from 'expo-image-picker';
-import { useCallback, useEffect, useState } from 'react';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   Modal,
@@ -85,60 +86,96 @@ export function ItemFormModal({
     null,
   );
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<PlaceResult[]>([]);
-  const [searching, setSearching] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const [submittedPlaceQuery, setSubmittedPlaceQuery] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  // Reset/populate the fields each time the modal opens.
-  useEffect(() => {
-    if (!visible) return;
-    setError(null);
-    setQuery('');
-    setResults([]);
-    if (item) {
-      setType(item.type);
-      setTitle(item.title);
-      setDescription(item.description ?? '');
-      setUrl(item.url ?? '');
-      setDate(item.date ? item.date.slice(0, 10) : '');
-      setImageUrl(item.imageUrl);
-      setPlaceId(item.placeId);
-      setCoords(
-        item.lat != null && item.lng != null
-          ? { lat: item.lat, lng: item.lng }
-          : null,
-      );
-    } else {
-      setType('PLACE');
-      setTitle('');
-      setDescription('');
-      setUrl('');
-      setDate('');
-      setImageUrl(null);
-      setPlaceId(null);
-      setCoords(null);
-    }
-  }, [visible, item]);
+  // Places search goes through React Query: identical searches are deduped and
+  // reused for a day (Places calls are billed — AGENTS.md §6).
+  const placesQuery = useQuery({
+    queryKey: ['places', 'search', submittedPlaceQuery],
+    queryFn: () => api.searchPlaces(submittedPlaceQuery),
+    enabled: submittedPlaceQuery.length > 0,
+    staleTime: 24 * 60 * 60 * 1000,
+  });
+  const results = placesQuery.data ?? [];
+  const searching = placesQuery.isFetching;
+  const placesMessage =
+    !searching && submittedPlaceQuery.length > 0 && results.length === 0
+      ? 'No places matched that search'
+      : null;
 
-  const searchPlaces = useCallback(async () => {
+  // Writes run through React Query mutations.
+  const saveMutation = useMutation({
+    mutationFn: (args: {
+      itemId: string | null;
+      body: Parameters<typeof api.createItem>[2];
+    }) =>
+      args.itemId
+        ? api.updateItem(boardId, sectionId, args.itemId, args.body)
+        : api.createItem(boardId, sectionId, args.body),
+    onSuccess: () => {
+      onSaved();
+      onClose();
+    },
+    onError: (err: Error) => {
+      setError(err instanceof ApiError ? err.message : 'Could not save item');
+    },
+  });
+  const saving = saveMutation.isPending;
+
+  const uploadMutation = useMutation({
+    mutationFn: (asset: { uri: string; name: string; type: string }) =>
+      api.uploadImage(asset),
+    onSuccess: ({ url }) => {
+      setImageUrl(url);
+    },
+    onError: (err: Error) => {
+      setError(err instanceof ApiError ? err.message : 'Image upload failed');
+    },
+  });
+
+  // Reset/populate the fields each time the modal opens. Adjusting state
+  // during render (instead of a synchronous setState effect) avoids the
+  // cascading-render warning while keeping the reset atomic per open.
+  const openKey = visible ? (item?.id ?? 'new') : null;
+  const [prevOpenKey, setPrevOpenKey] = useState<string | null>(null);
+  if (openKey !== prevOpenKey) {
+    setPrevOpenKey(openKey);
+    if (visible) {
+      setError(null);
+      setQuery('');
+      setSubmittedPlaceQuery('');
+      if (item) {
+        setType(item.type);
+        setTitle(item.title);
+        setDescription(item.description ?? '');
+        setUrl(item.url ?? '');
+        setDate(item.date ? item.date.slice(0, 10) : '');
+        setImageUrl(item.imageUrl);
+        setPlaceId(item.placeId);
+        setCoords(
+          item.lat != null && item.lng != null
+            ? { lat: item.lat, lng: item.lng }
+            : null,
+        );
+      } else {
+        setType('PLACE');
+        setTitle('');
+        setDescription('');
+        setUrl('');
+        setDate('');
+        setImageUrl(null);
+        setPlaceId(null);
+        setCoords(null);
+      }
+    }
+  }
+
+  const searchPlaces = useCallback(() => {
     const q = query.trim();
     if (!q) return;
-    setSearching(true);
     setError(null);
-    try {
-      const found = await api.searchPlaces(q);
-      setResults(found);
-      if (found.length === 0) {
-        setError('No places matched that search');
-      }
-    } catch (err) {
-      setError(
-        err instanceof ApiError ? err.message : 'Place search failed',
-      );
-    } finally {
-      setSearching(false);
-    }
+    setSubmittedPlaceQuery(q);
   }, [query]);
 
   const pickImage = useCallback(async () => {
@@ -150,16 +187,15 @@ export function ItemFormModal({
       });
       if (result.canceled || !result.assets?.[0]) return;
       const asset = result.assets[0];
-      const uploaded = await api.uploadImage({
+      uploadMutation.mutate({
         uri: asset.uri,
         name: asset.fileName ?? 'item.jpg',
         type: asset.mimeType ?? 'image/jpeg',
       });
-      setImageUrl(uploaded.url);
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Image upload failed');
+    } catch {
+      setError('Image upload failed');
     }
-  }, []);
+  }, [uploadMutation]);
 
   const applyPlace = useCallback((place: PlaceResult) => {
     setTitle(place.name);
@@ -168,18 +204,18 @@ export function ItemFormModal({
     if (place.formattedAddress) {
       setDescription(place.formattedAddress);
     }
-    setResults([]);
-    setQuery('');
+    setSubmittedPlaceQuery('');
   }, []);
-  const save = useCallback(async () => {
+  const save = useCallback(() => {
     if (!title.trim()) {
       setError('Item title is required');
       return;
     }
-    setSaving(true);
     setError(null);
-    try {
-      const common = {
+    saveMutation.mutate({
+      itemId: item?.id ?? null,
+      body: {
+        type,
         title: title.trim(),
         description: description.trim() || undefined,
         url: url.trim() || undefined,
@@ -188,19 +224,8 @@ export function ItemFormModal({
         lat: coords?.lat,
         lng: coords?.lng,
         date: date.trim() || undefined,
-      };
-      if (item) {
-        await api.updateItem(boardId, sectionId, item.id, common);
-      } else {
-        await api.createItem(boardId, sectionId, { ...common, type });
-      }
-      onSaved();
-      onClose();
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Could not save item');
-    } finally {
-      setSaving(false);
-    }
+      },
+    });
   }, [
     title,
     description,
@@ -211,10 +236,7 @@ export function ItemFormModal({
     date,
     type,
     item,
-    boardId,
-    sectionId,
-    onSaved,
-    onClose,
+    saveMutation,
   ]);
 
   const showPlaceSearch = PLACE_TYPES.includes(type);
@@ -243,7 +265,7 @@ export function ItemFormModal({
                   key={t}
                   onPress={() => {
                     setType(t);
-                    setResults([]);
+                    setSubmittedPlaceQuery('');
                     setQuery('');
                   }}
                   disabled={isEdit}
@@ -382,9 +404,9 @@ export function ItemFormModal({
               ) : null}
             </Pressable>
 
-            {error ? (
+            {error || placesMessage ? (
               <ThemedText type="small" style={styles.error}>
-                {error}
+                {error ?? placesMessage}
               </ThemedText>
             ) : null}
 

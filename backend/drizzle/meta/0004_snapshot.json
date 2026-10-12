@@ -557,7 +557,7 @@
             }
           ],
           "isUnique": false,
-          "concurrently": true,
+          "concurrently": false,
           "method": "gin",
           "with": {}
         }
@@ -1478,7 +1478,7 @@
             }
           ],
           "isUnique": false,
-          "concurrently": true,
+          "concurrently": false,
           "method": "gin",
           "with": {}
         }

@@ -27,7 +27,7 @@ describe('AuthService', () => {
     getOrThrow: jest.fn((key: string) => {
       if (key === 'JWT_SECRET') return 'test-secret';
       if (key === 'JWT_REFRESH_SECRET') return 'test-refresh-secret';
-      if (key === 'FRONTEND_URL') return 'http://localhost:3001';
+      if (key === 'FRONTEND_URL') return 'http://localhost:3000';
       return undefined;
     }),
   };

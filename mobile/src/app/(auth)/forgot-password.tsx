@@ -15,6 +15,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { api, ApiError } from '@/lib/api';
+import { useMutation } from '@tanstack/react-query';
 
 export default function ForgotPasswordScreen() {
   const theme = useTheme();
@@ -22,26 +23,28 @@ export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+
+  // Password reset request runs through a React Query mutation.
+  const forgotMutation = useMutation({
+    mutationFn: (vars: { email: string }) => api.forgotPassword(vars.email),
+  });
+  const submitting = forgotMutation.isPending;
 
   const submit = useCallback(async () => {
     if (!email.trim()) {
       setError('Enter your email');
       return;
     }
-    setSubmitting(true);
     setError(null);
     try {
-      await api.forgotPassword(email.trim().toLowerCase());
+      await forgotMutation.mutateAsync({ email: email.trim().toLowerCase() });
       setSent(true);
     } catch (err) {
       setError(
         err instanceof ApiError ? err.message : 'Something went wrong — try again',
       );
-    } finally {
-      setSubmitting(false);
     }
-  }, [email]);
+  }, [email, forgotMutation]);
 
   const inputStyle = [
     styles.input,

@@ -19,6 +19,8 @@ import { FollowsModule } from './follows/follows.module';
 import { ChatModule } from './chat/chat.module';
 import { UploadsModule } from './uploads/uploads.module';
 import { UsersModule } from './users/users.module';
+import { PushModule } from './push/push.module';
+import { NotificationsModule } from './notifications/notifications.module';
 import { RedisModule } from './common/redis/redis.module';
 import { REDIS_CLIENT } from './common/redis/redis.constants';
 import { UpstashKeyvStore } from './common/cache/upstash-keyv.store';
@@ -32,7 +34,8 @@ const CACHE_L1_LRU_SIZE = 5_000;
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     LoggerModule.forRootAsync({
-      imports: [ConfigService],
+      // ConfigModule is `isGlobal`, so ConfigService is already injectable —
+      // it must NOT go in `imports` (that array only takes modules).
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
         pinoHttp: {
@@ -86,6 +89,8 @@ const CACHE_L1_LRU_SIZE = 5_000;
     ChatModule,
     UploadsModule,
     UsersModule,
+    PushModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],

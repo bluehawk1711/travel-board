@@ -1,19 +1,12 @@
-import { useRouter } from 'expo-router';
-import { useEffect } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import AppTabs from '@/components/app-tabs';
 import { useAuthStore } from '@/lib/auth-store';
 
 export default function TabsLayout() {
-  const router = useRouter();
+  // Redirects (in both directions) are handled once by `useAuthGuard` in the
+  // root layout — here we only hold the UI until the session is known.
   const status = useAuthStore((state) => state.status);
-
-  useEffect(() => {
-    if (status === 'unauthenticated') {
-      void router.replace('/(auth)/sign-in');
-    }
-  }, [router, status]);
 
   if (status !== 'authenticated') {
     return (

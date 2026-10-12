@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
@@ -31,8 +31,6 @@ export default function EditBoardScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
 
   const [error, setError] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [deleting, setDeleting] = useState(false);
 
   const query = useQuery({
     queryKey: ['board', id],
@@ -40,27 +38,42 @@ export default function EditBoardScreen() {
     enabled: !!id,
   });
 
+  // Save/delete run through React Query mutations so cache invalidation lives
+  // next to the write instead of in every handler.
+  const updateMutation = useMutation({
+    mutationFn: (values: BoardFormValues) => api.updateBoard(id, values),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['board', id] });
+      await queryClient.invalidateQueries({ queryKey: ['boards', 'mine'] });
+      router.back();
+    },
+    onError: (err: Error) => {
+      setError(err instanceof ApiError ? err.message : 'Could not save changes');
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: () => api.deleteBoard(id),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['boards', 'mine'] });
+      router.replace('/(tabs)');
+    },
+    onError: (err: Error) => {
+      setError(err instanceof ApiError ? err.message : 'Could not delete');
+    },
+  });
+
   const board = query.data;
   const canEdit = board?.role === 'OWNER' || board?.role === 'EDITOR';
+  const saving = updateMutation.isPending;
+  const deleting = deleteMutation.isPending;
 
   const submit = useCallback(
-    async (values: BoardFormValues) => {
-      setSaving(true);
+    (values: BoardFormValues) => {
       setError(null);
-      try {
-        await api.updateBoard(id, values);
-        await queryClient.invalidateQueries({ queryKey: ['board', id] });
-        await queryClient.invalidateQueries({ queryKey: ['boards', 'mine'] });
-        router.back();
-      } catch (err) {
-        setError(
-          err instanceof ApiError ? err.message : 'Could not save changes',
-        );
-      } finally {
-        setSaving(false);
-      }
+      updateMutation.mutate(values);
     },
-    [id, queryClient, router],
+    [updateMutation],
   );
 
   const confirmDelete = useCallback(() => {
@@ -69,26 +82,10 @@ export default function EditBoardScreen() {
       {
         text: 'Delete',
         style: 'destructive',
-        onPress: () => {
-          setDeleting(true);
-          void api
-            .deleteBoard(id)
-            .then(async () => {
-              await queryClient.invalidateQueries({
-                queryKey: ['boards', 'mine'],
-              });
-              router.replace('/(tabs)');
-            })
-            .catch((err: unknown) => {
-              setError(
-                err instanceof ApiError ? err.message : 'Could not delete',
-              );
-              setDeleting(false);
-            });
-        },
+        onPress: () => deleteMutation.mutate(),
       },
     ]);
-  }, [id, queryClient, router]);
+  }, [deleteMutation]);
 
   if (query.isLoading) {
     return (

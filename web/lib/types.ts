@@ -31,8 +31,8 @@ export interface AuthUser {
   bio: string | null;
 }
 
-/** Re-exported from the repo-level shared module (brand source of truth). */
-export type { UserSettings, ThemeMode } from '@shared';
+/** Re-exported from the shared brand module (single source of truth). */
+export type { UserSettings, ThemeMode } from '@travel-board/shared';
 
 export interface SearchUser {
   id: string;

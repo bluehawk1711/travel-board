@@ -1,4 +1,5 @@
 import * as ImagePicker from 'expo-image-picker';
+import { useMutation } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
@@ -65,7 +66,21 @@ export function BoardForm({
     initialValues?.coverImageUrl ?? null,
   );
   const [localError, setLocalError] = useState<string | null>(null);
-  const [uploadingCover, setUploadingCover] = useState(false);
+
+  // Cover upload runs through a React Query mutation.
+  const coverMutation = useMutation({
+    mutationFn: (asset: { uri: string; name: string; type: string }) =>
+      api.uploadImage(asset),
+    onSuccess: ({ url }) => {
+      setCoverImageUrl(url);
+    },
+    onError: (err: Error) => {
+      setLocalError(
+        err instanceof ApiError ? err.message : 'Cover upload failed',
+      );
+    },
+  });
+  const uploadingCover = coverMutation.isPending;
 
   const pickCover = useCallback(async () => {
     setLocalError(null);
@@ -78,22 +93,16 @@ export function BoardForm({
       });
       if (result.canceled || !result.assets?.[0]) return;
 
-      setUploadingCover(true);
       const asset = result.assets[0];
-      const { url } = await api.uploadImage({
+      coverMutation.mutate({
         uri: asset.uri,
         name: asset.fileName ?? 'cover.jpg',
         type: asset.mimeType ?? 'image/jpeg',
       });
-      setCoverImageUrl(url);
-    } catch (err) {
-      setLocalError(
-        err instanceof ApiError ? err.message : 'Cover upload failed',
-      );
-    } finally {
-      setUploadingCover(false);
+    } catch {
+      setLocalError('Cover upload failed');
     }
-  }, []);
+  }, [coverMutation]);
 
   const submit = useCallback(() => {
     if (!title.trim()) {

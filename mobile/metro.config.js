@@ -2,12 +2,8 @@ const { getDefaultConfig } = require('expo/metro-config');
 
 const config = getDefaultConfig(__dirname);
 
-// Compile the repo-level `shared/` brand & token module.
+// Compile the repo-level `shared/` brand & token package (also symlinked via
+// node_modules through the `file:` dependency in package.json).
 config.watchFolders = [`${__dirname}/../shared`];
-
-config.resolver.extraNodeModules = {
-  ...config.resolver.extraNodeModules,
-  '@shared': `${__dirname}/../shared`,
-};
 
 module.exports = config;

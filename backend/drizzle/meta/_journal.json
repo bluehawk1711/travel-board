@@ -36,6 +36,13 @@
       "when": 1789624157300,
       "tag": "0004_user_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1789971369721,
+      "tag": "0005_public_nextwave",
+      "breakpoints": true
     }
   ]
 }

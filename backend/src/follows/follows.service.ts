@@ -8,9 +8,10 @@ import { and, desc, eq, sql, type SQL } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { PG_CONNECTION } from '../db/dbProvider';
 import * as schema from '../db/schema';
-import { follows, users } from '../db/schema';
+import { boards, follows, users } from '../db/schema';
 import { MESSAGES } from '../common/messages';
 import { BoardsService } from '../boards/boards.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import type { AuthUser } from '../auth/auth.service';
 
 export type FollowTargetType = 'USER' | 'BOARD';
@@ -36,6 +37,7 @@ export class FollowsService {
   constructor(
     @Inject(PG_CONNECTION) private readonly db: NodePgDatabase<typeof schema>,
     private readonly boardsService: BoardsService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   // ── Users ─────────────────────────────────────────────────
@@ -49,6 +51,14 @@ export class FollowsService {
     }
     const target = await this.requireUser(targetUserId);
     await this.insertFollow(follower.id, 'USER', target.id);
+    this.notifications.notify({
+      userId: target.id,
+      type: 'NEW_FOLLOWER',
+      actorId: follower.id,
+      targetType: 'USER',
+      targetId: target.id,
+      metadata: { actorName: follower.name },
+    });
     return {
       following: true,
       followerCount: await this.userFollowerCount(target.id),
@@ -122,6 +132,20 @@ export class FollowsService {
       throw new NotFoundException(MESSAGES.BOARDS.NOT_FOUND);
     }
     await this.insertFollow(follower.id, 'BOARD', boardId);
+    const board = await this.db.query.boards.findFirst({
+      columns: { ownerId: true, title: true },
+      where: eq(boards.id, boardId),
+    });
+    if (board && board.ownerId !== follower.id) {
+      this.notifications.notify({
+        userId: board.ownerId,
+        type: 'NEW_BOARD_FOLLOWER',
+        actorId: follower.id,
+        targetType: 'BOARD',
+        targetId: boardId,
+        metadata: { actorName: follower.name, boardTitle: board.title },
+      });
+    }
     return {
       following: true,
       followerCount: await this.boardFollowerCount(boardId),

@@ -1,3 +1,4 @@
+CREATE EXTENSION IF NOT EXISTS pg_trgm;--> statement-breakpoint
 CREATE TABLE "password_reset_tokens" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"user_id" uuid NOT NULL,
@@ -12,5 +13,5 @@ ALTER TABLE "board_items" ADD COLUMN "lng" double precision;--> statement-breakp
 ALTER TABLE "password_reset_tokens" ADD CONSTRAINT "password_reset_tokens_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "password_reset_tokens_user_id_idx" ON "password_reset_tokens" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "password_reset_tokens_token_hash_idx" ON "password_reset_tokens" USING btree ("token_hash");--> statement-breakpoint
-CREATE INDEX CONCURRENTLY "boards_title_trgm_idx" ON "boards" USING gin ("title" gin_trgm_ops);--> statement-breakpoint
-CREATE INDEX CONCURRENTLY "users_name_trgm_idx" ON "users" USING gin ("name" gin_trgm_ops);
+CREATE INDEX "boards_title_trgm_idx" ON "boards" USING gin ("title" gin_trgm_ops);--> statement-breakpoint
+CREATE INDEX "users_name_trgm_idx" ON "users" USING gin ("name" gin_trgm_ops);

@@ -204,3 +204,56 @@ The existing `board/[id].tsx` realtime wiring is mostly correct. Ensure:
 7. Map view (optional).
 8. Lint + typecheck + smoke on device.
 
+
+
+---
+
+# Implementation Plan — Production polish (added 2026-09-17)
+
+## Goal
+Production readiness across all three apps: every client-side API call goes through React Query (web + mobile), web adopts Next 16 Cache Components, middleware-level route guards in all three layers, zero `any`/`unknown` leaks, production-grade caching/perf, root `pnpm dev` to start all 3 projects at once, and all preexisting errors fixed.
+
+## Phase 1 — Root tooling + hygiene ✅
+- [x] Root `package.json` (private) with `concurrently` and `pnpm dev` → all three projects at once (backend `start:dev`, web `dev`, mobile `expo start`) with color-banded prefix output
+- [x] `dev:b` / `dev:w` / `dev:m` / `dev` (skip mobile) / `build` / `test` scripts
+- [x] Delete ~12 stale root `*.txt` logs (`backend-build.txt`, `backend-gates*.txt`, `mobile-*.txt`, `web-*.txt`, etc.)
+
+## Phase 2 — React Query on mobile (parity pass) 🔲
+- [ ] `src/lib/query-keys.ts` — centralized `queryKeys` factory (`me`, `settings`, `board(id)`, `boards(scope)`, `profile(id)`, `conversations`, `comments(boardId)`…) so invalidation is consistent
+- [ ] Configure global `staleTime`/`gcTime`/`retry` on the existing QueryClient in `_layout.tsx` (with `persistQueryClient`)
+- [ ] Audit every screen/component that fetches; convert remaining `useEffect`+`fetch`/`useState` fetch flows to `useQuery`/`useMutation` (settings save, profile refresh, any socket-adjacent REST reads)
+- [ ] Verify the settings form populates when `user` loads async (the `sync-in-effect` fix may need a `key={user?.id}` remount)
+
+## Phase 3 — React Query on web 🔲
+- [ ] Add `@tanstack/react-query` to `web/` + `app/providers.tsx` (`"use client"` QueryClientProvider: `staleTime: 30s`, `retry: 1`, `refetchOnWindowFocus: false`) mounted in `app/layout.tsx
+- [ ] Migrate all client fetching to hooks (calls still flow through `authFetch`/`lib/api.ts` for the centralized token refresh):
+  - `app/boards/page.tsx`, `components/board-detail.tsx` (+ like/save/comment mutations with optimistic updates + invalidation), `components/following-feed.tsx`, `components/user-profile.tsx`, `app/settings/page.tsx` (profile + settings mutations), `components/search-results.tsx (debounced)`, `components/explore-feed.tsx`, `components/board-members.tsx`, `components/board-chat.tsx` (initial history through the query cache; socket events unchanged)
+- [ ] `lib/api.ts` unchanged as the single transport layer; hooks live in `web/lib/queries.ts`
+
+## Phase 4 — Middleware / route guards in all three layers 🔲
+- [ ] **Web** `web/proxy.ts` (Next 16 middleware replacement): guard `/boards/**`, `/settings`, `/onboarding`, `/chat/**`, `/following` by checking `tb_refresh_token` cookie presence → redirect `/login?next=…`; public routes untouched
+- proxy.ts runs on Node runtime and can read cookies; response via `NextResponse.redirect()`
+- [ ] `next.config.ts` `headers()` — security headers (HSTS, nosniff, Referrer-Policy, frame-ancestors CSP) since helmet CSP is disabled at the API layer
+- [ ] **Mobile** `useProtectedRoute` hook in `(tabs)/_layout.tsx` — redirect to sign-in when unauthenticated (Zustand `useAuth` status + router)
+- (token-refresh interceptor in `api.ts` already acts as the client "middleware")
+- [ ] **Backend** tighter `@Throttle()` on auth/places routes (AGENTS §6), verify 401/429 behavior
+
+## Phase 5 — Production-grade caching & perf 🔲
+- [ ] Web: enable `cacheComponents: true` in `next.config.ts`; adopt `"use cache"` + `cacheLife`/`cacheTag` on public server surfaces (home/explore shell, public board metadata) with `<Suspense>` around dynamic API reads (`cookies()`); if fallout exceeds public paths, scope to route-level config and document
+- [ ] Web: `next/image` sizes/priority on LCP covers; Link prefetch audit
+- LCP covers: add `priority` to the first card cover; `sizes` on all covers
+- [ ] Mobile: FlashList on all long lists; `expo-image` everywhere; React Query `staleTime` tuning
+- [ ] Backend: verify every Redis write has TTL + Postgres fallback (AGENTS §6); feed version-bump invalidation intact
+
+## Phase 6 — Type safety enforcement 🔲
+- [ ] Add `@typescript-eslint/no-explicit-any` + related no-unsafe rules to web/mobile/backend eslint configs
+- [ ] Fix every reported case (initial scan found none beyond false positives)
+
+## Verification 🔲
+- [ ] Backend: `pnpm lint && pnpm build && pnpm test` (prior session gates were green: 23/23 tests)
+- [ ] Web: `pnpm exec tsc --noEmit` + `pnpm build`
+- [ ] Mobile: `pnpm exec tsc --noEmit` + `pnpm exec eslint .`
+- [ ] Apply migrations 0003 + 0004 to dev DB; smoke-test `GET/PATCH /users/me/settings`
+- [ ] Update `plan.md`/`architecture.md` where decisions changed (shared package, proxy.ts, React Query adoption)
+- [ ] Commit in logical chunks (no AI footers per AGENTS §9)
+

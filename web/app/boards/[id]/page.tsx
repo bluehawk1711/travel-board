@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 import { BoardDetailView } from "@/components/board-detail";
 import { ApiError, fetchBoard } from "@/lib/api";
 
-export const dynamic = "force-dynamic";
+// Cache Components: the board fetch streams at request time behind the
+// segment's loading.tsx Suspense boundary; metadata streams with it.
 
 export async function generateMetadata({
   params,

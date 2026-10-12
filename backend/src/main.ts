@@ -48,7 +48,7 @@ async function bootstrap() {
 
   const frontendUrl = configService.get<string>(
     'FRONTEND_URL',
-    'http://localhost:3001',
+    'http://localhost:3000',
   );
   app.enableCors({
     origin: [frontendUrl],
@@ -63,7 +63,15 @@ async function bootstrap() {
   );
   app.useGlobalFilters(new GlobalExceptionFilter());
 
-  await app.listen(process.env.PORT ?? 3000);
+  const port = Number(process.env.PORT ?? 4000);
+  await app.listen(port);
+  console.log(`Travel Board API listening on http://localhost:${port}`);
 }
 
-void bootstrap();
+bootstrap().catch((error: unknown) => {
+  // `void bootstrap()` hides DI/config failures behind a silent non-zero exit.
+  // Print the root cause and fail loudly instead.
+  console.error('Failed to start the API:');
+  console.error(error);
+  process.exit(1);
+});

@@ -1,13 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, Loader2, Save } from "lucide-react";
 import { fetchMe, fetchMySettings, updateMyProfile, updateMySettings, uploadImage } from "@/lib/api";
-import { getAccessToken, notifyAuthChanged } from "@/lib/auth";
-import type { AuthUser, ThemeMode, UserSettings } from "@/lib/types";
-import { THEME_MODES } from "@shared";
+import { notifyAuthChanged } from "@/lib/auth";
+import { useSignedIn } from "@/hooks/use-signed-in";
+import { queryKeys } from "@/lib/queries";
+import type { ThemeMode, UserSettings } from "@/lib/types";
+import { THEME_MODES } from "@travel-board/shared";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,88 +30,94 @@ function dataUrlToFile(dataUrl: string, filename: string): File {
 
 export default function SettingsPage() {
   const router = useRouter();
-  const [me, setMe] = useState<AuthUser | null>(null);
-  const [name, setName] = useState("");
-  const [bio, setBio] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [avatarSaving, setAvatarSaving] = useState(false);
+  const queryClient = useQueryClient();
+  // Session state comes from an external store read (no setState-in-effect);
+  // the edge guard in `proxy.ts` handles the redirect for anonymous visitors.
+  const signedIn = useSignedIn();
+  // `null` draft = "show the server value"; typing fills the draft.
+  const [nameDraft, setNameDraft] = useState<string | null>(null);
+  const [bioDraft, setBioDraft] = useState<string | null>(null);
   const [avatarDone, setAvatarDone] = useState(false);
   const [savedAt, setSavedAt] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [settings, setSettings] = useState<UserSettings | null>(null);
-  const [settingsSaving, setSettingsSaving] = useState(false);
   const [settingsSaved, setSettingsSaved] = useState(false);
 
-  useEffect(() => {
-    if (!getAccessToken()) {
-      router.replace("/login");
-      return;
-    }
-    void fetchMe()
-      .then(({ user }) => {
-        setMe(user);
-        setName(user.name);
-        setBio(user.bio ?? "");
-      })
-      .catch(() => router.replace("/login"));
-    void fetchMySettings()
-      .then(setSettings)
-      .catch(() => setSettings(null));
-  }, [router]);
+  // Server state via React Query.
+  const meQuery = useQuery({
+    queryKey: ["me"],
+    queryFn: fetchMe,
+    enabled: signedIn,
+  });
+  const settingsQuery = useQuery({
+    queryKey: queryKeys.mySettings,
+    queryFn: fetchMySettings,
+    enabled: signedIn,
+  });
 
-  const saveSettings = async (patch: Partial<UserSettings>) => {
-    setSettingsSaving(true);
-    setError(null);
-    try {
-      const updated = await updateMySettings(patch);
-      setSettings(updated);
+  const me = meQuery.data?.user ?? null;
+  const settings = settingsQuery.data ?? null;
+
+  // Derive the editable fields instead of copying them into state via an
+  // effect: the server value is the fallback until the user types.
+  const name = nameDraft ?? me?.name ?? "";
+  const bio = bioDraft ?? me?.bio ?? "";
+
+  const settingsMutation = useMutation({
+    mutationFn: (patch: Partial<UserSettings>) => updateMySettings(patch),
+    onSuccess: (updated) => {
+      queryClient.setQueryData(queryKeys.mySettings, updated);
       setSettingsSaved(true);
       window.setTimeout(() => setSettingsSaved(false), 2000);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Save failed");
-    } finally {
-      setSettingsSaving(false);
-    }
+    },
+    onError: (err: Error) => setError(err.message || "Save failed"),
+  });
+
+  const saveSettings = (patch: Partial<UserSettings>) => {
+    setError(null);
+    settingsMutation.mutate(patch);
   };
 
-  const handleAvatar = async (dataUrl: string) => {
-    setAvatarSaving(true);
-    setAvatarDone(false);
-    setError(null);
-    try {
+  const avatarMutation = useMutation({
+    mutationFn: async (dataUrl: string) => {
       const file = dataUrlToFile(dataUrl, "avatar.png");
       const { url } = await uploadImage(file);
       const { user } = await updateMyProfile({ avatarUrl: url });
-      setMe((prev) => (prev ? { ...prev, avatarUrl: url } : prev));
+      return user;
+    },
+    onSuccess: (user) => {
+      queryClient.setQueryData(["me"], { user });
       setAvatarDone(true);
       notifyAuthChanged("login");
-      setMe(user);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Upload failed");
-    } finally {
-      setAvatarSaving(false);
-    }
+    },
+    onError: (err: Error) => setError(err.message || "Upload failed"),
+  });
+
+  const handleAvatar = (dataUrl: string) => {
+    setError(null);
+    avatarMutation.mutate(dataUrl);
   };
 
-  const saveProfile = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSaving(true);
-    setError(null);
-    try {
-      const { user } = await updateMyProfile({
+  const profileMutation = useMutation({
+    mutationFn: () =>
+      updateMyProfile({
         name: name.trim() || undefined,
         bio: bio.trim() || undefined,
-      });
-      setMe(user);
-      setName(user.name);
-      setBio(user.bio ?? "");
+      }),
+    onSuccess: ({ user }) => {
+      queryClient.setQueryData(["me"], { user });
+      // Drop the drafts so the fresh server values render.
+      setNameDraft(null);
+      setBioDraft(null);
       setSavedAt(Date.now());
       notifyAuthChanged("login");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Save failed");
-    } finally {
-      setSaving(false);
-    }
+    },
+    onError: (err: Error) => setError(err.message || "Save failed"),
+  });
+
+  const saveProfile = (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    profileMutation.mutate();
   };
 
   if (!me) {
@@ -164,7 +173,7 @@ export default function SettingsPage() {
                 )}
               </div>
             </div>
-            {avatarSaving && (
+            {avatarMutation.isPending && (
               <p className="mb-3 flex items-center gap-2 text-sm text-zinc-500">
                 <Loader2 className="size-4 animate-spin" /> Uploading photo…
               </p>
@@ -187,7 +196,7 @@ export default function SettingsPage() {
               <Input
                 id="settings-name"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e) => setNameDraft(e.target.value)}
                 maxLength={60}
                 required
               />
@@ -197,7 +206,7 @@ export default function SettingsPage() {
               <Textarea
                 id="settings-bio"
                 value={bio}
-                onChange={(e) => setBio(e.target.value)}
+                onChange={(e) => setBioDraft(e.target.value)}
                 maxLength={300}
                 rows={4}
                 placeholder="Where have you been? What are you planning next?"
@@ -217,15 +226,15 @@ export default function SettingsPage() {
             )}
 
             <div className="flex items-center gap-3">
-              <Button type="submit" disabled={saving}>
-                {saving ? (
+              <Button type="submit" disabled={profileMutation.isPending}>
+                {profileMutation.isPending ? (
                   <Loader2 className="size-4 animate-spin" />
                 ) : (
                   <Save className="size-4" />
                 )}
                 Save changes
               </Button>
-              {savedAt && !saving && (
+              {savedAt && !profileMutation.isPending && (
                 <span className="flex items-center gap-1 text-sm text-emerald-600 dark:text-emerald-400">
                   <Check className="size-4" /> Saved
                 </span>
@@ -245,7 +254,7 @@ export default function SettingsPage() {
               <select
                 id="settings-theme"
                 value={settings?.themeMode ?? "SYSTEM"}
-                disabled={settingsSaving || !settings}
+                disabled={settingsMutation.isPending || !settings}
                 onChange={(e) =>
                   void saveSettings({
                     themeMode: e.target.value as ThemeMode,
@@ -266,7 +275,7 @@ export default function SettingsPage() {
               <select
                 id="settings-currency"
                 value={settings?.currency ?? "USD"}
-                disabled={settingsSaving || !settings}
+                disabled={settingsMutation.isPending || !settings}
                 onChange={(e) =>
                   void saveSettings({ currency: e.target.value })
                 }
@@ -312,7 +321,7 @@ export default function SettingsPage() {
                   type="checkbox"
                   className="size-4 accent-[#FA5438]"
                   checked={settings ? settings[key] : false}
-                  disabled={settingsSaving || !settings}
+                  disabled={settingsMutation.isPending || !settings}
                   onChange={(e) => void saveSettings({ [key]: e.target.checked })}
                 />
               </label>

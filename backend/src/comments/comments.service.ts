@@ -11,6 +11,7 @@ import * as schema from '../db/schema';
 import { boards, comments, users } from '../db/schema';
 import { MESSAGES } from '../common/messages';
 import { BoardsService } from '../boards/boards.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import type { AuthUser } from '../auth/auth.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
 
@@ -32,6 +33,7 @@ export class CommentsService {
   constructor(
     @Inject(PG_CONNECTION) private readonly db: NodePgDatabase<typeof schema>,
     private readonly boardsService: BoardsService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   async listByBoard(
@@ -99,6 +101,25 @@ export class CommentsService {
       .insert(comments)
       .values({ boardId, userId: user.id, body: dto.body })
       .returning();
+
+    const board = await this.db.query.boards.findFirst({
+      columns: { ownerId: true, title: true },
+      where: eq(boards.id, boardId),
+    });
+    if (board && board.ownerId !== user.id) {
+      this.notifications.notify({
+        userId: board.ownerId,
+        type: 'NEW_COMMENT',
+        actorId: user.id,
+        targetType: 'BOARD',
+        targetId: boardId,
+        metadata: {
+          actorName: user.name,
+          boardTitle: board.title,
+          excerpt: dto.body.slice(0, 80),
+        },
+      });
+    }
 
     return {
       id: comment.id,

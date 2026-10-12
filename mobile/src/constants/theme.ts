@@ -10,61 +10,66 @@ import '@/global.css';
 
 import { Platform } from 'react-native';
 
+import { THEME } from '@travel-board/shared';
+
+function color<K extends keyof typeof THEME.colors>(
+  token: K,
+  mode: 'light' | 'dark',
+): string {
+  return THEME.colors[token][mode];
+}
+
 export const Colors = {
   light: {
-    text: '#191716',
-    background: '#FAF9F6',
-    backgroundElement: '#F4F2ED',
-    backgroundSelected: '#ECE8E1',
-    textSecondary: '#6A645D',
-    /** Elevated white card surface. */
-    surfaceCard: '#FFFFFF',
-    /** Terracotta — primary actions, active states, save counts. */
-    primary: '#FA5438',
-    primaryDark: '#D93D22',
-    primaryContainer: '#FFECE8',
-    onPrimary: '#FFFFFF',
-    /** Confirmed / success accents (trip status, live presence). */
-    tertiary: '#0E7453',
-    tertiaryLight: '#E3F7EE',
-    /** Hairline separators (1px, warm). */
-    borderSubtle: '#ECE8E1',
-    /** Overlays over photography + floating glass chips. */
-    scrim: 'rgba(25, 23, 22, 0.55)',
+    text: color('foreground', 'light'),
+    background: color('background', 'light'),
+    backgroundElement: color('secondary', 'light'),
+    backgroundSelected: color('border', 'light'),
+    textSecondary: color('mutedForeground', 'light'),
+    surfaceCard: color('surface', 'light'),
+    primary: color('primary', 'light'),
+    primaryDark: color('primary', 'light'),
+    primaryContainer: color('primaryContainer', 'light'),
+    onPrimary: color('primaryForeground', 'light'),
+    tertiary: color('success', 'light'),
+    tertiaryLight: color('successContainer', 'light'),
+    borderSubtle: color('border', 'light'),
+    scrim: color('scrim', 'light'),
     overlay: 'rgba(25, 23, 22, 0.45)',
-    danger: '#BA1A1A',
+    danger: color('destructive', 'light'),
   },
   dark: {
-    text: '#FAF9F6',
-    background: '#141210',
-    backgroundElement: '#221F1D',
-    backgroundSelected: '#2E2A27',
-    textSecondary: '#A8A29B',
-    surfaceCard: '#1C1917',
-    primary: '#FA5438',
-    primaryDark: '#D93D22',
-    primaryContainer: '#3A1A13',
-    onPrimary: '#FFFFFF',
-    tertiary: '#4FB98C',
-    tertiaryLight: '#12352A',
-    borderSubtle: '#2E2A27',
-    scrim: 'rgba(0, 0, 0, 0.6)',
+    text: color('foreground', 'dark'),
+    background: color('background', 'dark'),
+    backgroundElement: color('secondary', 'dark'),
+    backgroundSelected: color('border', 'dark'),
+    textSecondary: color('mutedForeground', 'dark'),
+    surfaceCard: color('surface', 'dark'),
+    primary: color('primary', 'dark'),
+    primaryDark: color('primary', 'dark'),
+    primaryContainer: color('primaryContainer', 'dark'),
+    onPrimary: color('primaryForeground', 'dark'),
+    tertiary: color('success', 'dark'),
+    tertiaryLight: color('successContainer', 'dark'),
+    borderSubtle: color('border', 'dark'),
+    scrim: color('scrim', 'dark'),
     overlay: 'rgba(0, 0, 0, 0.5)',
-    danger: '#FFB4AB',
+    danger: color('destructive', 'dark'),
   },
 } as const;
 
 export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
 
+// ── Fonts ────────────────────────────────────────────────────────────────
+// Platform-specific font family selection. The shared `THEME.fonts.sans` is
+// "Plus Jakarta Sans", but on iOS that maps to the system-ui family which
+// includes the bundled San Francisco; we keep the same visual weight.
+
 export const Fonts = Platform.select({
   ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
     sans: 'system-ui',
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
     serif: 'ui-serif',
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
     rounded: 'ui-rounded',
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
     mono: 'ui-monospace',
   },
   default: {
@@ -81,53 +86,118 @@ export const Fonts = Platform.select({
   },
 });
 
+// ── Spacing ──────────────────────────────────────────────────────────────
+// 1:1 from `shared/THEME.spacing`. Mobile `Spacing` uses a `one`/`two`...
+// naming; the values map exactly.
+
 export const Spacing = {
-  half: 2,
-  one: 4,
-  two: 8,
-  three: 16,
-  four: 24,
-  five: 32,
-  six: 64,
+  half: THEME.spacing.half,
+  one: THEME.spacing.xs,
+  two: THEME.spacing.sm,
+  three: THEME.spacing.md,
+  four: THEME.spacing.lg,
+  five: THEME.spacing.xl,
+  six: THEME.spacing['2xl'],
 } as const;
 
-/** Corner scale from DESIGN.md: 16px baseline, 20–24px prominent surfaces. */
+// ── Radius ───────────────────────────────────────────────────────────────
+// 1:1 from `shared/THEME.radii`.
+
 export const Radius = {
-  sm: 4,
-  md: 8,
-  lg: 16,
-  xl: 20,
-  xxl: 24,
-  full: 9999,
+  sm: THEME.radii.sm,
+  md: THEME.radii.md,
+  lg: THEME.radii.lg,
+  xl: THEME.radii.xl,
+  xxl: THEME.radii['2xl'],
+  full: THEME.radii.full,
 } as const;
 
-/** Warm tinted ambient shadows — never neutral gray. */
-export const Shadows = {
-  card: {
-    shadowColor: '#1C1410',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.06,
-    shadowRadius: 24,
-    elevation: 3,
+// ── Shadows ──────────────────────────────────────────────────────────────
+// Platform-specific shadow presets derived from `shared/THEME.shadows`.
+// Mobile needs RN shadow objects (shadowColor/Offset/Opacity/Radius +
+// Android elevation); web uses the CSS strings from shared.
+
+export const Shadows = Platform.select({
+  ios: {
+    card: {
+      shadowColor: '#1C1410',
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.06,
+      shadowRadius: 24,
+      elevation: 3,
+    },
+    nav: {
+      shadowColor: '#231712',
+      shadowOffset: { width: 0, height: 12 },
+      shadowOpacity: 0.12,
+      shadowRadius: 36,
+      elevation: 8,
+    },
+    fab: {
+      shadowColor: '#FA5438',
+      shadowOffset: { width: 0, height: 10 },
+      shadowOpacity: 0.42,
+      shadowRadius: 24,
+      elevation: 10,
+    },
   },
-  nav: {
-    shadowColor: '#231712',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.12,
-    shadowRadius: 36,
-    elevation: 8,
+  android: {
+    card: {
+      shadowColor: '#1C1410',
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.06,
+      shadowRadius: 24,
+      elevation: 3,
+    },
+    nav: {
+      shadowColor: '#231712',
+      shadowOffset: { width: 0, height: 12 },
+      shadowOpacity: 0.12,
+      shadowRadius: 36,
+      elevation: 8,
+    },
+    fab: {
+      shadowColor: '#FA5438',
+      shadowOffset: { width: 0, height: 10 },
+      shadowOpacity: 0.42,
+      shadowRadius: 24,
+      elevation: 10,
+    },
   },
-  fab: {
-    shadowColor: '#FA5438',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.42,
-    shadowRadius: 24,
-    elevation: 10,
+  default: {
+    card: {
+      shadowColor: '#1C1410',
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.06,
+      shadowRadius: 24,
+      elevation: 3,
+    },
+    nav: {
+      shadowColor: '#231712',
+      shadowOffset: { width: 0, height: 12 },
+      shadowOpacity: 0.12,
+      shadowRadius: 36,
+      elevation: 8,
+    },
+    fab: {
+      shadowColor: '#FA5438',
+      shadowOffset: { width: 0, height: 10 },
+      shadowOpacity: 0.42,
+      shadowRadius: 24,
+      elevation: 10,
+    },
   },
-} as const;
+});
+
+// ── Layout tokens ────────────────────────────────────────────────────────
 
 /** Minimum touch target from DESIGN.md (48dp height). */
-export const TouchTarget = 48;
+export const TouchTarget = THEME.touchTarget;
 
-export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
-export const MaxContentWidth = 800;
+/** Bottom tab bar inset per platform (mobile only). */
+export const BottomTabInset =
+  (Platform.OS === 'ios' ? THEME.bottomTabInset.ios : THEME.bottomTabInset.android) ??
+  0;
+
+/** Max content width for centered layouts (px). */
+export const MaxContentWidth = THEME.maxContentWidth;

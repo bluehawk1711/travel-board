@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CalendarDays, MessagesSquare, Settings } from "lucide-react";
 import {
   fetchUserBoards,
@@ -105,54 +106,51 @@ export function UserProfileView({
   initialBoards: UserBoardsResult;
 }) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [profile, setProfile] = useState(initialProfile);
-  const [boards, setBoards] = useState<UserBoardsResult>(initialBoards);
-  const [followingList, setFollowingList] =
-    useState<FollowListResult<SearchUser> | null>(null);
-  const [followersList, setFollowersList] =
-    useState<FollowListResult<SearchUser> | null>(null);
   const [listOpen, setListOpen] = useState<"following" | "followers" | null>(
     null,
   );
-  const [followBusy, setFollowBusy] = useState(false);
+  const boards = initialBoards;
 
   const signedIn = Boolean(getAccessToken());
 
-  const handleFollow = async () => {
-    if (!signedIn) {
-      router.push("/login");
-      return;
-    }
-    setFollowBusy(true);
-    try {
-      const result = await toggleFollowUser(
-        profile.id,
-        Boolean(profile.isFollowing),
-      );
+  // Follow lists load through React Query; enabled only while the modal is open.
+  const followingQuery = useQuery({
+    queryKey: ["user", profile.id, "following"],
+    queryFn: () => fetchUserFollowing(profile.id),
+    enabled: listOpen === "following",
+  });
+  const followersQuery = useQuery({
+    queryKey: ["user", profile.id, "followers"],
+    queryFn: () => fetchUserFollowers(profile.id),
+    enabled: listOpen === "followers",
+  });
+
+  const followMutation = useMutation({
+    mutationFn: () =>
+      toggleFollowUser(profile.id, Boolean(profile.isFollowing)),
+    onSuccess: (result) => {
       setProfile((prev) => ({
         ...prev,
         isFollowing: result.following,
         followerCount: result.followerCount,
       }));
-    } finally {
-      setFollowBusy(false);
+      // Follow state affects other users' cached lists too.
+      void queryClient.invalidateQueries({ queryKey: ["user"] });
+    },
+  });
+
+  const handleFollow = () => {
+    if (!signedIn) {
+      router.push("/login");
+      return;
     }
+    followMutation.mutate();
   };
 
-  const openList = async (kind: "following" | "followers") => {
+  const openList = (kind: "following" | "followers") => {
     setListOpen(kind);
-    const loader =
-      kind === "following" ? fetchUserFollowing : fetchUserFollowers;
-    try {
-      const data = await loader(profile.id);
-      if (kind === "following") {
-        setFollowingList(data);
-      } else {
-        setFollowersList(data);
-      }
-    } catch {
-      // leave list empty on failure
-    }
   };
 
   const feedItems: FeedItem[] = boards.items.map((board) => ({
@@ -207,7 +205,7 @@ export function UserProfileView({
                 variant={profile.isFollowing ? "outline" : "default"}
                 className="rounded-full"
                 onClick={() => void handleFollow()}
-                disabled={followBusy}
+                disabled={followMutation.isPending}
               >
                 {profile.isFollowing ? "Following" : "Follow"}
               </Button>
@@ -304,7 +302,11 @@ export function UserProfileView({
       {listOpen && (
         <FollowListModal
           title={listOpen === "following" ? "Following" : "Followers"}
-          data={listOpen === "following" ? followingList : followersList}
+          data={
+            listOpen === "following"
+              ? (followingQuery.data ?? null)
+              : (followersQuery.data ?? null)
+          }
           onClose={() => setListOpen(null)}
         />
       )}

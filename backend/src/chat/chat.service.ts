@@ -19,6 +19,7 @@ import {
 } from '../db/schema';
 import { REDIS_CLIENT } from '../common/redis/redis.constants';
 import { MESSAGES } from '../common/messages';
+import { NotificationsService } from '../notifications/notifications.service';
 import { CreateConversationDto } from './dto/create-conversation.dto';
 
 const ROOM_PREFIX = 'conv:';
@@ -52,6 +53,7 @@ export class ChatService {
   constructor(
     @Inject(PG_CONNECTION) private readonly db: NodePgDatabase<typeof schema>,
     @Inject(REDIS_CLIENT) private readonly redis: Redis,
+    private readonly notifications: NotificationsService,
   ) {}
 
   static room(conversationId: string): string {
@@ -316,6 +318,25 @@ export class ChatService {
       columns: { id: true, name: true, avatarUrl: true },
       where: eq(users.id, userId),
     });
+
+    const memberRows = await this.db
+      .select({ userId: conversationMembers.userId })
+      .from(conversationMembers)
+      .where(eq(conversationMembers.conversationId, conversationId));
+    this.notifications.notifyMany(
+      memberRows.map((r) => r.userId),
+      {
+        type: 'NEW_CHAT_MESSAGE',
+        actorId: userId,
+        targetType: 'CONVERSATION',
+        targetId: conversationId,
+        metadata: {
+          actorName: sender?.name ?? 'Someone',
+          excerpt: trimmed.slice(0, 80),
+        },
+      },
+    );
+
     return {
       id: message.id,
       conversationId,

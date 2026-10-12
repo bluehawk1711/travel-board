@@ -15,9 +15,9 @@ import {
   User,
   X,
 } from "lucide-react";
-import { fetchMe, searchUsers } from "@/lib/api";
-import { clearTokens, getAccessToken, notifyAuthChanged } from "@/lib/auth";
-import type { AuthUser, SearchUser } from "@/lib/types";
+import { clearTokens, notifyAuthChanged } from "@/lib/auth";
+import { queryKeys, useMe, useUserSearch } from "@/lib/queries";
+import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,32 +41,39 @@ const NAV_LINKS = [
 export function SiteHeader() {
   const pathname = usePathname();
   const router = useRouter();
-  const [me, setMe] = useState<AuthUser | null>(null);
+  const queryClient = useQueryClient();
+  const { data: me } = useMe();
   const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
-  const [userResults, setUserResults] = useState<SearchUser[]>([]);
-  const [searchingUsers, setSearchingUsers] = useState(false);
   const searchRef = useRef<HTMLFormElement>(null);
 
-  const loadMe = useCallback(async () => {
-    if (!getAccessToken()) {
-      setMe(null);
-      return;
-    }
-    try {
-      const { user } = await fetchMe();
-      setMe(user);
-    } catch {
-      setMe(null);
-    }
-  }, []);
+  const { data: searchData, isFetching: searchingUsers } =
+    useUserSearch(debouncedQuery);
+  const userResults = searchData?.users ?? [];
 
+  // Debounce keystrokes before hitting `GET /users/search`.
   useEffect(() => {
-    void loadMe();
-    const onAuth = () => void loadMe();
+    const timer = window.setTimeout(() => {
+      setDebouncedQuery(query.trim());
+    }, 250);
+    return () => window.clearTimeout(timer);
+  }, [query]);
+
+  // The access token lives in memory; when auth state changes (login/logout or
+  // a silent refresh) invalidate the cached `me` so the header re-renders.
+  useEffect(() => {
+    const onAuth = () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.me });
+    };
     window.addEventListener("tb:auth", onAuth);
     return () => window.removeEventListener("tb:auth", onAuth);
-  }, [loadMe]);
+  }, [queryClient]);
+
+  const clearSearch = useCallback(() => {
+    setQuery("");
+    setDebouncedQuery("");
+  }, []);
 
   // Close search dropdown on outside click.
   useEffect(() => {
@@ -74,44 +81,28 @@ export function SiteHeader() {
     function handleClickOutside(e: MouseEvent) {
       if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
         setSearchOpen(false);
-        setUserResults([]);
+        clearSearch();
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [searchOpen]);
+  }, [searchOpen, clearSearch]);
 
   const submitSearch = (e: React.FormEvent) => {
     e.preventDefault();
     const q = query.trim();
     setSearchOpen(false);
-    setUserResults([]);
+    clearSearch();
     if (q) {
       router.push(`/search?q=${encodeURIComponent(q)}`);
     }
   };
 
-  const handleUserSearch = useCallback(async (q: string) => {
-    setQuery(q);
-    if (!q.trim()) {
-      setUserResults([]);
-      return;
-    }
-    setSearchingUsers(true);
-    try {
-      const { users } = await searchUsers(q.trim());
-      setUserResults(users);
-    } catch {
-      setUserResults([]);
-    } finally {
-      setSearchingUsers(false);
-    }
-  }, []);
-
   const signOut = async () => {
     clearTokens();
     notifyAuthChanged("logout");
-    setMe(null);
+    // Drop every cached authed response so a different account starts clean.
+    queryClient.clear();
     router.push("/");
   };
 
@@ -151,7 +142,7 @@ export function SiteHeader() {
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-400" />
           <Input
             value={query}
-            onChange={(e) => void handleUserSearch(e.target.value)}
+            onChange={(e) => setQuery(e.target.value)}
             onFocus={() => setSearchOpen(true)}
             placeholder="Search destinations or boards…"
             className="rounded-full pl-9"
@@ -160,6 +151,11 @@ export function SiteHeader() {
           {searchOpen && (
             <div className="absolute left-0 right-0 top-full z-50 mt-1">
               <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-lg dark:border-zinc-800 dark:bg-zinc-900">
+                {searchingUsers && userResults.length === 0 && (
+                  <div className="px-3 py-2 text-xs text-zinc-400 dark:text-zinc-500">
+                    Searching people…
+                  </div>
+                )}
                 {query.trim() && userResults.length > 0 ? (
                   <div className="max-h-60 overflow-auto">
                     <div className="px-3 py-2 text-xs font-medium text-zinc-400 dark:text-zinc-500">
@@ -171,8 +167,7 @@ export function SiteHeader() {
                         type="button"
                         onClick={() => {
                           setSearchOpen(false);
-                          setQuery("");
-                          setUserResults([]);
+                          clearSearch();
                           router.push(`/u/${user.id}`);
                         }}
                         className="flex w-full items-center gap-2.5 px-3 py-2 text-left transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800"
@@ -205,7 +200,7 @@ export function SiteHeader() {
                     className="flex-1 rounded-xl"
                     onClick={() => {
                       setSearchOpen(false);
-                      setUserResults([]);
+                      clearSearch();
                     }}
                   >
                     Search boards
@@ -217,8 +212,7 @@ export function SiteHeader() {
                     className="rounded-xl"
                     onClick={() => {
                       setSearchOpen(false);
-                      setQuery("");
-                      setUserResults([]);
+                      clearSearch();
                     }}
                   >
                     <X className="size-3.5" />

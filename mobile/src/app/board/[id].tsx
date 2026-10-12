@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
@@ -33,7 +33,6 @@ import {
   type BoardPresenceEvent,
 } from '@/lib/board-types';
 import { getBoardSocket } from '@/lib/socket';
-import type { BoardMember } from '@/lib/types';
 
 // ── Item card ──────────────────────────────────────────────────────────────
 
@@ -202,53 +201,53 @@ function MembersModal({
   boardId: string;
 }) {
   const theme = useTheme();
-  const [members, setMembers] = useState<BoardMember[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [email, setEmail] = useState('');
-  const [adding, setAdding] = useState(false);
 
-  useEffect(() => {
-    if (!visible) return;
-    setLoading(true);
-    api
-      .getBoardMembers(boardId)
-      .then((res) => setMembers(res.members))
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [visible, boardId]);
+  // Members load through React Query while the sheet is open.
+  const membersQuery = useQuery({
+    queryKey: ['board', boardId, 'members'],
+    queryFn: () => api.getBoardMembers(boardId),
+    enabled: visible,
+  });
+  const members = membersQuery.data?.members ?? [];
+  const loading = membersQuery.isPending;
 
-  const handleAdd = async () => {
-    if (!email.trim()) return;
-    setAdding(true);
-    try {
-      const { member } = await api.addBoardMember(boardId, email.trim().toLowerCase());
-      setMembers((prev) => [...prev, member]);
+  const invalidateMembers = () =>
+    queryClient.invalidateQueries({ queryKey: ['board', boardId, 'members'] });
+
+  // Member writes are mutations so the list invalidates in one place.
+  const addMutation = useMutation({
+    mutationFn: (value: string) => api.addBoardMember(boardId, value),
+    onSuccess: async () => {
       setEmail('');
-    } catch {
-      // silent
-    } finally {
-      setAdding(false);
-    }
+      await invalidateMembers();
+    },
+  });
+  const adding = addMutation.isPending;
+
+  const removeMutation = useMutation({
+    mutationFn: (userId: string) => api.removeBoardMember(boardId, userId),
+    onSuccess: invalidateMembers,
+  });
+
+  const roleMutation = useMutation({
+    mutationFn: (vars: { userId: string; role: 'EDITOR' | 'VIEWER' }) =>
+      api.updateBoardMemberRole(boardId, vars.userId, vars.role),
+    onSuccess: invalidateMembers,
+  });
+
+  const handleAdd = () => {
+    if (!email.trim()) return;
+    addMutation.mutate(email.trim().toLowerCase());
   };
 
-  const handleRemove = async (userId: string) => {
-    try {
-      await api.removeBoardMember(boardId, userId);
-      setMembers((prev) => prev.filter((m) => m.userId !== userId));
-    } catch {
-      // silent
-    }
+  const handleRemove = (userId: string) => {
+    removeMutation.mutate(userId);
   };
 
-  const handleRoleChange = async (userId: string, role: 'EDITOR' | 'VIEWER') => {
-    try {
-      await api.updateBoardMemberRole(boardId, userId, role);
-      setMembers((prev) =>
-        prev.map((m) => (m.userId === userId ? { ...m, role } : m)),
-      );
-    } catch {
-      // silent
-    }
+  const handleRoleChange = (userId: string, role: 'EDITOR' | 'VIEWER') => {
+    roleMutation.mutate({ userId, role });
   };
 
   return (
@@ -350,6 +349,7 @@ function MembersModal({
 export default function BoardDetailScreen() {
   const theme = useTheme();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { id } = useLocalSearchParams<{ id: string }>();
 
   const query = useQuery({
@@ -369,8 +369,6 @@ export default function BoardDetailScreen() {
     | null
   >(null);
   const [showMembers, setShowMembers] = useState(false);
-  const [likePending, setLikePending] = useState(false);
-  const [savePending, setSavePending] = useState(false);
 
   const board = live ?? query.data;
   const boardRef = useRef<BoardDetail | null>(null);
@@ -386,51 +384,58 @@ export default function BoardDetailScreen() {
       section.items.filter((item) => item.lat != null && item.lng != null),
     ) ?? [];
 
-  // Like/save optimistic state — initialized from API response.
-  const [liked, setLiked] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [likeCount, setLikeCount] = useState(0);
-  const [saveCount, setSaveCount] = useState(0);
+  // Like/save: the board query is the source of truth; an override holds the
+  // optimistic flip until the mutation settles and the query refetches.
+  const [likeOverride, setLikeOverride] = useState<{
+    liked: boolean;
+    count: number;
+  } | null>(null);
+  const [saveOverride, setSaveOverride] = useState<{
+    saved: boolean;
+    count: number;
+  } | null>(null);
 
-  useEffect(() => {
-    if (board) {
-      setLiked(board.liked);
-      setSaved(board.saved);
-      setLikeCount(board.likeCount);
-      setSaveCount(board.saveCount);
-    }
-  }, [board?.id, board?.liked, board?.saved, board?.likeCount, board?.saveCount]);
+  const liked = likeOverride?.liked ?? board?.liked ?? false;
+  const likeCount = likeOverride?.count ?? board?.likeCount ?? 0;
+  const saved = saveOverride?.saved ?? board?.saved ?? false;
+  const saveCount = saveOverride?.count ?? board?.saveCount ?? 0;
 
-  const handleLike = async () => {
-    if (likePending || !board) return;
-    setLikePending(true);
-    const prev = liked;
-    setLiked(!prev);
-    setLikeCount((c) => (prev ? c - 1 : c + 1));
-    try {
-      await api.toggleBoardLike(board.id);
-    } catch {
-      setLiked(prev);
-      setLikeCount((c) => (prev ? c + 1 : c - 1));
-    } finally {
-      setLikePending(false);
-    }
+  const likeMutation = useMutation({
+    mutationFn: (boardId: string) => api.toggleBoardLike(boardId),
+    onSettled: async () => {
+      setLikeOverride(null);
+      await queryClient.invalidateQueries({ queryKey: ['board', id] });
+    },
+  });
+  const likePending = likeMutation.isPending;
+
+  const saveMutation = useMutation({
+    mutationFn: (boardId: string) => api.toggleBoardSave(boardId),
+    onSettled: async () => {
+      setSaveOverride(null);
+      await queryClient.invalidateQueries({ queryKey: ['board', id] });
+    },
+  });
+  const savePending = saveMutation.isPending;
+
+  const handleLike = () => {
+    if (!board || likePending) return;
+    const next = !liked;
+    setLikeOverride({
+      liked: next,
+      count: Math.max(0, likeCount + (next ? 1 : -1)),
+    });
+    likeMutation.mutate(board.id);
   };
 
-  const handleSave = async () => {
-    if (savePending || !board) return;
-    setSavePending(true);
-    const prev = saved;
-    setSaved(!prev);
-    setSaveCount((c) => (prev ? c - 1 : c + 1));
-    try {
-      await api.toggleBoardSave(board.id);
-    } catch {
-      setSaved(prev);
-      setSaveCount((c) => (prev ? c + 1 : c - 1));
-    } finally {
-      setSavePending(false);
-    }
+  const handleSave = () => {
+    if (!board || savePending) return;
+    const next = !saved;
+    setSaveOverride({
+      saved: next,
+      count: Math.max(0, saveCount + (next ? 1 : -1)),
+    });
+    saveMutation.mutate(board.id);
   };
 
   const handleDeleteBoard = () => {
