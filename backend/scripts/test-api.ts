@@ -34,6 +34,9 @@ const NEW_USER = {
   name: 'E2E Runner',
 };
 
+/** Seeded demo account used where the API wants an email (board members). */
+const SEED_USER_EMAIL = 'leo@travelboard.dev';
+
 let accessToken = '';
 let refreshToken = '';
 
@@ -239,8 +242,9 @@ async function main() {
     'Users',
     'GET',
     '/users/search?q=maya',
-    'Searches users by name',
+    'Searches users by name (auth required)',
     {
+      auth: true,
       check: (json) => {
         const body = json as { users?: unknown[] };
         if (!Array.isArray(body.users)) return 'missing users[]';
@@ -323,20 +327,16 @@ async function main() {
     expect: [400],
   });
 
-  await call('Boards', 'GET', '/boards/mine', 'Lists my boards', {
+  await call('Boards', 'GET', '/boards/mine', 'Lists my boards (bare array)', {
     auth: true,
     check: (json) =>
-      Array.isArray((json as { items?: unknown[] })?.items)
-        ? ''
-        : 'missing items[]',
+      Array.isArray(json) ? '' : 'expected a board array',
   });
 
-  await call('Boards', 'GET', '/boards/saved', 'Lists saved boards', {
+  await call('Boards', 'GET', '/boards/saved', 'Lists saved boards (bare array)', {
     auth: true,
     check: (json) =>
-      Array.isArray((json as { items?: unknown[] })?.items)
-        ? ''
-        : 'missing items[]',
+      Array.isArray(json) ? '' : 'expected a board array',
   });
 
   if (boardId) {
@@ -419,7 +419,7 @@ async function main() {
           'Reorders items within a section',
           {
             auth: true,
-            body: { sectionId, itemIds: [itemId] },
+            body: { sectionId, orderedItemIds: [itemId] },
             expect: [200, 201, 204],
           },
         );
@@ -438,7 +438,11 @@ async function main() {
       'PATCH',
       `/boards/${boardId}/sections/reorder`,
       'Reorders sections',
-      { auth: true, body: { sectionIds: [] }, expect: [200, 201, 204] },
+      {
+        auth: true,
+        body: { orderedSectionIds: [sectionId] },
+        expect: [200, 201, 204],
+      },
     );
 
     // -- Members ------------------------------------------------------------
@@ -455,8 +459,8 @@ async function main() {
         'Boards',
         'POST',
         `/boards/${boardId}/members`,
-        'Adds a collaborator',
-        { auth: true, body: { userId: seedUserId, role: 'EDITOR' } },
+        'Adds a collaborator by email',
+        { auth: true, body: { email: SEED_USER_EMAIL, role: 'EDITOR' } },
       );
       await call(
         'Boards',
@@ -679,7 +683,7 @@ async function main() {
         'Creates a direct conversation',
         {
           auth: true,
-          body: { type: 'DIRECT', memberIds: [seedUserId] },
+          body: { type: 'DIRECT', userId: seedUserId },
           expect: [200, 201],
         },
       );
@@ -739,13 +743,13 @@ async function main() {
     );
   }
 
-  // -- Places (500 without GOOGLE_PLACES_API_KEY is expected) ----------------
+  // -- Places (placeholder key -> upstream 400 -> proxied 502) --------------
   await call(
     'Places',
     'GET',
     '/places/search?q=ramen%20in%20tokyo',
-    'Proxies Google Places search (needs a server API key)',
-    { auth: true, expect: [200, 400, 500], check: () => '' },
+    'Proxies Google Places search (needs a valid server API key)',
+    { auth: true, expect: [200, 400, 500, 502], check: () => '' },
   );
 
   // -- Logout ---------------------------------------------------------------
@@ -831,7 +835,7 @@ function writeReport(): void {
   lines.push('## Notes');
   lines.push('');
   lines.push(
-    '- `GET /places/search` requires `GOOGLE_PLACES_API_KEY` in `backend/.env`. Without it the route answers 500, which this suite accepts as expected rather than a regression.',
+    '- `GET /places/search` requires a valid `GOOGLE_PLACES_API_KEY` in `backend/.env`. A missing key answers 500 and a placeholder key gets `400 API key not valid` from Google, which the proxy maps to 502; both are expected until a real key is configured.',
   );
   lines.push(
     '- `POST /uploads/image` is multipart; the suite covers `POST /uploads/register` (the URL-registration path) instead of a binary upload.',
@@ -862,3 +866,8 @@ function writeReport(): void {
     process.exitCode = 1;
   }
 }
+
+void main().catch((error: unknown) => {
+  console.error(error);
+  process.exitCode = 1;
+});

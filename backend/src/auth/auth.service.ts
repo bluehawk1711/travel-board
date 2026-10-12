@@ -29,6 +29,7 @@ export interface AuthUser {
   email: string;
   name: string;
   avatarUrl: string | null;
+  bio: string | null;
 }
 
 export interface TokensResponse {
@@ -296,12 +297,14 @@ export class AuthService {
     email: string;
     name: string;
     avatarUrl: string | null;
+    bio: string | null;
   }): AuthUser {
     return {
       id: user.id,
       email: user.email,
       name: user.name,
       avatarUrl: user.avatarUrl,
+      bio: user.bio,
     };
   }
 }

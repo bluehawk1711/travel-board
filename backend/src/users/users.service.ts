@@ -228,7 +228,14 @@ export class UsersService {
     const { name, bio, avatarUrl } = dto;
     const [updated] = await this.db
       .update(users)
-      .set({ name, bio, avatarUrl, updatedAt: new Date() })
+      .set({
+        name,
+        // An empty string means "clear the bio" — store NULL, not ''.
+        // `undefined` keeps Drizzle's skip-undefined behavior for partials.
+        bio: bio === undefined ? undefined : bio === '' ? null : bio,
+        avatarUrl,
+        updatedAt: new Date(),
+      })
       .where(eq(users.id, userId))
       .returning({
         id: users.id,
