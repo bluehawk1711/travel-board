@@ -30,6 +30,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { APP } from "@travel-board/shared";
 
 const NAV_LINKS = [
   { href: "/", label: "Explore", icon: Compass },
@@ -113,10 +114,14 @@ export function SiteHeader() {
           href="/"
           className="flex shrink-0 items-center gap-2 font-semibold tracking-tight text-zinc-900 dark:text-zinc-50"
         >
-          <span className="flex size-7 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-400 to-cyan-600 text-xs font-bold text-white">
-            TB
-          </span>
-          Travel Boards
+          <Image
+            src="/logo.png"
+            alt=""
+            width={28}
+            height={28}
+            className="size-7 rounded-lg"
+          />
+          {APP.namePlural}
         </Link>
 
         <nav aria-label="Primary" className="hidden items-center gap-1 md:flex">

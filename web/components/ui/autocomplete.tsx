@@ -7,6 +7,7 @@ import React, {
   useRef,
   useCallback,
   useEffect,
+  useId,
   useSyncExternalStore,
   type ReactNode
 } from 'react'
@@ -32,6 +33,7 @@ interface AutocompleteCtx {
   selectedLabel: string | null
   highlightedValue: string | null
   setHighlightedValue: (v: string | null) => void
+  listId: string
   disabled: boolean
   inputWrapperRef: React.RefObject<HTMLDivElement | null>
   inputRef: React.RefObject<HTMLInputElement | null>
@@ -92,6 +94,7 @@ const Autocomplete = ({
   const inputWrapperRef = useRef<HTMLDivElement | null>(null)
   const inputRef = useRef<HTMLInputElement | null>(null)
   const popupRef = useRef<HTMLDivElement | null>(null)
+  const listId = useId()
 
   const isOpen = openProp !== undefined ? openProp : openState
   const resolvedValue = valueProp !== undefined ? valueProp : selectedValue
@@ -185,6 +188,7 @@ const Autocomplete = ({
         selectedLabel,
         highlightedValue,
         setHighlightedValue,
+        listId,
         disabled,
         inputWrapperRef,
         inputRef,
@@ -251,7 +255,7 @@ const AutocompleteInput = ({
   onKeyDown,
   ...props
 }: AutocompleteInputProps) => {
-  const { open, setOpen, inputValue, setInputValue, inputWrapperRef, inputRef, disabled, highlightNext, highlightPrev, selectHighlighted } =
+  const { open, setOpen, inputValue, setInputValue, inputWrapperRef, inputRef, disabled, listId, highlightNext, highlightPrev, selectHighlighted } =
     useAc()
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -291,6 +295,7 @@ const AutocompleteInput = ({
         aria-expanded={open}
         aria-autocomplete='list'
         aria-haspopup='listbox'
+        aria-controls={listId}
         disabled={disabled}
         value={inputValue}
         onChange={e => {
@@ -486,9 +491,11 @@ const AutocompleteContent = ({
 type AutocompleteListProps = React.HTMLAttributes<HTMLDivElement>
 
 const AutocompleteList = ({ className, ...props }: AutocompleteListProps) => {
+  const { listId } = useAc()
   return (
     <div
       data-slot='autocomplete-list'
+      id={listId}
       role='listbox'
       className={cn(
         'max-h-96 overflow-y-auto overscroll-contain scroll-py-1 not-empty:px-1 not-empty:py-1',

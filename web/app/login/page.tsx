@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { AuthForm } from "@/components/auth-form";
+import { UI_MESSAGES } from "@travel-board/shared";
 
 export const metadata: Metadata = {
   title: "Sign in",
-  description: "Sign in to Travel Boards.",
+  description: UI_MESSAGES.AUTH.SIGN_IN_META,
 };
 
 export default function LoginPage() {

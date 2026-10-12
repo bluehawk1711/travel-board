@@ -319,7 +319,7 @@ export default function SettingsPage() {
                 </span>
                 <input
                   type="checkbox"
-                  className="size-4 accent-[#FA5438]"
+                  className="size-4 accent-(--primary)"
                   checked={settings ? settings[key] : false}
                   disabled={settingsMutation.isPending || !settings}
                   onChange={(e) => void saveSettings({ [key]: e.target.checked })}

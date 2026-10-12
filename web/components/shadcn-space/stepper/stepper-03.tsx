@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import {
   Check,
@@ -47,6 +47,21 @@ export default function Stepper03({
   const [activeStep, setActiveStep] = useState(0);
   const prefersReducedMotion = useReducedMotion();
 
+  // Track width (px) lets the progress dot animate via transform instead of
+  // the layout-thrashing `left` property.
+  const trackRef = useRef<HTMLDivElement>(null);
+  const [trackWidth, setTrackWidth] = useState(0);
+
+  useEffect(() => {
+    const el = trackRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver(([entry]) => {
+      setTrackWidth(entry.contentRect.width);
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   const progress = activeStep / (steps.length - 1);
 
   const isLast = activeStep === steps.length - 1;
@@ -78,13 +93,18 @@ export default function Stepper03({
             animate={{ scaleX: progress }}
             transition={{ type: "spring", stiffness: 120, damping: 20 }}
           />
-          <motion.span
-            className="absolute size-2 rounded-full bg-primary"
-            style={{ top: 21, x: "-50%", y: "-50%" }}
-            initial={{ left: "12.5%" }}
-            animate={{ left: `${12.5 + progress * 75}%` }}
-            transition={{ type: "spring", stiffness: 160, damping: 24 }}
-          />
+          <div
+            ref={trackRef}
+            className="absolute top-5 left-[12.5%] right-[12.5%] h-0"
+          >
+            <motion.span
+              className="absolute size-2 rounded-full bg-primary"
+              style={{ top: 0, y: "-50%" }}
+              initial={false}
+              animate={{ x: progress * trackWidth - 4 }}
+              transition={{ type: "spring", stiffness: 160, damping: 24 }}
+            />
+          </div>
           <div className="relative flex items-start justify-between">
             {steps.map((step, index) => {
               const isActive = index === activeStep;

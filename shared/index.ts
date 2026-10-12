@@ -13,6 +13,8 @@
 
 export const APP = {
   name: 'Travel Board',
+  /** Plural form used in marketing copy, headers and SEO titles. */
+  namePlural: 'Travel Boards',
   tagline: 'Discover, plan, and share trips together',
   description:
     'Travel Board is a Pinterest-style social platform where people discover, create, save, and collaboratively plan trips through shareable travel boards.',
@@ -68,6 +70,8 @@ export const THEME = {
     surfaceElevated: { light: '#F4F2ED', dark: '#221F1D' },
     /** Primary action color (terracotta). Same in both modes. */
     primary: { light: '#FA5438', dark: '#FA5438' },
+    /** Deeper terracotta — hover/pressed states, gradient bottoms. */
+    primaryDark: { light: '#D93D22', dark: '#FF8A73' },
     /** Primary foreground on primary (white). */
     primaryForeground: { light: '#FFFFFF', dark: '#FFFFFF' },
     /** Primary container (tinted terracotta for hover/selected). */
@@ -88,6 +92,12 @@ export const THEME = {
     success: { light: '#0E7453', dark: '#4FB98C' },
     successForeground: { light: '#FFFFFF', dark: '#002113' },
     successContainer: { light: '#E3F7EE', dark: '#12352A' },
+    /** Golden hour — ratings, bookmark saves, editor picks. */
+    golden: { light: '#E08722', dark: '#F0A94B' },
+    /** Ocean cyan — maps, transit, AI assistant, info toasts/badges. */
+    info: { light: '#1C7ED6', dark: '#5AA3E8' },
+    /** Pure white for text/icons composited over photography. */
+    onImage: { light: '#FFFFFF', dark: '#FFFFFF' },
     /** Hairline borders / dividers. */
     border: { light: '#ECE8E1', dark: '#2E2A27' },
     /** Input background. */
@@ -148,12 +158,23 @@ export const THEME = {
       dark: '0 10px 24px -2px rgba(250, 84, 56, 0.5)',
     },
   },
+  /**
+   * Shadow *tints* (RN needs a solid shadowColor per elevation; web encodes
+   * them inside the CSS strings above). Warm-tinted, never neutral gray.
+   */
+  shadowColors: {
+    card: '#1C1410',
+    nav: '#231712',
+    fab: '#FA5438',
+  },
   /** Minimum touch target (dp). */
   touchTarget: 48,
   /** Bottom tab bar inset per platform (mobile only, web ignores). */
   bottomTabInset: {
-    ios: 50,
-    android: 80,
+    // Floating dock: 64px pill + ~16px gap + safe-area (34 iOS home
+    // indicator / ~24 Android gesture nav, rounded up).
+    ios: 114,
+    android: 96,
     default: 0,
   },
   /** Max content width for centered layouts (px). */
@@ -172,3 +193,66 @@ export interface UserSettings {
   /** Currency code used for budget display (e.g. "USD"). */
   currency: string;
 }
+
+/**
+ * User-facing UI copy for the web and mobile clients (English).
+ *
+ * Client-rendered strings live here so both apps speak with one voice and a
+ * wording change is a one-line edit. API-originated error/success strings are
+ * NOT duplicated here — the NestJS API owns those and returns them in its
+ * response bodies (see `backend/src/common/messages.ts`).
+ */
+export const UI_MESSAGES = {
+  COMMON: {
+    GENERIC_ERROR: 'Something went wrong - try again',
+    NETWORK_ERROR: 'Check your connection and try again',
+  },
+  AUTH: {
+    PASSWORD_TOO_SHORT: 'Password must be at least 8 characters',
+    INVALID_RESET_LINK: 'Invalid reset link - please request a new one',
+    GOOGLE_FAILED: 'Google sign-in failed - try again',
+    PASSWORDS_MISMATCH: 'Passwords do not match',
+    ALL_FIELDS_REQUIRED: 'All fields are required',
+    EMAIL_REQUIRED: 'Enter your email',
+    EMAIL_PASSWORD_REQUIRED: 'Enter your email and password',
+    HAVE_ACCOUNT: 'Already have an account?',
+    NEW_HERE: 'New to Travel Boards?',
+    JOIN_TAGLINE: 'Join Travel Boards to create, save and share trips.',
+    SIGN_IN_META: 'Sign in to Travel Boards.',
+    SIGN_UP_META: 'Join Travel Boards and start planning trips with friends.',
+  },
+  BOARDS: {
+    TITLE_REQUIRED: 'Board title is required',
+    ITEM_TITLE_REQUIRED: 'Item title is required',
+    SAVE_FAILED: 'Could not save changes',
+    SAVE_ITEM_FAILED: 'Could not save item',
+    DELETE_FAILED: 'Could not delete',
+    COMMENT_FAILED: 'Could not post comment',
+    COVER_UPLOAD_FAILED: 'Cover upload failed',
+    IMAGE_UPLOAD_FAILED: 'Image upload failed',
+    NEW_TAGLINE: 'Start a travel board - you can edit it live with collaborators.',
+  },
+  SETTINGS: {
+    NAME_REQUIRED: 'Name is required',
+    SAVED: 'Saved!',
+    AVATAR_UPLOAD_FAILED: 'Avatar upload failed',
+  },
+  EXPLORE: {
+    TITLE: 'Explore - Travel Boards',
+    DESCRIPTION:
+      'Discover travel boards from the community - itineraries and collections to save and collaborate on.',
+    HEADING: 'Discover travel boards from the community',
+  },
+  SEARCH: {
+    DESCRIPTION: 'Search public travel boards by destination or title.',
+    SEARCH_FAILED: 'Search failed',
+  },
+  HOW_IT_WORKS: {
+    HEADING: 'How Travel Boards works',
+  },
+  NOTIFICATIONS: {
+    EMPTY: 'No notifications yet.',
+    MARK_ALL_READ: 'Mark all read',
+    LOAD_FAILED: 'Could not load notifications',
+  },
+} as const;

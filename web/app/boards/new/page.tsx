@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { createBoard, type CreateBoardPayload } from "@/lib/board-edit";
 import { useDestinationOptions } from "@/lib/queries";
 import { cn } from "@/lib/utils";
+import { UI_MESSAGES } from "@travel-board/shared";
 
 export default function NewBoardPage() {
   const router = useRouter();
@@ -69,7 +70,7 @@ export default function NewBoardPage() {
           New board
         </h1>
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-          Start a travel board — you can edit it live with collaborators.
+          {UI_MESSAGES.BOARDS.NEW_TAGLINE}
         </p>
       </header>
 

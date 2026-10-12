@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { AuthForm } from "@/components/auth-form";
+import { UI_MESSAGES } from "@travel-board/shared";
 
 export const metadata: Metadata = {
   title: "Create account",
-  description: "Join Travel Boards and start planning trips with friends.",
+  description: UI_MESSAGES.AUTH.SIGN_UP_META,
 };
 
 export default function SignupPage() {

@@ -16,6 +16,14 @@
   /* Terracotta (primary action) */
   --primary: #fa5438;
   --primary-foreground: #ffffff;
+  /* Deeper terracotta — hover/pressed states, gradient bottoms */
+  --primary-dark: #d93d22;
+  /* Golden hour — ratings, bookmark saves, editor picks */
+  --golden: #e08722;
+  /* Ocean cyan — maps, transit, AI assistant accents */
+  --info: #1c7ed6;
+  /* Deep gradient stop (sunset strata) */
+  --brand-deep: #8d4f00;
   /* Warm sand containers */
   --secondary: #f4f2ed;
   --secondary-foreground: #191716;
@@ -53,6 +61,10 @@
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-dark: var(--primary-dark);
+  --color-golden: var(--golden);
+  --color-info: var(--info);
+  --color-brand-deep: var(--brand-deep);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
@@ -106,6 +118,10 @@
     --popover-foreground: #faf9f6;
     --primary: #fa5438;
     --primary-foreground: #ffffff;
+    --primary-dark: #ff8a73;
+    --golden: #f0a94b;
+    --info: #5aa3e8;
+    --brand-deep: #8d4f00;
     --secondary: #221f1d;
     --secondary-foreground: #faf9f6;
     --muted: #221f1d;
@@ -129,4 +145,15 @@ body {
   font-family: var(--font-jakarta), "Plus Jakarta Sans", ui-sans-serif, system-ui,
     sans-serif;
   -webkit-font-smoothing: antialiased;
+}
+
+/* Sunset-strata placeholder gradient for board covers without imagery
+ * (DESIGN.md §Cards: terracotta → deep earth). */
+@utility bg-sunset-gradient {
+  background-image: linear-gradient(
+    135deg,
+    var(--primary) 0%,
+    var(--primary-dark) 55%,
+    var(--brand-deep) 100%
+  );
 }

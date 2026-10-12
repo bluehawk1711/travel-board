@@ -57,7 +57,7 @@ export function BoardMembers({ boardId, isOwner, open, onOpenChange }: BoardMemb
     enabled: open,
     staleTime: 15_000,
   });
-  const members = membersQuery.data?.members ?? [];
+  const members = membersQuery.data ?? [];
 
   // Debounced user search via React Query.
   useEffect(() => {

@@ -9,6 +9,7 @@ import { ExplorePlanner, EMPTY_FILTER, type ExploreFilter } from "./explore-plan
 import { TripChecklist } from "./trip-checklist";
 import { FeaturedDestination } from "./featured-destination";
 import { HowItWorks } from "./how-it-works";
+import { UI_MESSAGES } from "@travel-board/shared";
 
 function SortLink({
   label,
@@ -96,7 +97,7 @@ export function ExploreFeed({
             Explore
           </h1>
           <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-            Discover travel boards from the community
+            {UI_MESSAGES.EXPLORE.HEADING}
           </p>
         </div>
         <nav

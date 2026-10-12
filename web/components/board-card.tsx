@@ -23,7 +23,7 @@ function ownerInitials(name: string): string {
 
 function CoverPlaceholder({ label }: { label: string }) {
   return (
-    <div className="flex h-full w-full items-end bg-gradient-to-br from-[#FA5438] via-[#D93D22] to-[#8D4F00] p-3">
+    <div className="flex h-full w-full items-end bg-sunset-gradient p-3">
       <span className="truncate text-lg font-bold text-white drop-shadow">
         {label}
       </span>
@@ -55,7 +55,7 @@ export function BoardCard({ board, index }: { board: FeedItem; index: number }) 
           {cover}
 
           {/* Bottom scrim keeps the overlay label legible over any photo. */}
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-[#191716]/85 via-[#191716]/35 to-transparent" />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-foreground/85 via-foreground/35 to-transparent" />
 
           {board.boardType === "ITINERARY" && (
             <span className="absolute left-3 top-3 rounded-full border border-white/15 bg-black/45 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur-md">

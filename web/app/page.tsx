@@ -3,15 +3,15 @@ import { Suspense } from "react";
 import { ExploreFeed } from "@/components/explore-feed";
 import { FEED_PAGE_SIZE, fetchExploreFeed } from "@/lib/api";
 import type { FeedSort } from "@/lib/types";
+import { APP, UI_MESSAGES } from "@travel-board/shared";
 
 // Cache Components (PPR) is enabled: the page shell prerenders, and the feed
 // streams in at request time behind <Suspense>. `next build` must never depend
 // on the API being up, and the API already serves its own 60s Redis-cached feed.
 
 export const metadata: Metadata = {
-  title: "Explore — Travel Boards",
-  description:
-    "Discover travel boards from the community — itineraries and collections to save and collaborate on.",
+  title: UI_MESSAGES.EXPLORE.TITLE,
+  description: UI_MESSAGES.EXPLORE.DESCRIPTION,
 };
 
 export default function HomePage({

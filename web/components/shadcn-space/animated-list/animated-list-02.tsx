@@ -127,13 +127,13 @@ export const SetupSteps = ({
                 </div>
                 <div className="ml-7.5 h-1.5 overflow-hidden rounded-full bg-muted">
                   <motion.div
-                    className="h-full bg-teal-400 rounded-full"
-                    initial={{ width: "0%" }}
+                    className="h-full w-full bg-teal-400 rounded-full origin-left"
+                    initial={{ scaleX: 0 }}
                     animate={{
-                      width: status === "pending" ? "0%" : "100%",
+                      scaleX: status === "pending" ? 0 : 1,
                     }}
                     transition={{
-                      width: isActive
+                      scaleX: isActive
                         ? { duration: duration / 1000, ease: "linear" }
                         : { duration: 0.5, ease: "easeInOut" },
                     }}

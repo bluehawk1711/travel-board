@@ -259,7 +259,13 @@ export function fetchUserFollowing(
 export function uploadImage(file: File): Promise<{ url: string }> {
   const form = new FormData();
   form.append('file', file);
-  return authFetch('/uploads/image', { method: 'POST', body: form });
+  return authFetch<{ url: string }>('/uploads/image', { method: 'POST', body: form }).then(
+    (data) => ({
+      // The API returns root-relative URLs — make them absolute so covers,
+      // avatars and item photos resolve from the web origin too.
+      url: data.url.startsWith('/') ? `${API_URL}${data.url}` : data.url,
+    }),
+  );
 }
 
 // ── Chat: conversations & users (backend/src/chat, /users) ─
@@ -307,7 +313,7 @@ export interface BoardMember {
   user: { id: string; name: string; email: string; avatarUrl: string | null };
 }
 
-export function fetchBoardMembers(boardId: string): Promise<{ members: BoardMember[] }> {
+export function fetchBoardMembers(boardId: string): Promise<BoardMember[]> {
   return authFetch(`/boards/${boardId}/members`);
 }
 

@@ -1,4 +1,5 @@
 import AccordionMotionServices from "@/components/shadcn-space/accordion/accordion-07";
+import { UI_MESSAGES } from "@travel-board/shared";
 
 export function HowItWorks() {
   return (
@@ -8,7 +9,7 @@ export function HowItWorks() {
           id="how-it-works"
           className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50"
         >
-          How Travel Boards works
+          {UI_MESSAGES.HOW_IT_WORKS.HEADING}
         </h2>
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
           From discovery to a shared itinerary in four steps.
