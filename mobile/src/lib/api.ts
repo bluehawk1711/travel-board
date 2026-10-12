@@ -11,6 +11,7 @@ import type {
   FeedSort,
   FollowListResult,
   MyBoard,
+  NotificationListResult,
   PlaceResult,
   PublicProfile,
   SearchUser,
@@ -321,8 +322,8 @@ export const api = {
     startDate?: string;
     endDate?: string;
     coverImageUrl?: string;
-  }): Promise<{ board: MyBoard }> {
-    return apiFetch<{ board: MyBoard }>('/boards', {
+  }): Promise<MyBoard> {
+    return apiFetch<MyBoard>('/boards', {
       method: 'POST',
       body: JSON.stringify(payload),
     });
@@ -340,8 +341,8 @@ export const api = {
       startDate?: string;
       endDate?: string;
     },
-  ): Promise<{ board: MyBoard }> {
-    return apiFetch<{ board: MyBoard }>(`/boards/${id}`, {
+  ): Promise<MyBoard> {
+    return apiFetch<MyBoard>(`/boards/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(payload),
     });
@@ -471,7 +472,7 @@ export const api = {
 
   // ── Board members ──────────────────────────────────────────
 
-  getBoardMembers(boardId: string): Promise<{ members: BoardMember[] }> {
+  getBoardMembers(boardId: string): Promise<BoardMember[]> {
     return apiFetch(`/boards/${boardId}/members`);
   },
 
@@ -585,7 +586,12 @@ export const api = {
         response.status,
       );
     }
-    return response.json() as Promise<{ url: string }>;
+    const data = (await response.json()) as { url: string };
+    // The API returns root-relative URLs (/uploads/<file>) — make them
+    // absolute so <Image>/avatars/covers resolve against the backend host.
+    return {
+      url: data.url.startsWith('/') ? `${API_URL}${data.url}` : data.url,
+    };
   },
 
   // ── Settings (backend/src/users, `user_settings` table) ─────
@@ -629,7 +635,7 @@ export const api = {
       id: string;
       type: string;
       name: string | null;
-      members: { userId: string; user: { id: string; name: string; avatarUrl: string | null } }[];
+      members: { userId: string; name: string; avatarUrl: string | null }[];
     }>(`/chat/conversations/${conversationId}`);
   },
 
@@ -666,7 +672,7 @@ export const api = {
       id: string;
       type: string;
       name: string | null;
-      members: { userId: string; user: { id: string; name: string; avatarUrl: string | null } }[];
+      members: { userId: string; name: string; avatarUrl: string | null }[];
     }>(`/chat/boards/${boardId}`);
   },
 
@@ -686,5 +692,49 @@ export const api = {
     return apiFetch<Record<string, boolean>>(
       `/chat/presence?userIds=${encodeURIComponent(userIds.join(','))}`,
     );
+  },
+
+  // ── Notifications ──────────────────────────────────────────
+
+  getNotifications(limit: number, offset: number): Promise<NotificationListResult> {
+    return apiFetch<NotificationListResult>(
+      `/notifications?limit=${limit}&offset=${offset}`,
+    );
+  },
+
+  getUnreadNotificationCount(): Promise<{ unreadCount: number }> {
+    return apiFetch<{ unreadCount: number }>('/notifications/unread-count');
+  },
+
+  markNotificationsRead(ids: string[]): Promise<{ updated: number }> {
+    return apiFetch<{ updated: number }>('/notifications/read', {
+      method: 'PATCH',
+      body: JSON.stringify({ ids }),
+    });
+  },
+
+  markAllNotificationsRead(): Promise<{ updated: number }> {
+    return apiFetch<{ updated: number }>('/notifications/read-all', {
+      method: 'PATCH',
+    });
+  },
+
+  // ── Push ───────────────────────────────────────────────────
+
+  registerPushToken(payload: {
+    token: string;
+    platform?: 'EXPO' | 'FCM' | 'WEB_PUSH';
+  }): Promise<{ registered: boolean }> {
+    return apiFetch<{ registered: boolean }>('/push/tokens', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  unregisterPushToken(token: string): Promise<{ unregistered: boolean }> {
+    return apiFetch<{ unregistered: boolean }>('/push/tokens', {
+      method: 'DELETE',
+      body: JSON.stringify({ token }),
+    });
   },
 };

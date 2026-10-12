@@ -17,6 +17,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { api, ApiError } from '@/lib/api';
 import { useQuery } from '@tanstack/react-query';
 import type { SearchUser } from '@/lib/types';
+import { UI_MESSAGES } from '@travel-board/shared';
 
 export default function SearchScreen() {
   const theme = useTheme();
@@ -39,7 +40,7 @@ export default function SearchScreen() {
     queryError instanceof ApiError
       ? queryError.message
       : queryError
-        ? 'Search failed'
+        ? UI_MESSAGES.SEARCH.SEARCH_FAILED
         : null;
 
   const doSearch = useCallback(() => {
@@ -83,7 +84,13 @@ export default function SearchScreen() {
       </View>
 
       {error ? (
-        <ThemedText type="small" style={{ color: '#dc2626', paddingHorizontal: Spacing.three }}>
+        <ThemedText
+          type="small"
+          style={{
+            color: theme.danger,
+            paddingHorizontal: Spacing.three,
+          }}
+        >
           {error}
         </ThemedText>
       ) : null}
@@ -111,9 +118,6 @@ export default function SearchScreen() {
             </View>
             <View style={styles.resultInfo}>
               <ThemedText type="smallBold">{item.name}</ThemedText>
-              <ThemedText type="small" themeColor="textSecondary">
-                {item.email}
-              </ThemedText>
             </View>
           </Pressable>
         )}
@@ -125,7 +129,7 @@ export default function SearchScreen() {
             </ThemedText>
           ) : !searched ? (
             <ThemedText themeColor="textSecondary" style={styles.emptyText}>
-              Search for people by name or email.
+              Search for people by name.
             </ThemedText>
           ) : null
         }

@@ -1,9 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import { FlashList } from '@shopify/flash-list';
+import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
+  Pressable,
   StyleSheet,
   View,
 } from 'react-native';
@@ -42,6 +44,13 @@ function MyBoardsScreen() {
     queryFn: scope === 'mine' ? api.getMyBoards : api.getSavedBoards,
   });
 
+  const unreadQuery = useQuery({
+    queryKey: ['unreadNotifications'],
+    queryFn: api.getUnreadNotificationCount,
+    refetchInterval: 60_000,
+  });
+  const unreadCount = unreadQuery.data?.unreadCount ?? 0;
+
   const cards = (query.data ?? []).map(toCardModel);
 
   const handleSignOut = useCallback(() => {
@@ -52,11 +61,41 @@ function MyBoardsScreen() {
     router.push('/board/create');
   }, [router]);
 
+  const openNotifications = useCallback(() => {
+    router.push('/notifications');
+  }, [router]);
+
   return (
     <ThemedView style={styles.screen}>
       <View style={styles.header}>
         <ThemedText type="subtitle">My Boards</ThemedText>
         <View style={styles.headerActions}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={
+              unreadCount > 0
+                ? `Notifications, ${unreadCount} unread`
+                : 'Notifications'
+            }
+            onPress={openNotifications}
+            style={({ pressed }) => [
+              styles.bellButton,
+              { backgroundColor: theme.backgroundElement },
+              pressed && styles.bellPressed,
+            ]}
+          >
+            <MaterialIcons name="notifications" size={20} color={theme.text} />
+            {unreadCount > 0 ? (
+              <View style={[styles.bellBadge, { backgroundColor: theme.primary }]}>
+                <ThemedText
+                  type="smallBold"
+                  style={[styles.bellBadgeText, { color: theme.onPrimary }]}
+                >
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </ThemedText>
+              </View>
+            ) : null}
+          </Pressable>
           <PillButton
             label="New"
             onPress={openCreate}
@@ -156,7 +195,33 @@ const styles = StyleSheet.create({
   },
   headerActions: {
     flexDirection: 'row',
+    alignItems: 'center',
     gap: Spacing.two,
+  },
+  bellButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bellPressed: {
+    opacity: 0.7,
+  },
+  bellBadge: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    paddingHorizontal: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bellBadgeText: {
+    fontSize: 10,
+    lineHeight: 14,
   },
   scopeRow: {
     flexDirection: 'row',

@@ -17,6 +17,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { api, ApiError } from '@/lib/api';
 import type { BoardItem, BoardItemType } from '@/lib/board-types';
 import type { PlaceResult } from '@/lib/types';
+import { UI_MESSAGES } from '@travel-board/shared';
 
 /** Types that map to a Google Places result (show the search field). */
 const PLACE_TYPES: BoardItemType[] = [
@@ -118,7 +119,9 @@ export function ItemFormModal({
       onClose();
     },
     onError: (err: Error) => {
-      setError(err instanceof ApiError ? err.message : 'Could not save item');
+      setError(
+        err instanceof ApiError ? err.message : UI_MESSAGES.BOARDS.SAVE_ITEM_FAILED,
+      );
     },
   });
   const saving = saveMutation.isPending;
@@ -130,7 +133,11 @@ export function ItemFormModal({
       setImageUrl(url);
     },
     onError: (err: Error) => {
-      setError(err instanceof ApiError ? err.message : 'Image upload failed');
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : UI_MESSAGES.BOARDS.IMAGE_UPLOAD_FAILED,
+      );
     },
   });
 
@@ -193,7 +200,7 @@ export function ItemFormModal({
         type: asset.mimeType ?? 'image/jpeg',
       });
     } catch {
-      setError('Image upload failed');
+      setError(UI_MESSAGES.BOARDS.IMAGE_UPLOAD_FAILED);
     }
   }, [uploadMutation]);
 
@@ -208,7 +215,7 @@ export function ItemFormModal({
   }, []);
   const save = useCallback(() => {
     if (!title.trim()) {
-      setError('Item title is required');
+      setError(UI_MESSAGES.BOARDS.ITEM_TITLE_REQUIRED);
       return;
     }
     setError(null);
@@ -397,7 +404,7 @@ export function ItemFormModal({
               </View>
               {imageUrl ? (
                 <Pressable onPress={() => setImageUrl(null)}>
-                  <ThemedText type="small" style={styles.error}>
+                  <ThemedText type="small" style={{ color: theme.danger }}>
                     Remove
                   </ThemedText>
                 </Pressable>
@@ -405,7 +412,7 @@ export function ItemFormModal({
             </Pressable>
 
             {error || placesMessage ? (
-              <ThemedText type="small" style={styles.error}>
+              <ThemedText type="small" style={{ color: theme.danger }}>
                 {error ?? placesMessage}
               </ThemedText>
             ) : null}
@@ -500,7 +507,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.two,
   },
-  error: { color: '#dc2626' },
   actions: {
     flexDirection: 'row',
     justifyContent: 'flex-end',

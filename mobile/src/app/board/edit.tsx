@@ -18,6 +18,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { api, ApiError } from '@/lib/api';
+import { UI_MESSAGES } from '@travel-board/shared';
 
 /** API dates are ISO-8601; the form edits plain YYYY-MM-DD. */
 function toDateInput(value: string | null): string {
@@ -48,7 +49,7 @@ export default function EditBoardScreen() {
       router.back();
     },
     onError: (err: Error) => {
-      setError(err instanceof ApiError ? err.message : 'Could not save changes');
+      setError(err instanceof ApiError ? err.message : UI_MESSAGES.BOARDS.SAVE_FAILED);
     },
   });
 
@@ -59,7 +60,7 @@ export default function EditBoardScreen() {
       router.replace('/(tabs)');
     },
     onError: (err: Error) => {
-      setError(err instanceof ApiError ? err.message : 'Could not delete');
+      setError(err instanceof ApiError ? err.message : UI_MESSAGES.BOARDS.DELETE_FAILED);
     },
   });
 
@@ -165,12 +166,19 @@ export default function EditBoardScreen() {
             <Pressable
               onPress={confirmDelete}
               disabled={deleting}
-              style={[styles.deleteButton, deleting && styles.disabled]}
+              style={[
+                styles.deleteButton,
+                deleting && styles.disabled,
+                { borderColor: theme.danger },
+              ]}
             >
               {deleting ? (
-                <ActivityIndicator color="#dc2626" />
+                <ActivityIndicator color={theme.danger} />
               ) : (
-                <ThemedText type="smallBold" style={styles.deleteText}>
+                <ThemedText
+                  type="smallBold"
+                  style={{ color: theme.danger }}
+                >
                   Delete board
                 </ThemedText>
               )}
@@ -206,11 +214,9 @@ const styles = StyleSheet.create({
   },
   deleteButton: {
     borderWidth: 1,
-    borderColor: '#dc2626',
     borderRadius: Spacing.three,
     paddingVertical: Spacing.three,
     alignItems: 'center',
   },
-  deleteText: { color: '#dc2626' },
   disabled: { opacity: 0.5 },
 });

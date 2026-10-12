@@ -59,7 +59,6 @@ export interface TokensResponse {
 export interface SearchUser {
   id: string;
   name: string;
-  email: string;
   avatarUrl: string | null;
 }
 
@@ -128,11 +127,44 @@ export interface CommentListResult {
   total: number;
 }
 
+export interface ConversationMember {
+  userId: string;
+  name: string;
+  avatarUrl: string | null;
+}
+
 export interface ConversationSummary {
   id: string;
   type: 'DIRECT' | 'GROUP' | 'BOARD';
   name: string | null;
   lastMessage?: { body: string; createdAt: string } | null;
-  otherUser?: { id: string; name: string; avatarUrl: string | null } | null;
+  members: ConversationMember[];
   unreadCount?: number;
+}
+
+// ── Notifications ─────────────────────────────────────────────
+
+export type NotificationType =
+  | 'NEW_FOLLOWER'
+  | 'NEW_BOARD_FOLLOWER'
+  | 'NEW_COMMENT'
+  | 'NEW_LIKE'
+  | 'NEW_SAVE'
+  | 'NEW_CHAT_MESSAGE'
+  | 'MENTION';
+
+export interface NotificationItem {
+  id: string;
+  type: NotificationType;
+  actor: { id: string; name: string; avatarUrl: string | null };
+  targetId: string | null;
+  targetType: string | null;
+  metadata: Record<string, unknown> | null;
+  read: boolean;
+  createdAt: string;
+}
+
+export interface NotificationListResult {
+  items: NotificationItem[];
+  total: number;
 }

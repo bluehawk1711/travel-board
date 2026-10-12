@@ -10,6 +10,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { api, ApiError } from '@/lib/api';
 import { useAuthStore } from '@/lib/auth-store';
 import { queryClient } from '@/lib/query-client';
+import { UI_MESSAGES } from '@travel-board/shared';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -40,9 +41,7 @@ export function GoogleButton() {
       .catch((err) => {
         if (!active) return;
         setError(
-          err instanceof ApiError
-            ? err.message
-            : 'Google sign-in failed — try again',
+          err instanceof ApiError ? err.message : UI_MESSAGES.AUTH.GOOGLE_FAILED,
         );
       });
 
@@ -68,7 +67,7 @@ export function GoogleButton() {
         <ThemedText type="smallBold">Continue with Google</ThemedText>
       </Pressable>
       {error ? (
-        <ThemedText type="small" style={styles.error}>
+        <ThemedText type="small" style={[styles.error, { color: theme.danger }]}>
           {error}
         </ThemedText>
       ) : null}
@@ -87,7 +86,6 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   error: {
-    color: '#dc2626',
     textAlign: 'center',
   },
 });

@@ -13,6 +13,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { api, ApiError } from '@/lib/api';
+import { UI_MESSAGES } from '@travel-board/shared';
 
 export type BoardVisibility = 'PUBLIC' | 'PRIVATE';
 export type BoardType = 'ITINERARY' | 'FREEFORM';
@@ -76,7 +77,9 @@ export function BoardForm({
     },
     onError: (err: Error) => {
       setLocalError(
-        err instanceof ApiError ? err.message : 'Cover upload failed',
+        err instanceof ApiError
+          ? err.message
+          : UI_MESSAGES.BOARDS.COVER_UPLOAD_FAILED,
       );
     },
   });
@@ -100,13 +103,13 @@ export function BoardForm({
         type: asset.mimeType ?? 'image/jpeg',
       });
     } catch {
-      setLocalError('Cover upload failed');
+      setLocalError(UI_MESSAGES.BOARDS.COVER_UPLOAD_FAILED);
     }
   }, [coverMutation]);
 
   const submit = useCallback(() => {
     if (!title.trim()) {
-      setLocalError('Board title is required');
+      setLocalError(UI_MESSAGES.BOARDS.TITLE_REQUIRED);
       return;
     }
     setLocalError(null);
@@ -261,7 +264,7 @@ export function BoardForm({
       </Pressable>
 
       {shownError ? (
-        <ThemedText type="small" style={styles.error}>
+        <ThemedText type="small" style={{ color: theme.danger }}>
           {shownError}
         </ThemedText>
       ) : null}
@@ -331,7 +334,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  error: { color: '#dc2626' },
   primaryButton: {
     borderRadius: Spacing.three,
     paddingVertical: Spacing.three,

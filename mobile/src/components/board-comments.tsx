@@ -15,6 +15,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { api, ApiError } from '@/lib/api';
 import { useAuthStore } from '@/lib/auth-store';
 import type { CommentItem } from '@/lib/types';
+import { UI_MESSAGES } from '@travel-board/shared';
 
 function CommentRow({
   comment,
@@ -76,7 +77,7 @@ export function BoardComments({ boardId }: { boardId: string }) {
       void queryClient.invalidateQueries({ queryKey: ['comments', boardId] });
     },
     onError: (err: unknown) => {
-      setError(err instanceof ApiError ? err.message : 'Could not post comment');
+      setError(err instanceof ApiError ? err.message : UI_MESSAGES.BOARDS.COMMENT_FAILED);
     },
   });
 
@@ -138,7 +139,7 @@ export function BoardComments({ boardId }: { boardId: string }) {
       </View>
 
       {error ? (
-        <ThemedText type="small" style={styles.error}>
+        <ThemedText type="small" style={{ color: theme.danger }}>
           {error}
         </ThemedText>
       ) : null}
@@ -183,7 +184,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   disabled: { opacity: 0.5 },
-  error: { color: '#dc2626' },
   row: {
     flexDirection: 'row',
     alignItems: 'flex-start',

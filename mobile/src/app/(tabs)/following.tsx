@@ -1,7 +1,7 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { BoardCard, type BoardCardModel } from '@/components/board-card';
 import { PillButton } from '@/components/ui/pill-button';
@@ -45,6 +45,12 @@ export default function FollowingScreen() {
   return (
     <ThemedView style={styles.screen}>
       <View style={styles.header}>
+        {/* Secondary destination (hidden dock tab) — offer a way back. */}
+        <Pressable onPress={() => router.back()} hitSlop={12}>
+          <ThemedText type="subtitle" themeColor="textSecondary">
+            ‹ Back
+          </ThemedText>
+        </Pressable>
         <ThemedText type="subtitle">Following</ThemedText>
       </View>
 

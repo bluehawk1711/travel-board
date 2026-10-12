@@ -28,11 +28,17 @@ export const Colors = {
     textSecondary: color('mutedForeground', 'light'),
     surfaceCard: color('surface', 'light'),
     primary: color('primary', 'light'),
-    primaryDark: color('primary', 'light'),
+    primaryDark: color('primaryDark', 'light'),
     primaryContainer: color('primaryContainer', 'light'),
     onPrimary: color('primaryForeground', 'light'),
     tertiary: color('success', 'light'),
     tertiaryLight: color('successContainer', 'light'),
+    /** Bookmark saves, ratings, editor picks (golden hour). */
+    golden: color('golden', 'light'),
+    /** Maps, transit, AI accents, info toasts/badges (ocean cyan). */
+    info: color('info', 'light'),
+    /** Text/icons composited over photography. */
+    onImage: color('onImage', 'light'),
     borderSubtle: color('border', 'light'),
     scrim: color('scrim', 'light'),
     overlay: 'rgba(25, 23, 22, 0.45)',
@@ -46,11 +52,14 @@ export const Colors = {
     textSecondary: color('mutedForeground', 'dark'),
     surfaceCard: color('surface', 'dark'),
     primary: color('primary', 'dark'),
-    primaryDark: color('primary', 'dark'),
+    primaryDark: color('primaryDark', 'dark'),
     primaryContainer: color('primaryContainer', 'dark'),
     onPrimary: color('primaryForeground', 'dark'),
     tertiary: color('success', 'dark'),
     tertiaryLight: color('successContainer', 'dark'),
+    golden: color('golden', 'dark'),
+    info: color('info', 'dark'),
+    onImage: color('onImage', 'dark'),
     borderSubtle: color('border', 'dark'),
     scrim: color('scrim', 'dark'),
     overlay: 'rgba(0, 0, 0, 0.5)',
@@ -117,77 +126,30 @@ export const Radius = {
 // Mobile needs RN shadow objects (shadowColor/Offset/Opacity/Radius +
 // Android elevation); web uses the CSS strings from shared.
 
-export const Shadows = Platform.select({
-  ios: {
-    card: {
-      shadowColor: '#1C1410',
-      shadowOffset: { width: 0, height: 8 },
-      shadowOpacity: 0.06,
-      shadowRadius: 24,
-      elevation: 3,
-    },
-    nav: {
-      shadowColor: '#231712',
-      shadowOffset: { width: 0, height: 12 },
-      shadowOpacity: 0.12,
-      shadowRadius: 36,
-      elevation: 8,
-    },
-    fab: {
-      shadowColor: '#FA5438',
-      shadowOffset: { width: 0, height: 10 },
-      shadowOpacity: 0.42,
-      shadowRadius: 24,
-      elevation: 10,
-    },
-  },
-  android: {
-    card: {
-      shadowColor: '#1C1410',
-      shadowOffset: { width: 0, height: 8 },
-      shadowOpacity: 0.06,
-      shadowRadius: 24,
-      elevation: 3,
-    },
-    nav: {
-      shadowColor: '#231712',
-      shadowOffset: { width: 0, height: 12 },
-      shadowOpacity: 0.12,
-      shadowRadius: 36,
-      elevation: 8,
-    },
-    fab: {
-      shadowColor: '#FA5438',
-      shadowOffset: { width: 0, height: 10 },
-      shadowOpacity: 0.42,
-      shadowRadius: 24,
-      elevation: 10,
-    },
-  },
-  default: {
-    card: {
-      shadowColor: '#1C1410',
-      shadowOffset: { width: 0, height: 8 },
-      shadowOpacity: 0.06,
-      shadowRadius: 24,
-      elevation: 3,
-    },
-    nav: {
-      shadowColor: '#231712',
-      shadowOffset: { width: 0, height: 12 },
-      shadowOpacity: 0.12,
-      shadowRadius: 36,
-      elevation: 8,
-    },
-    fab: {
-      shadowColor: '#FA5438',
-      shadowOffset: { width: 0, height: 10 },
-      shadowOpacity: 0.42,
-      shadowRadius: 24,
-      elevation: 10,
-    },
-  },
-});
+export const Shadows = (() => {
+  const card = {
+    shadowColor: THEME.shadowColors.card,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.06,
+    shadowRadius: 24,
+    elevation: 3,
+  };
+  const nav = {
+    shadowColor: THEME.shadowColors.nav,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.12,
+    shadowRadius: 36,
+    elevation: 8,
+  };
+  const fab = {
+    shadowColor: THEME.shadowColors.fab,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.42,
+    shadowRadius: 24,
+    elevation: 10,
+  };
+  return { card, nav, fab };
+})();
 
 // ── Layout tokens ────────────────────────────────────────────────────────
 

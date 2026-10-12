@@ -19,6 +19,7 @@ import { useMutation } from '@tanstack/react-query';
 import { useAuthStore } from '@/lib/auth-store';
 import { queryClient } from '@/lib/query-client';
 import { GoogleButton } from '@/components/google-button';
+import { UI_MESSAGES } from '@travel-board/shared';
 
 export default function SignInScreen() {
   const theme = useTheme();
@@ -37,7 +38,7 @@ export default function SignInScreen() {
 
   const submit = useCallback(async () => {
     if (!email.trim() || !password) {
-      setError('Enter your email and password');
+      setError(UI_MESSAGES.AUTH.EMAIL_PASSWORD_REQUIRED);
       return;
     }
     setError(null);
@@ -51,7 +52,7 @@ export default function SignInScreen() {
       router.replace('/(tabs)');
     } catch (err) {
       setError(
-        err instanceof ApiError ? err.message : 'Something went wrong — try again',
+        err instanceof ApiError ? err.message : UI_MESSAGES.COMMON.GENERIC_ERROR,
       );
     }
   }, [email, password, router, setSession, signInMutation]);
@@ -103,7 +104,7 @@ export default function SignInScreen() {
           </Pressable>
 
           {error ? (
-            <ThemedText type="small" style={{ color: '#dc2626' }}>
+            <ThemedText type="small" style={{ color: theme.danger }}>
               {error}
             </ThemedText>
           ) : null}

@@ -19,6 +19,7 @@ import { useMutation } from '@tanstack/react-query';
 import { useAuthStore } from '@/lib/auth-store';
 import { queryClient } from '@/lib/query-client';
 import { GoogleButton } from '@/components/google-button';
+import { UI_MESSAGES } from '@travel-board/shared';
 
 export default function SignUpScreen() {
   const theme = useTheme();
@@ -39,15 +40,15 @@ export default function SignUpScreen() {
 
   const submit = useCallback(async () => {
     if (!name.trim() || !email.trim() || !password) {
-      setError('All fields are required');
+      setError(UI_MESSAGES.AUTH.ALL_FIELDS_REQUIRED);
       return;
     }
     if (password.length < 8) {
-      setError('Password must be at least 8 characters');
+      setError(UI_MESSAGES.AUTH.PASSWORD_TOO_SHORT);
       return;
     }
     if (password !== confirm) {
-      setError('Passwords do not match');
+      setError(UI_MESSAGES.AUTH.PASSWORDS_MISMATCH);
       return;
     }
     setError(null);
@@ -62,7 +63,7 @@ export default function SignUpScreen() {
       router.replace('/(tabs)');
     } catch (err) {
       setError(
-        err instanceof ApiError ? err.message : 'Something went wrong — try again',
+        err instanceof ApiError ? err.message : UI_MESSAGES.COMMON.GENERIC_ERROR,
       );
     }
   }, [name, email, password, confirm, router, setSession, signUpMutation]);
@@ -126,7 +127,7 @@ export default function SignUpScreen() {
           />
 
           {error ? (
-            <ThemedText type="small" style={{ color: '#dc2626' }}>
+            <ThemedText type="small" style={{ color: theme.danger }}>
               {error}
             </ThemedText>
           ) : null}

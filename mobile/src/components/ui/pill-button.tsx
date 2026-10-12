@@ -128,7 +128,7 @@ export function Badge({
     neutral: { bg: theme.backgroundElement, fg: theme.textSecondary },
     primary: { bg: theme.primaryContainer, fg: theme.primaryDark },
     tertiary: { bg: theme.tertiaryLight, fg: theme.tertiary },
-    glass: { bg: theme.overlay, fg: '#FFFFFF' },
+    glass: { bg: theme.overlay, fg: theme.onImage },
   } as const;
   const { bg, fg } = map[tone];
 

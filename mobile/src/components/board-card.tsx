@@ -78,7 +78,10 @@ export function BoardCard({
         ) : null}
 
         <View style={styles.overlayText}>
-          <ThemedText style={styles.overlayTitle} numberOfLines={2}>
+          <ThemedText
+            style={[styles.overlayTitle, { color: theme.onImage }]}
+            numberOfLines={2}
+          >
             {board.title}
           </ThemedText>
           {board.destination ? (
@@ -139,7 +142,6 @@ const styles = StyleSheet.create({
     gap: Spacing.half,
   },
   overlayTitle: {
-    color: '#FFFFFF',
     fontSize: 15,
     lineHeight: 20,
     fontWeight: '700',

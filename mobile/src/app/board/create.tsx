@@ -14,6 +14,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { api, ApiError } from '@/lib/api';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { UI_MESSAGES } from '@travel-board/shared';
 
 export default function CreateBoardScreen() {
   const router = useRouter();
@@ -24,7 +25,7 @@ export default function CreateBoardScreen() {
   // cache can be invalidated in one place.
   const createMutation = useMutation({
     mutationFn: (values: BoardFormValues) => api.createBoard(values),
-    onSuccess: async ({ board }) => {
+    onSuccess: async (board) => {
       await queryClient.invalidateQueries({ queryKey: ['boards', 'mine'] });
       router.replace(`/board/${board.id}`);
     },
@@ -32,7 +33,7 @@ export default function CreateBoardScreen() {
       setError(
         err instanceof ApiError
           ? err.message
-          : 'Something went wrong — try again',
+          : UI_MESSAGES.COMMON.GENERIC_ERROR,
       );
     },
   });

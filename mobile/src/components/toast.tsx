@@ -2,19 +2,21 @@ import { StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from './themed-text';
+import { useTheme } from '@/hooks/use-theme';
 import { useToastStore, type ToastState, type ToastType } from '@/lib/toast-store';
 
-const colors: Record<ToastType, string> = {
-  error: '#dc2626',
-  success: '#16a34a',
-  info: '#2563eb',
-} as const;
-
 export function ToastViewport() {
+  const theme = useTheme();
   const message = useToastStore((state: ToastState) => state.message);
   const type = useToastStore((state: ToastState) => state.type);
 
   if (!message) return null;
+
+  const colors: Record<ToastType, string> = {
+    error: theme.danger,
+    success: theme.tertiary,
+    info: theme.info,
+  } as const;
 
   return (
     <SafeAreaView style={styles.container} pointerEvents="none">
@@ -23,6 +25,7 @@ export function ToastViewport() {
           styles.toast,
           {
             backgroundColor: colors[type],
+            color: theme.onPrimary,
           },
         ]}
         type="smallBold"
@@ -47,7 +50,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 8,
-    color: '#ffffff',
     textAlign: 'center',
   },
 });

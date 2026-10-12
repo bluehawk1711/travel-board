@@ -1,8 +1,13 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  StyleSheet,
+  TextInput,
+  View,
+} from 'react-native';
 
 import { BoardCard, type BoardCardModel } from '@/components/board-card';
 import { Chip, PillButton } from '@/components/ui/pill-button';
@@ -30,10 +35,24 @@ export default function ExploreScreen() {
   const theme = useTheme();
   const router = useRouter();
   const [sort, setSort] = useState<FeedSort>('newest');
+  const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+
+  // Debounce board search so each keystroke doesn't hit the API.
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search.trim()), 300);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   const query = useInfiniteQuery({
-    queryKey: ['explore', sort],
-    queryFn: ({ pageParam }) => api.getExplore(sort, PAGE_SIZE, (pageParam as number) ?? 0),
+    queryKey: ['explore', sort, debouncedSearch],
+    queryFn: ({ pageParam }) =>
+      api.getExplore(
+        sort,
+        PAGE_SIZE,
+        (pageParam as number) ?? 0,
+        debouncedSearch || undefined,
+      ),
     initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) =>
       lastPage.hasMore ? allPages.length * PAGE_SIZE : undefined,
@@ -47,6 +66,22 @@ export default function ExploreScreen() {
     <ThemedView style={styles.screen}>
       <View style={styles.header}>
         <ThemedText type="subtitle">Explore</ThemedText>
+        <TextInput
+          style={[
+            styles.searchInput,
+            {
+              backgroundColor: theme.backgroundElement,
+              borderColor: theme.backgroundSelected,
+              color: theme.text,
+            },
+          ]}
+          placeholder="Search boards by destination or title…"
+          placeholderTextColor={theme.textSecondary}
+          value={search}
+          onChangeText={setSearch}
+          autoCapitalize="none"
+          returnKeyType="search"
+        />
         <View style={styles.sortRow}>
           <Chip
             label="Newest"
@@ -58,6 +93,8 @@ export default function ExploreScreen() {
             active={sort === 'trending'}
             onPress={() => setSort('trending')}
           />
+          {/* Following is a secondary destination (hidden dock tab). */}
+          <Chip label="Following" active={false} onPress={() => router.push('/following')} />
         </View>
       </View>
 
@@ -100,7 +137,9 @@ export default function ExploreScreen() {
           ListEmptyComponent={
             query.isLoading ? null : (
               <ThemedText themeColor="textSecondary" style={styles.centerText}>
-                No boards here yet — be the first to create one.
+                {debouncedSearch
+                  ? `No boards match “${debouncedSearch}”.`
+                  : 'No boards here yet — be the first to create one.'}
               </ThemedText>
             )
           }
@@ -136,6 +175,13 @@ const styles = StyleSheet.create({
   sortRow: {
     flexDirection: 'row',
     gap: Spacing.two,
+  },
+  searchInput: {
+    height: 44,
+    borderWidth: 1,
+    borderRadius: 22,
+    paddingHorizontal: Spacing.three,
+    fontSize: 15,
   },
   listContent: {
     paddingHorizontal: Spacing.two,

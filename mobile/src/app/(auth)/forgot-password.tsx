@@ -16,6 +16,7 @@ import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { api, ApiError } from '@/lib/api';
 import { useMutation } from '@tanstack/react-query';
+import { UI_MESSAGES } from '@travel-board/shared';
 
 export default function ForgotPasswordScreen() {
   const theme = useTheme();
@@ -32,7 +33,7 @@ export default function ForgotPasswordScreen() {
 
   const submit = useCallback(async () => {
     if (!email.trim()) {
-      setError('Enter your email');
+      setError(UI_MESSAGES.AUTH.EMAIL_REQUIRED);
       return;
     }
     setError(null);
@@ -41,7 +42,7 @@ export default function ForgotPasswordScreen() {
       setSent(true);
     } catch (err) {
       setError(
-        err instanceof ApiError ? err.message : 'Something went wrong — try again',
+        err instanceof ApiError ? err.message : UI_MESSAGES.COMMON.GENERIC_ERROR,
       );
     }
   }, [email, forgotMutation]);
@@ -100,7 +101,7 @@ export default function ForgotPasswordScreen() {
               />
 
               {error ? (
-                <ThemedText type="small" style={{ color: '#dc2626' }}>
+                <ThemedText type="small" style={{ color: theme.danger }}>
                   {error}
                 </ThemedText>
               ) : null}

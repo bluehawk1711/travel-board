@@ -18,6 +18,7 @@ import { api, ApiError } from '@/lib/api';
 import { useMutation } from '@tanstack/react-query';
 import { useAuthStore } from '@/lib/auth-store';
 import { queryClient } from '@/lib/query-client';
+import { UI_MESSAGES } from '@travel-board/shared';
 
 export default function ResetPasswordScreen() {
   const theme = useTheme();
@@ -37,15 +38,15 @@ export default function ResetPasswordScreen() {
 
   const submit = useCallback(async () => {
     if (!token) {
-      setError('Invalid reset link — please request a new one');
+      setError(UI_MESSAGES.AUTH.INVALID_RESET_LINK);
       return;
     }
     if (!password || password.length < 8) {
-      setError('Password must be at least 8 characters');
+      setError(UI_MESSAGES.AUTH.PASSWORD_TOO_SHORT);
       return;
     }
     if (password !== confirm) {
-      setError('Passwords do not match');
+      setError(UI_MESSAGES.AUTH.PASSWORDS_MISMATCH);
       return;
     }
     setError(null);
@@ -56,7 +57,7 @@ export default function ResetPasswordScreen() {
       router.replace('/(tabs)');
     } catch (err) {
       setError(
-        err instanceof ApiError ? err.message : 'Something went wrong — try again',
+        err instanceof ApiError ? err.message : UI_MESSAGES.COMMON.GENERIC_ERROR,
       );
     }
   }, [token, password, confirm, router, setSession, resetMutation]);
@@ -101,7 +102,7 @@ export default function ResetPasswordScreen() {
           />
 
           {error ? (
-            <ThemedText type="small" style={{ color: '#dc2626' }}>
+            <ThemedText type="small" style={{ color: theme.danger }}>
               {error}
             </ThemedText>
           ) : null}

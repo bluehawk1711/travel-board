@@ -41,18 +41,25 @@ function ItemCard({
   boardId,
   sectionId,
   canEdit,
+  isFirst,
+  isLast,
   onDeleted,
   onEdit,
+  onMove,
 }: {
   item: BoardItem;
   boardId: string;
   sectionId: string;
   canEdit: boolean;
+  isFirst: boolean;
+  isLast: boolean;
   onDeleted: () => void;
   onEdit: (item: BoardItem) => void;
+  onMove: (direction: -1 | 1) => void;
 }) {
   const theme = useTheme();
   const [deleting, setDeleting] = useState(false);
+  const [moving, setMoving] = useState(false);
 
   const handleDelete = async () => {
     Alert.alert('Delete item', `Delete "${item.title}"?`, [
@@ -73,6 +80,14 @@ function ItemCard({
         },
       },
     ]);
+  };
+
+  const handleMove = (direction: -1 | 1) => {
+    if (moving) return;
+    setMoving(true);
+    onMove(direction);
+    // Parent refetches optimistically; unlock after the round-trip window.
+    setTimeout(() => setMoving(false), 400);
   };
 
   return (
@@ -110,8 +125,26 @@ function ItemCard({
               Edit
             </ThemedText>
           </Pressable>
+          <Pressable onPress={() => handleMove(-1)} disabled={isFirst || moving}>
+            <ThemedText
+              type="small"
+              themeColor={isFirst ? 'textSecondary' : 'textSecondary'}
+              style={isFirst ? { opacity: 0.4 } : undefined}
+            >
+              ↑
+            </ThemedText>
+          </Pressable>
+          <Pressable onPress={() => handleMove(1)} disabled={isLast || moving}>
+            <ThemedText
+              type="small"
+              themeColor="textSecondary"
+              style={isLast ? { opacity: 0.4 } : undefined}
+            >
+              ↓
+            </ThemedText>
+          </Pressable>
           <Pressable onPress={handleDelete} disabled={deleting}>
-            <ThemedText type="small" style={{ color: '#dc2626' }}>
+            <ThemedText type="small" style={{ color: theme.danger }}>
               {deleting ? '...' : 'Delete'}
             </ThemedText>
           </Pressable>
@@ -127,13 +160,17 @@ function AddSectionModal({
   visible,
   onClose,
   onAdd,
+  initialTitle = '',
+  heading = 'New section',
 }: {
   visible: boolean;
   onClose: () => void;
   onAdd: (title: string) => void;
+  initialTitle?: string;
+  heading?: string;
 }) {
   const theme = useTheme();
-  const [title, setTitle] = useState('');
+  const [title, setTitle] = useState(initialTitle);
 
   const handleAdd = () => {
     if (title.trim()) {
@@ -151,7 +188,7 @@ function AddSectionModal({
           onPress={(e) => e.stopPropagation()}
         >
           <ThemedText type="subtitle" style={styles.modalTitle}>
-            New section
+            {heading}
           </ThemedText>
           <TextInput
             style={[
@@ -210,7 +247,7 @@ function MembersModal({
     queryFn: () => api.getBoardMembers(boardId),
     enabled: visible,
   });
-  const members = membersQuery.data?.members ?? [];
+  const members = membersQuery.data ?? [];
   const loading = membersQuery.isPending;
 
   const invalidateMembers = () =>
@@ -321,7 +358,7 @@ function MembersModal({
                           </ThemedText>
                         </Pressable>
                         <Pressable onPress={() => handleRemove(m.userId)}>
-                          <ThemedText type="small" style={{ color: '#dc2626' }}>
+                          <ThemedText type="small" style={{ color: theme.danger }}>
                             Remove
                           </ThemedText>
                         </Pressable>
@@ -369,6 +406,11 @@ export default function BoardDetailScreen() {
     | null
   >(null);
   const [showMembers, setShowMembers] = useState(false);
+  const [chatOpening, setChatOpening] = useState(false);
+  const [renameSection, setRenameSection] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
 
   const board = live ?? query.data;
   const boardRef = useRef<BoardDetail | null>(null);
@@ -461,6 +503,94 @@ export default function BoardDetailScreen() {
     if (!board) return;
     try {
       await api.createSection(board.id, title);
+      query.refetch();
+    } catch {
+      // silent
+    }
+  };
+
+  const handleOpenChat = async () => {
+    if (!board || chatOpening) return;
+    setChatOpening(true);
+    try {
+      // Get-or-create the per-board collaboration room (members only).
+      const conv = await api.getBoardConversation(board.id);
+      router.push(`/chat/${conv.id}`);
+    } catch {
+      // silent — non-members cannot open the room
+    } finally {
+      setChatOpening(false);
+    }
+  };
+
+  const handleRenameSection = async (title: string) => {
+    if (!board || !renameSection || !title.trim()) return;
+    try {
+      await api.updateSection(board.id, renameSection.id, {
+        title: title.trim(),
+      });
+      setRenameSection(null);
+      query.refetch();
+    } catch {
+      // silent
+    }
+  };
+
+  const handleDeleteSection = (sectionId: string) => {
+    if (!board) return;
+    Alert.alert(
+      'Delete section',
+      'Delete this section and all of its items?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await api.deleteSection(board.id, sectionId);
+              query.refetch();
+            } catch {
+              // silent
+            }
+          },
+        },
+      ],
+    );
+  };
+
+  /** Swap a section with its neighbour and persist the full order. */
+  const handleMoveSection = async (sectionId: string, direction: -1 | 1) => {
+    if (!board) return;
+    const ids = board.sections.map((s) => s.id);
+    const index = ids.indexOf(sectionId);
+    const target = index + direction;
+    if (index < 0 || target < 0 || target >= ids.length) return;
+    [ids[index], ids[target]] = [ids[target], ids[index]];
+    try {
+      await api.reorderSections(board.id, ids);
+      query.refetch();
+    } catch {
+      // silent
+    }
+  };
+
+  /** Swap an item with its neighbour inside a section and persist order. */
+  const handleMoveItem = async (
+    sectionId: string,
+    itemId: string,
+    direction: -1 | 1,
+  ) => {
+    if (!board) return;
+    const section = board.sections.find((s) => s.id === sectionId);
+    if (!section) return;
+    const ids = section.items.map((i) => i.id);
+    const index = ids.indexOf(itemId);
+    const target = index + direction;
+    if (index < 0 || target < 0 || target >= ids.length) return;
+    [ids[index], ids[target]] = [ids[target], ids[index]];
+    try {
+      await api.reorderItems(board.id, sectionId, ids);
       query.refetch();
     } catch {
       // silent
@@ -588,7 +718,7 @@ export default function BoardDetailScreen() {
             </ThemedText>
             {canEdit ? (
               <Pressable onPress={handleDeleteBoard} hitSlop={8}>
-                <ThemedText type="small" style={{ color: '#dc2626' }}>
+                <ThemedText type="small" style={{ color: theme.danger }}>
                   Delete
                 </ThemedText>
               </Pressable>
@@ -681,7 +811,7 @@ export default function BoardDetailScreen() {
                 >
                   <ThemedText
                     type="smallBold"
-                    style={{ color: liked ? '#dc2626' : theme.textSecondary }}
+                    style={{ color: liked ? theme.primary : theme.textSecondary }}
                   >
                     {liked ? '♥' : '♡'} {likeCount}
                   </ThemedText>
@@ -693,7 +823,7 @@ export default function BoardDetailScreen() {
                 >
                   <ThemedText
                     type="smallBold"
-                    style={{ color: saved ? '#3b82f6' : theme.textSecondary }}
+                    style={{ color: saved ? theme.golden : theme.textSecondary }}
                   >
                     {saved ? '★' : '☆'} {saveCount}
                   </ThemedText>
@@ -705,6 +835,17 @@ export default function BoardDetailScreen() {
                   >
                     <ThemedText type="smallBold" themeColor="textSecondary">
                       Members
+                    </ThemedText>
+                  </Pressable>
+                ) : null}
+                {board.role ? (
+                  <Pressable
+                    onPress={() => void handleOpenChat()}
+                    disabled={chatOpening}
+                    style={styles.actionBtn}
+                  >
+                    <ThemedText type="smallBold" themeColor="textSecondary">
+                      {chatOpening ? '…' : 'Chat'}
                     </ThemedText>
                   </Pressable>
                 ) : null}
@@ -752,7 +893,12 @@ export default function BoardDetailScreen() {
               <View style={styles.liveRow}>
                 {joined ? (
                   <>
-                    <View style={styles.liveDot} />
+                    <View
+                      style={[
+                        styles.liveDot,
+                        { backgroundColor: theme.tertiary },
+                      ]}
+                    />
                     <ThemedText type="small" themeColor="textSecondary">
                       {editors.length > 0
                         ? `Live · ${editors.length} ${editors.length === 1 ? 'person' : 'people'} viewing`
@@ -793,22 +939,76 @@ export default function BoardDetailScreen() {
                 </View>
               ) : (
                 <View style={styles.sections}>
-                  {board.sections.map((section) => (
+                  {board.sections.map((section, sectionIndex) => (
                     <View key={section.id} style={styles.section}>
                       <View style={styles.sectionHeader}>
                         <ThemedText type="subtitle" style={styles.sectionTitle}>
                           {section.title}
                         </ThemedText>
                         {canEdit ? (
-                          <Pressable
-                            onPress={() =>
-                              setItemModal({ mode: 'create', sectionId: section.id })
-                            }
-                          >
-                            <ThemedText type="small" themeColor="textSecondary">
-                              + Item
-                            </ThemedText>
-                          </Pressable>
+                          <View style={styles.sectionActions}>
+                            <Pressable
+                              onPress={() =>
+                                setItemModal({ mode: 'create', sectionId: section.id })
+                              }
+                            >
+                              <ThemedText type="small" themeColor="textSecondary">
+                                + Item
+                              </ThemedText>
+                            </Pressable>
+                            <Pressable
+                              onPress={() => handleMoveSection(section.id, -1)}
+                              disabled={sectionIndex === 0}
+                            >
+                              <ThemedText
+                                type="small"
+                                themeColor="textSecondary"
+                                style={
+                                  sectionIndex === 0 ? { opacity: 0.4 } : undefined
+                                }
+                              >
+                                ↑
+                              </ThemedText>
+                            </Pressable>
+                            <Pressable
+                              onPress={() => handleMoveSection(section.id, 1)}
+                              disabled={sectionIndex === board.sections.length - 1}
+                            >
+                              <ThemedText
+                                type="small"
+                                themeColor="textSecondary"
+                                style={
+                                  sectionIndex === board.sections.length - 1
+                                    ? { opacity: 0.4 }
+                                    : undefined
+                                }
+                              >
+                                ↓
+                              </ThemedText>
+                            </Pressable>
+                            <Pressable
+                              onPress={() =>
+                                setRenameSection({
+                                  id: section.id,
+                                  title: section.title,
+                                })
+                              }
+                            >
+                              <ThemedText type="small" themeColor="textSecondary">
+                                Rename
+                              </ThemedText>
+                            </Pressable>
+                            <Pressable
+                              onPress={() => handleDeleteSection(section.id)}
+                            >
+                              <ThemedText
+                                type="small"
+                                style={{ color: theme.danger }}
+                              >
+                                Delete
+                              </ThemedText>
+                            </Pressable>
+                          </View>
                         ) : null}
                       </View>
                       {section.items.length === 0 ? (
@@ -817,13 +1017,15 @@ export default function BoardDetailScreen() {
                         </ThemedText>
                       ) : (
                         <View style={styles.itemGrid}>
-                          {section.items.map((item) => (
+                          {section.items.map((item, itemIndex) => (
                             <ItemCard
                               key={item.id}
                               item={item}
                               boardId={board.id}
                               sectionId={section.id}
                               canEdit={canEdit}
+                              isFirst={itemIndex === 0}
+                              isLast={itemIndex === section.items.length - 1}
                               onDeleted={() => query.refetch()}
                               onEdit={(item) =>
                                 setItemModal({
@@ -831,6 +1033,9 @@ export default function BoardDetailScreen() {
                                   sectionId: section.id,
                                   item,
                                 })
+                              }
+                              onMove={(direction) =>
+                                handleMoveItem(section.id, item.id, direction)
                               }
                             />
                           ))}
@@ -847,12 +1052,23 @@ export default function BoardDetailScreen() {
         </ScrollView>
       ) : null}
 
-      <AddSectionModal
-        visible={showAddSection}
-        onClose={() => setShowAddSection(false)}
-        onAdd={handleAddSection}
-      />
-      {board && itemModal ? (
+        {showAddSection ? (
+          <AddSectionModal
+            visible
+            onClose={() => setShowAddSection(false)}
+            onAdd={handleAddSection}
+          />
+        ) : null}
+        {renameSection ? (
+          <AddSectionModal
+            visible
+            heading="Rename section"
+            initialTitle={renameSection.title}
+            onClose={() => setRenameSection(null)}
+            onAdd={handleRenameSection}
+          />
+        ) : null}
+        {board && itemModal ? (
         <ItemFormModal
           visible
           boardId={board.id}
@@ -983,7 +1199,6 @@ const styles = StyleSheet.create({
     width: Spacing.two,
     height: Spacing.two,
     borderRadius: Spacing.two,
-    backgroundColor: '#10b981',
   },
   description: {
     marginTop: Spacing.two,
@@ -1008,6 +1223,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  sectionActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.three,
   },
   sectionTitle: {
     marginBottom: Spacing.one,

@@ -56,9 +56,6 @@ function UserRow({
       </View>
       <View style={styles.userInfo}>
         <ThemedText type="smallBold">{user.name}</ThemedText>
-        <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
-          {user.email}
-        </ThemedText>
       </View>
     </Pressable>
   );

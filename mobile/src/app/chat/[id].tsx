@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -25,12 +25,15 @@ interface Message {
   id: number | string;
   body: string;
   senderId: string;
+  senderName?: string | null;
+  senderAvatarUrl?: string | null;
   createdAt: string;
 }
 
 interface Member {
   userId: string;
-  user: { id: string; name: string; avatarUrl: string | null };
+  name: string;
+  avatarUrl: string | null;
 }
 
 export default function ChatViewScreen() {
@@ -56,6 +59,8 @@ export default function ChatViewScreen() {
   const typingSentAtRef = useRef(0);
   /** Last message id marked read — avoids re-emitting on every render. */
   const lastReadIdRef = useRef<number | string | null>(null);
+  /** Last id we auto-scrolled to — distinguishes new messages from prepends. */
+  const lastScrolledIdRef = useRef<number | string | null>(null);
 
   // Get current user — cache via query client to avoid redundant calls.
   const meQuery = useQuery({
@@ -74,19 +79,23 @@ export default function ChatViewScreen() {
     enabled: Boolean(id),
   });
 
-  const messagesQuery = useQuery({
+  const messagesQuery = useInfiniteQuery({
     queryKey: ['messages', id],
-    queryFn: () => api.getMessages(id ?? ''),
+    queryFn: ({ pageParam }) => api.getMessages(id ?? '', pageParam),
+    initialPageParam: undefined as number | undefined,
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     enabled: Boolean(id),
   });
 
   // Fetched history + locally received messages, deduped by id.
-  // The query's item type uses `id: string`; live socket/send payloads are
-  // cast to it (the backend emits numeric ids — deduping coerces via String).
-  // Live messages are keyed by conversation so switching chats doesn't leak
-  // the previous conversation's buffer into the merged list.
+  // Pages arrive newest-first (page 0 = newest 50); reverse the page order
+  // so the flat list renders oldest → newest. Live socket/send payloads are
+  // deduped via String(id) (backend ids are numeric over JSON).
   const messages = useMemo(() => {
-    const fetched: Message[] = messagesQuery.data?.items ?? [];
+    const fetched: Message[] = (messagesQuery.data?.pages ?? [])
+      .slice()
+      .reverse()
+      .flatMap((page) => page.items);
     const merged = [...fetched];
     if (liveMessages.conversationId === id) {
       for (const msg of liveMessages.items) {
@@ -204,7 +213,7 @@ export default function ChatViewScreen() {
   const members = convQuery.data?.members ?? [];
   const getMemberName = (userId: string) => {
     const m = members.find((m: Member) => m.userId === userId);
-    return m?.user.name ?? 'Unknown';
+    return m?.name ?? 'Unknown';
   };
 
   return (
@@ -239,9 +248,32 @@ export default function ChatViewScreen() {
       <FlatList
         ref={flatListRef}
         data={messages}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => String(item.id)}
         contentContainerStyle={styles.messagesList}
-        onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+        // Keep the visible message in place when older pages prepend at the top.
+        maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
+        onContentSizeChange={() => {
+          // Scroll to the bottom only when a NEW newest message arrives —
+          // never after a load-older prepend (last id is unchanged there).
+          const lastId = messages.at(-1)?.id ?? null;
+          if (lastId !== null && lastId !== lastScrolledIdRef.current) {
+            lastScrolledIdRef.current = lastId;
+            flatListRef.current?.scrollToEnd({ animated: false });
+          }
+        }}
+        onEndReachedThreshold={0.4}
+        onEndReached={() => {
+          if (messagesQuery.hasNextPage && !messagesQuery.isFetchingNextPage) {
+            messagesQuery.fetchNextPage();
+          }
+        }}
+        ListHeaderComponent={
+          messagesQuery.isFetchingNextPage ? (
+            <View style={styles.center}>
+              <ActivityIndicator color={theme.textSecondary} />
+            </View>
+          ) : null
+        }
         renderItem={({ item }) => {
           const isMine = item.senderId === myId;
           return (
@@ -254,8 +286,8 @@ export default function ChatViewScreen() {
               ]}
             >
               {!isMine ? (
-                <ThemedText type="small" themeColor="textSecondary" style={styles.senderName}>
-                  {getMemberName(item.senderId)}
+          <ThemedText type="small" themeColor="textSecondary" style={styles.senderName}>
+            {item.senderName ?? getMemberName(item.senderId)}
                 </ThemedText>
               ) : null}
               <ThemedText

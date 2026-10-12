@@ -19,6 +19,7 @@ import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { api, ApiError } from '@/lib/api';
 import { useAuthStore } from '@/lib/auth-store';
+import { UI_MESSAGES } from '@travel-board/shared';
 
 export default function SettingsScreen() {
   const theme = useTheme();
@@ -40,6 +41,17 @@ export default function SettingsScreen() {
   const [error, setError] = useState<string | null>(null);
   const [avatarError, setAvatarError] = useState<string | null>(null);
 
+  // Seed the fields once when `me` first resolves (the query starts empty on
+  // mount); later refetches must not clobber in-progress edits.
+  const seededRef = useRef(false);
+  useEffect(() => {
+    if (user && !seededRef.current) {
+      seededRef.current = true;
+      setName(user.name);
+      setBio(user.bio ?? '');
+    }
+  }, [user]);
+
   // Cleanup saved timer on unmount.
   useEffect(() => {
     return () => {
@@ -57,18 +69,21 @@ export default function SettingsScreen() {
       savedTimerRef.current = setTimeout(() => setSaved(false), 2000);
     },
     onError: (err: Error) => {
-      setError(err instanceof ApiError ? err.message : 'Something went wrong');
+      setError(
+        err instanceof ApiError ? err.message : UI_MESSAGES.COMMON.GENERIC_ERROR,
+      );
     },
   });
   const saving = profileMutation.isPending;
 
   const handleSave = useCallback(() => {
     if (!name.trim()) {
-      setError('Name is required');
+      setError(UI_MESSAGES.SETTINGS.NAME_REQUIRED);
       return;
     }
     setError(null);
-    profileMutation.mutate({ name: name.trim(), bio: bio.trim() || undefined });
+    // Always send bio as a string — '' clears it (backend stores NULL).
+    profileMutation.mutate({ name: name.trim(), bio: bio.trim() });
   }, [name, bio, profileMutation]);
 
   const avatarMutation = useMutation({
@@ -84,7 +99,11 @@ export default function SettingsScreen() {
       await queryClient.invalidateQueries({ queryKey: ['me'] });
     },
     onError: (err: Error) => {
-      setAvatarError(err instanceof ApiError ? err.message : 'Avatar upload failed');
+      setAvatarError(
+        err instanceof ApiError
+          ? err.message
+          : UI_MESSAGES.SETTINGS.AVATAR_UPLOAD_FAILED,
+      );
     },
   });
 
@@ -106,7 +125,7 @@ export default function SettingsScreen() {
         type: asset.mimeType ?? 'image/jpeg',
       });
     } catch {
-      setAvatarError('Avatar upload failed');
+      setAvatarError(UI_MESSAGES.SETTINGS.AVATAR_UPLOAD_FAILED);
     }
   }, [avatarMutation]);
 
@@ -166,13 +185,16 @@ export default function SettingsScreen() {
           </ThemedText>
 
           {/* Avatar */}
-          <Pressable onPress={handleAvatarUpload} style={styles.avatarBtn}>
+          <Pressable
+            onPress={handleAvatarUpload}
+            style={[styles.avatarBtn, { borderColor: theme.backgroundSelected }]}
+          >
             <ThemedText type="small" themeColor="textSecondary">
               Change avatar
             </ThemedText>
           </Pressable>
           {avatarError ? (
-            <ThemedText type="small" style={{ color: '#dc2626' }}>
+            <ThemedText type="small" style={{ color: theme.danger }}>
               {avatarError}
             </ThemedText>
           ) : null}
@@ -197,13 +219,13 @@ export default function SettingsScreen() {
           />
 
           {error ? (
-            <ThemedText type="small" style={{ color: '#dc2626' }}>
+            <ThemedText type="small" style={{ color: theme.danger }}>
               {error}
             </ThemedText>
           ) : null}
           {saved ? (
-            <ThemedText type="small" style={{ color: '#10b981' }}>
-              Saved!
+            <ThemedText type="small" style={{ color: theme.tertiary }}>
+              {UI_MESSAGES.SETTINGS.SAVED}
             </ThemedText>
           ) : null}
 
@@ -225,7 +247,12 @@ export default function SettingsScreen() {
             )}
           </Pressable>
 
-          <View style={styles.divider} />
+          <View
+            style={[
+              styles.divider,
+              { backgroundColor: theme.backgroundSelected },
+            ]}
+          />
 
           {/* Preferences */}
           <ThemedText type="smallBold" themeColor="textSecondary">
@@ -316,7 +343,12 @@ export default function SettingsScreen() {
             </ThemedText>
           ) : null}
 
-          <View style={styles.divider} />
+          <View
+            style={[
+              styles.divider,
+              { backgroundColor: theme.backgroundSelected },
+            ]}
+          />
 
           <PillButton
             label="Sign out"
@@ -343,7 +375,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.three,
     borderWidth: 1,
     borderRadius: Spacing.three,
-    borderColor: '#60646C',
     alignItems: 'center',
   },
   input: {
@@ -367,7 +398,6 @@ const styles = StyleSheet.create({
   disabled: { opacity: 0.5 },
   divider: {
     height: StyleSheet.hairlineWidth,
-    backgroundColor: '#60646C',
     marginVertical: Spacing.one,
   },
   prefRow: { gap: Spacing.two },
