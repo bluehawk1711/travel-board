@@ -17,3 +17,6 @@ node_modules/
 dist/
 .next/
 .expo/
+
+# react-doctor reports (local quality artifacts)
+rd*.json
