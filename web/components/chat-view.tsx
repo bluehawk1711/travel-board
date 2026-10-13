@@ -53,10 +53,18 @@ interface ListRow extends ConversationSummary {
   label: string;
 }
 
-function AvatarStack({ members, size = 36 }: { members: ConversationSummary["members"]; size?: number }) {
+function AvatarStack({
+  members,
+  size = 36,
+  online = false,
+}: {
+  members: ConversationSummary["members"];
+  size?: number;
+  online?: boolean;
+}) {
   const shown = members.slice(0, 3);
   return (
-    <span className="flex shrink-0 items-center">
+    <span className="relative flex shrink-0 items-center">
       {shown.map((m, i) => (
         <span
           key={m.userId}
@@ -83,6 +91,12 @@ function AvatarStack({ members, size = 36 }: { members: ConversationSummary["mem
           )}
         </span>
       ))}
+      {online ? (
+        <span
+          aria-label="Online"
+          className="absolute -bottom-0.5 -right-0.5 size-3 rounded-full border-2 border-white bg-emerald-500 dark:border-zinc-900"
+        />
+      ) : null}
     </span>
   );
 }
@@ -128,6 +142,7 @@ export function ChatView({
   const [loadedOlder, setLoadedOlder] = useState(false);
   const [typing, setTyping] = useState(false);
   const [presence, setPresence] = useState<Record<string, boolean>>({});
+  const [listPresence, setListPresence] = useState<Record<string, boolean>>({});
   const [newChatOpen, setNewChatOpen] = useState(false);
   const [mobileListOpen, setMobileListOpen] = useState(false);
 
@@ -387,6 +402,36 @@ export function ChatView({
     };
   }, [activeConv]);
 
+  // ── Presence across every conversation in the sidebar list ─
+  useEffect(() => {
+    if (rows.length === 0) return;
+    const ids = new Set<string>();
+    for (const row of rows) {
+      for (const m of row.members) {
+        if (m.userId !== meRef.current?.id) ids.add(m.userId);
+      }
+    }
+    if (ids.size === 0) return;
+    let cancelled = false;
+    const idList = [...ids];
+    async function refreshListPresence() {
+      try {
+        const data = await queryClient.fetchQuery(
+          presenceQueryOptions(idList),
+        );
+        if (!cancelled) setListPresence(data);
+      } catch {
+        // presence is best-effort
+      }
+    }
+    void refreshListPresence();
+    const timer = setInterval(() => void refreshListPresence(), 30_000);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, [rows, queryClient]);
+
   const loadOlder = useCallback(async () => {
     if (!activeId || !nextCursor || loadedOlder) return;
     setLoadedOlder(true);
@@ -642,7 +687,13 @@ export function ChatView({
                             : "hover:bg-zinc-50 dark:hover:bg-zinc-900/60",
                         )}
                       >
-                        <AvatarStack members={row.members} />
+                        <AvatarStack
+                          members={row.members}
+                          online={row.members.some(
+                            (m) =>
+                              m.userId !== me?.id && listPresence[m.userId],
+                          )}
+                        />
                         <span className="min-w-0 flex-1">
                           <span className="flex items-center justify-between gap-2">
                             <span className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-50">

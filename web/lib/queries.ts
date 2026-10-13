@@ -14,7 +14,9 @@ import {
   fetchFollowingFeed,
   fetchMe,
   fetchMySettings,
+  fetchNotifications,
   fetchPresence,
+  fetchUnreadNotificationCount,
   listMessages,
   searchUsers,
   type BoardMember,
@@ -24,6 +26,7 @@ import { getAccessToken } from "@/lib/auth";
 import type {
   AuthUser,
   ExploreResult,
+  NotificationListResult,
   SearchUser,
   UserSettings,
 } from "@/lib/types";
@@ -43,6 +46,8 @@ export const queryKeys = {
   messages: (conversationId: string, cursor?: number) =>
     ["chat", "messages", conversationId, cursor ?? "latest"] as const,
   presence: (userIds: string[]) => ["chat", "presence", ...userIds] as const,
+  notifications: ["notifications", "list"] as const,
+  unreadNotifications: ["notifications", "unread"] as const,
 };
 
 /**
@@ -159,6 +164,26 @@ export function useUserSearch(q: string): UseQueryResult<{
     queryKey: queryKeys.userSearch(q),
     queryFn: () => searchUsers(q),
     enabled: q.trim().length >= 1,
+  });
+}
+
+/** Notification inbox (auth-only, first page). */
+export function useNotifications(): UseQueryResult<NotificationListResult> {
+  return useQuery({
+    queryKey: queryKeys.notifications,
+    queryFn: () => fetchNotifications(30, 0),
+    enabled: typeof window !== "undefined" && !!getAccessToken(),
+  });
+}
+
+/** Unread badge count — polled lightly so the bell stays fresh. */
+export function useUnreadNotificationCount(): UseQueryResult<number> {
+  return useQuery({
+    queryKey: queryKeys.unreadNotifications,
+    queryFn: async () =>
+      (await fetchUnreadNotificationCount()).unreadCount,
+    enabled: typeof window !== "undefined" && !!getAccessToken(),
+    refetchInterval: 60_000,
   });
 }
 

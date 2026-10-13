@@ -720,17 +720,94 @@ async function main() {
     });
 
     // -- Uploads ------------------------------------------------------------
-    await call(
-      'Uploads',
-      'POST',
-      '/uploads/register',
-      'Registers an uploaded image URL',
-      {
-        auth: true,
-        body: { url: 'https://example.com/test.png' },
-        expect: [200, 201, 400, 403, 404],
-        check: () => '',
-      },
+    // Real multipart upload: 1x1 PNG through POST /uploads/image.
+    const pngBytes = Buffer.from(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+      'base64',
+    );
+    const form = new FormData();
+    form.append(
+      'file',
+      new Blob([pngBytes], { type: 'image/png' }),
+      'e2e-pixel.png',
+    );
+    let uploadStatus: number | 'ERR' = 'ERR';
+    let uploadDetail = '';
+    let uploadUrl = '';
+    try {
+      const uploadRes = await fetch(`${BASE_URL}/uploads/image`, {
+        method: 'POST',
+        headers: { ...authHeaders() },
+        body: form,
+      });
+      uploadStatus = uploadRes.status;
+      const uploadJson = (await uploadRes.json()) as { url?: string };
+      if (uploadRes.ok && typeof uploadJson.url === 'string') {
+        uploadUrl = uploadJson.url;
+        uploadDetail = '';
+      } else {
+        uploadDetail = 'expected { url: string }';
+      }
+    } catch (error) {
+      uploadDetail = error instanceof Error ? error.message : String(error);
+    }
+    steps.push({
+      group: 'Uploads',
+      method: 'POST',
+      path: '/uploads/image',
+      description: 'Multipart image upload returns { url }',
+      status: uploadStatus,
+      ok: uploadStatus !== 'ERR' && uploadStatus === 201 && uploadDetail === '',
+      detail: uploadDetail,
+    });
+    console.log(
+      `${uploadStatus === 'ERR' ? 'ERR' : uploadStatus} POST /uploads/image${uploadDetail ? ` -- ${uploadDetail}` : ''}`,
+    );
+
+    // The stored file is served back from /uploads/<filename>.
+    if (uploadUrl) {
+      await call(
+        'Uploads',
+        'GET',
+        uploadUrl,
+        'Uploaded file is served from /uploads',
+        { expect: [200] },
+      );
+    }
+
+    // Unsupported mime types are rejected with 400.
+    const badForm = new FormData();
+    badForm.append(
+      'file',
+      new Blob([Buffer.from('not an image')], { type: 'text/plain' }),
+      'notes.txt',
+    );
+    let badStatus: number | 'ERR' = 'ERR';
+    let badDetail = '';
+    try {
+      const badRes = await fetch(`${BASE_URL}/uploads/image`, {
+        method: 'POST',
+        headers: { ...authHeaders() },
+        body: badForm,
+      });
+      badStatus = badRes.status;
+      if (badRes.status !== 400) {
+        badDetail = 'expected 400';
+      }
+    } catch (error) {
+      badDetail = error instanceof Error ? error.message : String(error);
+    }
+    steps.push({
+      group: 'Uploads',
+      method: 'POST',
+      path: '/uploads/image',
+      description: 'Rejects a non-image mime type',
+      status: badStatus,
+      ok: badStatus !== 'ERR' && badStatus === 400 && badDetail === '',
+      detail: badDetail,
+    });
+    console.log(
+      `${badStatus === 'ERR' ? 'ERR' : badStatus} POST /uploads/image (bad mime)${badDetail ? ` -- ${badDetail}` : ''}`,
     );
 
     // -- Cleanup ------------------------------------------------------------
@@ -838,7 +915,7 @@ function writeReport(): void {
     '- `GET /places/search` requires a valid `GOOGLE_PLACES_API_KEY` in `backend/.env`. A missing key answers 500 and a placeholder key gets `400 API key not valid` from Google, which the proxy maps to 502; both are expected until a real key is configured.',
   );
   lines.push(
-    '- `POST /uploads/image` is multipart; the suite covers `POST /uploads/register` (the URL-registration path) instead of a binary upload.',
+    '- `POST /uploads/image` is exercised with a real multipart body (1x1 PNG); a non-image mime type is rejected with 400 and the stored file is fetched back from `/uploads/<filename>`.',
   );
   lines.push(
     '- Socket.IO events (`conversation:join`, `message:new`, `message:read`, `user:typing`) are exercised by the web and mobile clients, not by this REST suite.',

@@ -11,6 +11,7 @@ import type {
   ExploreResult,
   FeedSort,
   FollowListResult,
+  NotificationListResult,
   PublicProfile,
   SearchUser,
   UserBoardsResult,
@@ -417,4 +418,30 @@ export function fetchPresence(
   const url = new URL('/chat/presence', API_URL);
   url.searchParams.set('userIds', userIds.join(','));
   return authFetch(url.pathname + url.search);
+}
+
+// ── Notifications (inbox + unread badge) ─────────────────────
+
+export function fetchNotifications(
+  limit: number,
+  offset: number,
+): Promise<NotificationListResult> {
+  return authFetch(`/notifications?limit=${limit}&offset=${offset}`);
+}
+
+export function fetchUnreadNotificationCount(): Promise<{ unreadCount: number }> {
+  return authFetch('/notifications/unread-count');
+}
+
+export function markNotificationsRead(
+  ids: string[],
+): Promise<{ updated: number }> {
+  return authFetch('/notifications/read', {
+    method: 'PATCH',
+    body: JSON.stringify({ ids }),
+  });
+}
+
+export function markAllNotificationsRead(): Promise<{ updated: number }> {
+  return authFetch('/notifications/read-all', { method: 'PATCH' });
 }

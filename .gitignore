@@ -20,3 +20,6 @@ dist/
 
 # react-doctor reports (local quality artifacts)
 rd*.json
+
+# runtime uploads (multer disk storage)
+uploads/

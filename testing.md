@@ -15,9 +15,9 @@ The suite registers a throwaway account, walks every route, then deletes what it
 | | |
 |---|---|
 | Base URL | `http://localhost:4100` |
-| Ran at | 2026-10-12T08:55:27.662Z |
+| Ran at | 2026-10-13T05:17:10.590Z |
 | Node | v24.21.0 |
-| **Result** | **69/69 passed** |
+| **Result** | **71/71 passed** |
 
 | Group | Checks | Passed |
 |---|---|---|
@@ -31,7 +31,7 @@ The suite registers a throwaway account, walks every route, then deletes what it
 | Follows | 7 | 7 |
 | Notifications | 3 | 3 |
 | Push | 1 | 1 |
-| Uploads | 1 | 1 |
+| Uploads | 3 | 3 |
 | Places | 1 | 1 |
 
 ## Endpoint coverage
@@ -76,44 +76,44 @@ The suite registers a throwaway account, walks every route, then deletes what it
 | PASS | POST | `/boards` | 400 | Rejects a board with no title |
 | PASS | GET | `/boards/mine` | 200 | Lists my boards (bare array) |
 | PASS | GET | `/boards/saved` | 200 | Lists saved boards (bare array) |
-| PASS | GET | `/boards/5ef602c3-4c28-47ab-8d20-9eee3fee4406` | 200 | Reads one board |
-| PASS | PATCH | `/boards/5ef602c3-4c28-47ab-8d20-9eee3fee4406` | 200 | Updates the board |
-| PASS | POST | `/boards/5ef602c3-4c28-47ab-8d20-9eee3fee4406/sections` | 201 | Adds a section |
-| PASS | PATCH | `/boards/sections/cabf74cb-a4d4-49c0-99f3-db977635874a` | 200 | Renames the section |
-| PASS | POST | `/boards/5ef602c3-4c28-47ab-8d20-9eee3fee4406/items` | 201 | Adds a place item to the section |
-| PASS | POST | `/boards/5ef602c3-4c28-47ab-8d20-9eee3fee4406/items` | 400 | Rejects an item without sectionId |
-| PASS | PATCH | `/boards/items/423cb0ca-2f8d-4ba1-85c7-142f5c733078` | 200 | Updates the item |
-| PASS | PATCH | `/boards/5ef602c3-4c28-47ab-8d20-9eee3fee4406/items/reorder` | 200 | Reorders items within a section |
-| PASS | DELETE | `/boards/items/423cb0ca-2f8d-4ba1-85c7-142f5c733078` | 200 | Deletes the item |
-| PASS | PATCH | `/boards/5ef602c3-4c28-47ab-8d20-9eee3fee4406/sections/reorder` | 200 | Reorders sections |
-| PASS | GET | `/boards/5ef602c3-4c28-47ab-8d20-9eee3fee4406/members` | 200 | Lists members |
-| PASS | POST | `/boards/5ef602c3-4c28-47ab-8d20-9eee3fee4406/members` | 201 | Adds a collaborator by email |
-| PASS | PATCH | `/boards/5ef602c3-4c28-47ab-8d20-9eee3fee4406/members/11111111-1111-4111-8111-111111111111` | 200 | Changes the collaborator role |
-| PASS | DELETE | `/boards/5ef602c3-4c28-47ab-8d20-9eee3fee4406/members/11111111-1111-4111-8111-111111111111` | 200 | Removes the collaborator |
-| PASS | POST | `/boards/5ef602c3-4c28-47ab-8d20-9eee3fee4406/like` | 201 | Likes the board |
-| PASS | POST | `/boards/5ef602c3-4c28-47ab-8d20-9eee3fee4406/like` | 201 | Un-likes the board |
-| PASS | POST | `/boards/5ef602c3-4c28-47ab-8d20-9eee3fee4406/save` | 201 | Saves the board |
-| PASS | POST | `/boards/5ef602c3-4c28-47ab-8d20-9eee3fee4406/save` | 201 | Un-saves the board |
-| PASS | DELETE | `/boards/5ef602c3-4c28-47ab-8d20-9eee3fee4406` | 200 | Deletes the board |
+| PASS | GET | `/boards/92861525-17c2-408d-ae09-00975e03c6d9` | 200 | Reads one board |
+| PASS | PATCH | `/boards/92861525-17c2-408d-ae09-00975e03c6d9` | 200 | Updates the board |
+| PASS | POST | `/boards/92861525-17c2-408d-ae09-00975e03c6d9/sections` | 201 | Adds a section |
+| PASS | PATCH | `/boards/sections/88584364-1287-4877-97e1-84e8a76f77b5` | 200 | Renames the section |
+| PASS | POST | `/boards/92861525-17c2-408d-ae09-00975e03c6d9/items` | 201 | Adds a place item to the section |
+| PASS | POST | `/boards/92861525-17c2-408d-ae09-00975e03c6d9/items` | 400 | Rejects an item without sectionId |
+| PASS | PATCH | `/boards/items/5a6f95a0-eb63-4058-b73c-1895f326470a` | 200 | Updates the item |
+| PASS | PATCH | `/boards/92861525-17c2-408d-ae09-00975e03c6d9/items/reorder` | 200 | Reorders items within a section |
+| PASS | DELETE | `/boards/items/5a6f95a0-eb63-4058-b73c-1895f326470a` | 200 | Deletes the item |
+| PASS | PATCH | `/boards/92861525-17c2-408d-ae09-00975e03c6d9/sections/reorder` | 200 | Reorders sections |
+| PASS | GET | `/boards/92861525-17c2-408d-ae09-00975e03c6d9/members` | 200 | Lists members |
+| PASS | POST | `/boards/92861525-17c2-408d-ae09-00975e03c6d9/members` | 201 | Adds a collaborator by email |
+| PASS | PATCH | `/boards/92861525-17c2-408d-ae09-00975e03c6d9/members/11111111-1111-4111-8111-111111111111` | 200 | Changes the collaborator role |
+| PASS | DELETE | `/boards/92861525-17c2-408d-ae09-00975e03c6d9/members/11111111-1111-4111-8111-111111111111` | 200 | Removes the collaborator |
+| PASS | POST | `/boards/92861525-17c2-408d-ae09-00975e03c6d9/like` | 201 | Likes the board |
+| PASS | POST | `/boards/92861525-17c2-408d-ae09-00975e03c6d9/like` | 201 | Un-likes the board |
+| PASS | POST | `/boards/92861525-17c2-408d-ae09-00975e03c6d9/save` | 201 | Saves the board |
+| PASS | POST | `/boards/92861525-17c2-408d-ae09-00975e03c6d9/save` | 201 | Un-saves the board |
+| PASS | DELETE | `/boards/92861525-17c2-408d-ae09-00975e03c6d9` | 200 | Deletes the board |
 
 ### Comments
 
 | Result | Method | Path | Status | Checks |
 |---|---|---|---|---|
-| PASS | POST | `/boards/5ef602c3-4c28-47ab-8d20-9eee3fee4406/comments` | 201 | Adds a comment |
-| PASS | GET | `/boards/5ef602c3-4c28-47ab-8d20-9eee3fee4406/comments` | 200 | Lists comments on a board |
-| PASS | POST | `/boards/5ef602c3-4c28-47ab-8d20-9eee3fee4406/comments` | 400 | Rejects an empty comment |
-| PASS | DELETE | `/boards/5ef602c3-4c28-47ab-8d20-9eee3fee4406/comments/e1b3ed99-860a-453a-b519-f375ed018409` | 200 | Deletes the comment |
+| PASS | POST | `/boards/92861525-17c2-408d-ae09-00975e03c6d9/comments` | 201 | Adds a comment |
+| PASS | GET | `/boards/92861525-17c2-408d-ae09-00975e03c6d9/comments` | 200 | Lists comments on a board |
+| PASS | POST | `/boards/92861525-17c2-408d-ae09-00975e03c6d9/comments` | 400 | Rejects an empty comment |
+| PASS | DELETE | `/boards/92861525-17c2-408d-ae09-00975e03c6d9/comments/d74ed29e-e708-4513-bdf1-15bfc4fe48bc` | 200 | Deletes the comment |
 
 ### Chat
 
 | Result | Method | Path | Status | Checks |
 |---|---|---|---|---|
-| PASS | GET | `/chat/boards/5ef602c3-4c28-47ab-8d20-9eee3fee4406` | 200 | Opens (or creates) the board chat room |
-| PASS | GET | `/chat/conversations/e3a0fee6-dba9-4295-aae0-ac262e6b5f9e` | 200 | Reads the conversation detail |
-| PASS | GET | `/chat/conversations/e3a0fee6-dba9-4295-aae0-ac262e6b5f9e/messages` | 200 | Lists messages (first cursor page) |
-| PASS | POST | `/chat/conversations/e3a0fee6-dba9-4295-aae0-ac262e6b5f9e/messages` | 201 | Sends a message |
-| PASS | POST | `/chat/conversations/e3a0fee6-dba9-4295-aae0-ac262e6b5f9e/read` | 201 | Marks the room read |
+| PASS | GET | `/chat/boards/92861525-17c2-408d-ae09-00975e03c6d9` | 200 | Opens (or creates) the board chat room |
+| PASS | GET | `/chat/conversations/de3de258-d2e5-40ba-a0ae-be73b97bcda5` | 200 | Reads the conversation detail |
+| PASS | GET | `/chat/conversations/de3de258-d2e5-40ba-a0ae-be73b97bcda5/messages` | 200 | Lists messages (first cursor page) |
+| PASS | POST | `/chat/conversations/de3de258-d2e5-40ba-a0ae-be73b97bcda5/messages` | 201 | Sends a message |
+| PASS | POST | `/chat/conversations/de3de258-d2e5-40ba-a0ae-be73b97bcda5/read` | 201 | Marks the room read |
 | PASS | GET | `/chat/presence` | 200 | Reads the presence map |
 | PASS | GET | `/chat/conversations` | 200 | Lists conversations |
 | PASS | POST | `/chat/conversations` | 201 | Creates a direct conversation |
@@ -135,9 +135,9 @@ The suite registers a throwaway account, walks every route, then deletes what it
 | PASS | GET | `/users/11111111-1111-4111-8111-111111111111/followers` | 200 | Lists the followers of a user |
 | PASS | GET | `/users/11111111-1111-4111-8111-111111111111/following` | 200 | Lists who a user follows |
 | PASS | DELETE | `/users/11111111-1111-4111-8111-111111111111/follow` | 200 | Unfollows the user |
-| PASS | POST | `/boards/5ef602c3-4c28-47ab-8d20-9eee3fee4406/follow` | 201 | Follows a board |
-| PASS | GET | `/boards/5ef602c3-4c28-47ab-8d20-9eee3fee4406/followers` | 200 | Lists the followers of a board |
-| PASS | DELETE | `/boards/5ef602c3-4c28-47ab-8d20-9eee3fee4406/follow` | 200 | Unfollows the board |
+| PASS | POST | `/boards/92861525-17c2-408d-ae09-00975e03c6d9/follow` | 201 | Follows a board |
+| PASS | GET | `/boards/92861525-17c2-408d-ae09-00975e03c6d9/followers` | 200 | Lists the followers of a board |
+| PASS | DELETE | `/boards/92861525-17c2-408d-ae09-00975e03c6d9/follow` | 200 | Unfollows the board |
 
 ### Notifications
 
@@ -157,7 +157,9 @@ The suite registers a throwaway account, walks every route, then deletes what it
 
 | Result | Method | Path | Status | Checks |
 |---|---|---|---|---|
-| PASS | POST | `/uploads/register` | 404 | Registers an uploaded image URL |
+| PASS | POST | `/uploads/image` | 201 | Multipart image upload returns { url } |
+| PASS | GET | `/uploads/77aeba5e-ab21-4cd1-b3b5-357e26515cff.png` | 200 | Uploaded file is served from /uploads |
+| PASS | POST | `/uploads/image` | 400 | Rejects a non-image mime type |
 
 ### Places
 
@@ -168,7 +170,7 @@ The suite registers a throwaway account, walks every route, then deletes what it
 ## Notes
 
 - `GET /places/search` requires a valid `GOOGLE_PLACES_API_KEY` in `backend/.env`. A missing key answers 500 and a placeholder key gets `400 API key not valid` from Google, which the proxy maps to 502; both are expected until a real key is configured.
-- `POST /uploads/image` is multipart; the suite covers `POST /uploads/register` (the URL-registration path) instead of a binary upload.
+- `POST /uploads/image` is exercised with a real multipart body (1x1 PNG); a non-image mime type is rejected with 400 and the stored file is fetched back from `/uploads/<filename>`.
 - Socket.IO events (`conversation:join`, `message:new`, `message:read`, `user:typing`) are exercised by the web and mobile clients, not by this REST suite.
 - Google OAuth (`GET /auth/google`, `GET /auth/google/callback`, `POST /auth/google/mobile`) needs a Google Cloud client; it is not covered here.
 

@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
+  Bell,
   Compass,
   LayoutGrid,
   LogOut,
@@ -16,7 +17,7 @@ import {
   X,
 } from "lucide-react";
 import { clearTokens, notifyAuthChanged } from "@/lib/auth";
-import { queryKeys, useMe, useUserSearch } from "@/lib/queries";
+import { queryKeys, useMe, useUnreadNotificationCount, useUserSearch } from "@/lib/queries";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -44,6 +45,7 @@ export function SiteHeader() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { data: me } = useMe();
+  const { data: unreadCount } = useUnreadNotificationCount();
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
@@ -230,7 +232,24 @@ export function SiteHeader() {
 
         <div className="flex shrink-0 items-center gap-2">
           {me ? (
-            <DropdownMenu>
+            <>
+              <Link
+                href="/notifications"
+                aria-label={
+                  unreadCount
+                    ? `Notifications, ${unreadCount} unread`
+                    : "Notifications"
+                }
+                className="relative flex size-9 items-center justify-center rounded-full text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-50"
+              >
+                <Bell className="size-[18px]" />
+                {unreadCount ? (
+                  <span className="absolute -right-0.5 -top-0.5 flex min-w-[18px] items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold leading-[18px] text-white">
+                    {unreadCount > 99 ? "99+" : unreadCount}
+                  </span>
+                ) : null}
+              </Link>
+              <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
@@ -274,6 +293,7 @@ export function SiteHeader() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            </>
           ) : (
             <>
               <Button

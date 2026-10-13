@@ -76,3 +76,30 @@ export interface FollowListResult<T> {
   items: T[];
   total: number;
 }
+
+// ── Notifications ─────────────────────────────────────────────
+
+export type NotificationType =
+  | 'NEW_FOLLOWER'
+  | 'NEW_BOARD_FOLLOWER'
+  | 'NEW_COMMENT'
+  | 'NEW_LIKE'
+  | 'NEW_SAVE'
+  | 'NEW_CHAT_MESSAGE'
+  | 'MENTION';
+
+export interface NotificationItem {
+  id: string;
+  type: NotificationType;
+  actor: { id: string; name: string; avatarUrl: string | null };
+  targetId: string | null;
+  targetType: string | null;
+  metadata: Record<string, unknown> | null;
+  read: boolean;
+  createdAt: string;
+}
+
+export interface NotificationListResult {
+  items: NotificationItem[];
+  total: number;
+}
