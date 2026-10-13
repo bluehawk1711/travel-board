@@ -1,0 +1,66 @@
+name: Dev Build (Android)
+
+# EAS cloud development build (dev client). Manual-only so builds are only
+# triggered when a new native build is actually needed.
+#
+# Requires the `EXPO_TOKEN` repo secret (expo.dev → Account Settings →
+# Access Tokens) scoped to the account that owns @gourav-1711/travel-board.
+
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: 'Platform'
+        required: true
+        default: android
+        type: choice
+        options: [android, ios, all]
+
+concurrency:
+  group: dev-build-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  dev-build:
+    name: EAS development build
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Expo / EAS
+        uses: expo/expo-github-action@v9
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Run EAS development build
+        working-directory: mobile
+        run: >
+          eas build
+          --platform ${{ inputs.platform }}
+          --profile development
+          --non-interactive
+          --wait
+
+      - name: Summary
+        if: always()
+        working-directory: mobile
+        run: |
+          {
+            echo "## EAS development build"
+            echo ""
+            echo "- Platform: \`${{ inputs.platform }}\`"
+            echo "- Profile: \`development\` (dev client, internal distribution)"
+            if [ "${{ inputs.platform }}" != "ios" ]; then
+              APK_URL=$(eas build:list --platform android --limit 1 --json 2>/dev/null \
+                | jq -r '.[0].artifacts.buildUrl // empty' || true)
+              [ -n "$APK_URL" ] && echo "- Latest APK: $APK_URL"
+            fi
+            echo ""
+            echo "Install on a device, then run \`pnpm android\` in \`mobile/\` — Metro loads straight into the dev client."
+          } >> "$GITHUB_STEP_SUMMARY"
