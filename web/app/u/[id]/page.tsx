@@ -14,7 +14,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { id } = await params;
   try {
-    const { user } = await fetchProfile(id);
+    const user = await fetchProfile(id);
     return { title: user.name, description: user.bio ?? undefined };
   } catch {
     return { title: "Profile" };
@@ -39,7 +39,7 @@ async function loadProfile(
   id: string,
 ): Promise<{ user: PublicProfile; boards: UserBoardsResult }> {
   try {
-    const [{ user }, boards] = await Promise.all([
+    const [user, boards] = await Promise.all([
       fetchProfile(id),
       fetchUserBoards(id, 24, 0),
     ]);

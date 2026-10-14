@@ -190,9 +190,12 @@ export function fetchMe(): Promise<{ user: AuthUser }> {
 
 // ── Users & profiles (backend/src/users, /follows) ──────────
 
-export function fetchProfile(
-  id: string,
-): Promise<{ user: PublicProfile }> {
+/**
+ * Public profile. The API returns the profile object flat (`/users/:id` →
+ * `{id, name, ...}`), unlike `/auth/me` which wraps in `{user}` — verified by
+ * the E2E suite's `Reads a public profile` check.
+ */
+export function fetchProfile(id: string): Promise<PublicProfile> {
   return authFetch(`/users/${id}`);
 }
 

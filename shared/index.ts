@@ -206,6 +206,12 @@ export const UI_MESSAGES = {
   COMMON: {
     GENERIC_ERROR: 'Something went wrong - try again',
     NETWORK_ERROR: 'Check your connection and try again',
+    /** Title for the route-level error boundary (any page load failure). */
+    PAGE_ERROR_TITLE: 'This page failed to load',
+    /** Hint shown under the error boundary message (dev-facing). */
+    PAGE_ERROR_HINT:
+      'Make sure the NestJS API is running and reachable at the URL in API_URL.',
+    RETRY: 'Try again',
   },
   AUTH: {
     PASSWORD_TOO_SHORT: 'Password must be at least 8 characters',

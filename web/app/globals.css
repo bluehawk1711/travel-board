@@ -1,11 +1,15 @@
 @import "tailwindcss";
 
 /*
- * Terra Nova Travel design tokens — see
- * `stitch_travel_board_ui/terra_nova_travel/DESIGN.md`.
- * Warm parchment surfaces, terracotta accents, sunset-tinted elevation.
+ * Light-only for now (per product decision): dark: utilities are pinned to a
+ * `.dark` ancestor class that is never rendered, so they stay inert until a
+ * theme toggle ships. This also stops the OS-level `prefers-color-scheme`
+ * from flipping tokens and mixing dark backgrounds with light cards.
  */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
+  color-scheme: light;
   --background: #faf9f6;
   --foreground: #191716;
 
@@ -108,36 +112,9 @@
   --color-zinc-950: var(--foreground);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #141210;
-    --foreground: #faf9f6;
-    --card: #1c1917;
-    --card-foreground: #faf9f6;
-    --popover: #1c1917;
-    --popover-foreground: #faf9f6;
-    --primary: #fa5438;
-    --primary-foreground: #ffffff;
-    --primary-dark: #ff8a73;
-    --golden: #f0a94b;
-    --info: #5aa3e8;
-    --brand-deep: #8d4f00;
-    --secondary: #221f1d;
-    --secondary-foreground: #faf9f6;
-    --muted: #221f1d;
-    --muted-foreground: #a8a29b;
-    --accent: #3a1a13;
-    --accent-foreground: #ffb4a6;
-    --destructive: #ffb4ab;
-    --destructive-foreground: #690005;
-    --success: #4fb98c;
-    --success-foreground: #002113;
-    --success-container: #12352a;
-    --border: #2e2a27;
-    --input: #2e2a27;
-    --ring: #fa5438;
-  }
-}
+/* Dark token block removed on purpose — the app is light-only until a theme
+ * toggle ships (see the @custom-variant note above). Reintroduce it together
+ * with a `.dark` class toggle on <html>, not a media query. */
 
 body {
   background: var(--background);
