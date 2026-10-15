@@ -11,6 +11,7 @@ import { useAuthGuard } from '@/hooks/use-auth-guard';
 import { usePushRegistration } from '@/hooks/use-push-registration';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuthStore } from '@/lib/auth-store';
+import { useOnboardingStore } from '@/lib/onboarding-store';
 import { queryClient } from '@/lib/query-client';
 
 SplashScreen.preventAutoHideAsync();
@@ -20,10 +21,12 @@ export default function RootLayout() {
   const theme = useTheme();
   const status = useAuthStore((state) => state.status);
   const hydrate = useAuthStore((state) => state.hydrate);
+  const hydrateOnboarding = useOnboardingStore((state) => state.hydrate);
 
   useEffect(() => {
     void hydrate();
-  }, [hydrate]);
+    void hydrateOnboarding();
+  }, [hydrate, hydrateOnboarding]);
 
   // Route guard: redirects between the auth and app groups based on session.
   useAuthGuard();

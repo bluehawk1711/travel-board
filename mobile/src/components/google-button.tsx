@@ -33,7 +33,7 @@ const GOOGLE_WEB_CLIENT_ID =
   process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ||
   `demo-web-client-id${DEMO_CLIENT_SUFFIX}`;
 
-export function GoogleButton() {
+export function GoogleButton({ style }: { style?: object } = {}) {
   const theme = useTheme();
   const router = useRouter();
   const setSession = useAuthStore((state) => state.setSession);
@@ -81,6 +81,7 @@ export function GoogleButton() {
             borderColor: theme.backgroundSelected,
           },
           !request && styles.disabled,
+          style,
         ]}
       >
         <ThemedText type="smallBold">Continue with Google</ThemedText>

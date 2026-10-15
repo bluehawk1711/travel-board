@@ -1,4 +1,5 @@
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import type { ReactNode } from 'react';
 
 import { ThemedText } from '@/components/themed-text';
 import { Radius, Shadows, Spacing, TouchTarget } from '@/constants/theme';
@@ -19,6 +20,7 @@ export function PillButton({
   disabled = false,
   loading = false,
   compact = false,
+  icon,
   style,
 }: {
   label: string;
@@ -28,6 +30,8 @@ export function PillButton({
   loading?: boolean;
   /** Chips/compact controls: 36dp instead of the 48dp touch target. */
   compact?: boolean;
+  /** Optional trailing icon rendered after the label (e.g. an arrow). */
+  icon?: ReactNode;
   style?: object;
 }) {
   const theme = useTheme();
@@ -67,9 +71,12 @@ export function PillButton({
       {loading ? (
         <ActivityIndicator color={color} size="small" />
       ) : (
-        <ThemedText type="smallBold" style={{ color }}>
-          {label}
-        </ThemedText>
+        <>
+          <ThemedText type="smallBold" style={{ color }}>
+            {label}
+          </ThemedText>
+          {icon ? <View>{icon}</View> : null}
+        </>
       )}
     </Pressable>
   );
@@ -142,6 +149,8 @@ export function Badge({
 const styles = StyleSheet.create({
   base: {
     borderRadius: Radius.full,
+    flexDirection: 'row',
+    gap: Spacing.two,
     alignItems: 'center',
     justifyContent: 'center',
   },

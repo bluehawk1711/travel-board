@@ -237,6 +237,17 @@ export const UI_MESSAGES = {
     COVER_UPLOAD_FAILED: 'Cover upload failed',
     IMAGE_UPLOAD_FAILED: 'Image upload failed',
     NEW_TAGLINE: 'Start a travel board - you can edit it live with collaborators.',
+    /** Failure copy for POST /boards/:id/copy. */
+    COPY_FAILED: 'Could not copy this board',
+    /** Label under the owner name when the viewer has no role on the board. */
+    PUBLIC_BOARD_LABEL: 'Public board',
+    /** Grammatical role label ("You are the owner" / "an editor" / "a viewer"). */
+    yourRole: (role: string): string =>
+      role === 'OWNER'
+        ? 'You are the owner'
+        : role === 'EDITOR'
+          ? 'You are an editor'
+          : 'You are a viewer',
   },
   SETTINGS: {
     NAME_REQUIRED: 'Name is required',
@@ -260,5 +271,44 @@ export const UI_MESSAGES = {
     EMPTY: 'No notifications yet.',
     MARK_ALL_READ: 'Mark all read',
     LOAD_FAILED: 'Could not load notifications',
+  },
+  /** First-run onboarding carousel (mobile). */
+  ONBOARDING: {
+    SKIP: 'Skip',
+    CONTINUE: 'Continue',
+    LOG_IN: 'Log In',
+    BACK: 'Go back',
+    /** Slide counter shown next to the dots on the final slide ("4 / 4"). */
+    STEP_LABEL: (step: number, total: number): string => `${step} / ${total}`,
+    DISCOVER: {
+      BADGE: 'Inspire & Roam',
+      TITLE: 'Discover your next adventure',
+      BODY: 'Explore curated travel boards, hidden gems, and visual guides crafted by travelers around the globe.',
+    },
+    COLLABORATE: {
+      BADGE: 'Sync • Vote • Settle',
+      TITLE: 'Plan trips together in real-time',
+      BODY: 'Invite friends, vote on must-see places, split expenses, and build the ultimate itinerary without endless group chats.',
+    },
+    ITINERARY: {
+      BADGE: 'Curate & Organize',
+      TITLE: 'Save places worth visiting, build effortless itineraries',
+      BODY: 'Bookmark top spots from fellow travelers, organize them by day with custom routes, and never wonder what to do next.',
+      PERK_ROUTED: 'Auto-routed Days',
+      PERK_OFFLINE: 'Offline Availability',
+      PERK_SHARED: 'Shared Wishlists',
+    },
+    WELCOME: {
+      EYEBROW: 'Ready for departure',
+      TITLE: 'Your trips. Your people.',
+      TITLE_ACCENT: 'Your memories.',
+      BODY: 'Join over 250,000 travelers sharing real itineraries, insider local guides, and lifelong group adventures.',
+      SOCIAL_PROOF: '4.9/5 App Rating • 1.2M+ Pins created this month',
+      SIGN_UP_EMAIL: 'Sign up with Email',
+      LEGAL_PREFIX: `By continuing, you agree to ${APP.name}'s`,
+      TERMS: 'Terms of Service',
+      PRIVACY: 'Privacy Policy',
+      LEGAL_AND: '&',
+    },
   },
 } as const;
