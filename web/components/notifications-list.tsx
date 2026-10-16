@@ -11,6 +11,7 @@ import {
 } from "@/lib/api";
 import { queryKeys, useNotifications } from "@/lib/queries";
 import type { NotificationItem } from "@/lib/types";
+import { initials } from "@/lib/utils";
 import { UI_MESSAGES } from "@travel-board/shared";
 
 const PAGE_SIZE = 30;
@@ -167,7 +168,7 @@ export function NotificationsList() {
                     <AvatarImage src={item.actor.avatarUrl} alt="" />
                   ) : null}
                   <AvatarFallback className="bg-zinc-200 text-xs font-semibold text-zinc-700 dark:bg-zinc-700 dark:text-zinc-200">
-                    {item.actor.name.slice(0, 2).toUpperCase()}
+                    {initials(item.actor.name)}
                   </AvatarFallback>
                 </Avatar>
                 <div className="min-w-0 flex-1">

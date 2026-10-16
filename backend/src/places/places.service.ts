@@ -10,6 +10,12 @@ import { ConfigService } from '@nestjs/config';
 import type { Cache } from 'cache-manager';
 import { MESSAGES } from '../common/messages';
 
+/** A fetched Places photo: raw bytes + the upstream content type. */
+export interface PlacePhoto {
+  buffer: Buffer;
+  contentType: string;
+}
+
 /** 24h — Places API responses are immutable and billed per call. */
 const PLACES_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
@@ -141,5 +147,62 @@ export class PlacesService {
       return `${base}:${options.lat},${options.lng}:${options.radius ?? 1_000}`;
     }
     return base;
+  }
+
+  // ── Photo proxy ────────────────────────────────────────────
+  // Photos are fetched server-side so the Places key never reaches clients.
+  // Resolved bytes live in a small bounded in-process cache (hot photos only)
+  // and are served to clients with a long Cache-Control so the mobile/web
+  // image layers cache to disk — this keeps binary blobs out of Upstash Redis
+  // (§6: never store unbounded data) while still absorbing repeat views.
+
+  private static readonly PHOTO_CACHE_MAX_ENTRIES = 64;
+  private readonly photoCache = new Map<string, PlacePhoto>();
+
+  /** Photo resource names look like `places/…/photos/…` — reject anything else. */
+  private static readonly PHOTO_NAME_RE = /^places\/[A-Za-z0-9_-]+\/photos\/[A-Za-z0-9_-]+$/;
+
+  async getPhoto(photoName: string, maxWidthPx = 800): Promise<PlacePhoto> {
+    if (!PlacesService.PHOTO_NAME_RE.test(photoName)) {
+      throw new HttpException(MESSAGES.PLACES.PHOTO_INVALID, HttpStatus.BAD_REQUEST);
+    }
+
+    const width = Math.min(Math.max(Math.round(maxWidthPx), 16), 2048);
+    const cacheKey = `${photoName}@${width}`;
+    const cached = this.photoCache.get(cacheKey);
+    if (cached) {
+      // Refresh LRU recency.
+      this.photoCache.delete(cacheKey);
+      this.photoCache.set(cacheKey, cached);
+      return cached;
+    }
+
+    const url =
+      `https://places.googleapis.com/v1/${photoName}/media` +
+      `?maxWidthPx=${width}&key=${this.apiKey}`;
+
+    const response = await fetch(url, { redirect: 'follow' });
+    if (!response.ok) {
+      const detail = await response.text().catch(() => '');
+      this.logger.error(
+        `Places photo error: ${response.status} ${response.statusText} — ${detail.slice(0, 300)}`,
+      );
+      throw new HttpException(
+        MESSAGES.PLACES.PHOTO_FAILED,
+        HttpStatus.BAD_GATEWAY,
+      );
+    }
+
+    const contentType = response.headers.get('content-type') ?? 'image/jpeg';
+    const buffer = Buffer.from(await response.arrayBuffer());
+    const photo: PlacePhoto = { buffer, contentType };
+
+    // Bounded LRU: drop the oldest entry once at capacity.
+    if (this.photoCache.size >= PlacesService.PHOTO_CACHE_MAX_ENTRIES) {
+      const oldest = this.photoCache.keys().next().value;
+      if (oldest !== undefined) this.photoCache.delete(oldest);
+    }
+    this.photoCache.set(cacheKey, photo);
+    return photo;
   }
 }

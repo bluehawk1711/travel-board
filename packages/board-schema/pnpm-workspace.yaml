@@ -1,0 +1,4 @@
+# pnpm 11 build-script allowlist (see ERR_PNPM_IGNORED_BUILDS).
+# tsx needs esbuild's install script to link its binary.
+allowBuilds:
+  esbuild: true

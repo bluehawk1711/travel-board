@@ -6,8 +6,10 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Socket } from "socket.io-client";
-import { Bookmark, Home, Images, MessagesSquare, Pencil, Trash2, Users } from "lucide-react";
-import { deleteBoard, fetchBoard, toggleBoardLike, toggleBoardSave, uploadImage } from "@/lib/api";
+import { Bookmark, Copy, Home, Images, MessagesSquare, Pencil, Trash2, Users } from "lucide-react";
+import { UI_MESSAGES } from "@travel-board/shared";
+import { copyBoard, deleteBoard, fetchBoard, toggleBoardLike, toggleBoardSave, uploadImage } from "@/lib/api";
+import { getAccessToken } from "@/lib/auth";
 import { updateBoard } from "@/lib/board-edit";
 import {
   applyBoardChange,
@@ -18,7 +20,7 @@ import {
 } from "@/lib/board-types";
 import { getBoardSocket } from "@/lib/socket";
 import { queryKeys } from "@/lib/queries";
-import { cn } from "@/lib/utils";
+import { cn, initials } from "@/lib/utils";
 import AnimatedLikeButton from "@/components/shadcn-space/button/button-20";
 import EventCard from "@/components/shadcn-space/card/card-24";
 import CalendarWithEvents from "@/components/shadcn-space/calendar/calendar-08";
@@ -201,6 +203,24 @@ export function BoardDetailView({
       });
     },
   });
+
+  // "Copy board" — non-members duplicate a public board into their own boards
+  // (the copy starts private). Redirects to the fresh copy for editing.
+  const copyMutation = useMutation({
+    mutationFn: () => copyBoard(board.id),
+    onSuccess: (copy) => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.myBoards });
+      router.push(`/boards/${copy.id}`);
+    },
+  });
+
+  const handleCopy = () => {
+    if (!getAccessToken()) {
+      router.push("/login");
+      return;
+    }
+    copyMutation.mutate();
+  };
 
   const liked = board.liked;
   const likeCount = board.likeCount;
@@ -458,7 +478,7 @@ export function BoardDetailView({
                 className="h-full w-full object-cover"
               />
             ) : (
-              board.owner.name.slice(0, 2).toUpperCase()
+              initials(board.owner.name)
             )}
           </span>
           <div>
@@ -467,8 +487,8 @@ export function BoardDetailView({
             </p>
             <p className="text-xs text-zinc-500 dark:text-zinc-400">
               {board.role
-                ? `You are a ${board.role.toLowerCase()}`
-                : "Public board"}
+                ? UI_MESSAGES.BOARDS.yourRole(board.role)
+                : UI_MESSAGES.BOARDS.PUBLIC_BOARD_LABEL}
             </p>
           </div>
         </div>
@@ -490,7 +510,7 @@ export function BoardDetailView({
         </div>
       </div>
 
-      {/* Live indicator */}
+      {/* Live indicator + copy feedback */}
       <div className="mt-4 flex h-6 items-center gap-2">
         {joined && (
           <>
@@ -504,6 +524,16 @@ export function BoardDetailView({
                 : "Live"}
             </span>
           </>
+        )}
+        {copyMutation.isPending && (
+          <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+            Copying board…
+          </span>
+        )}
+        {copyMutation.isError && (
+          <span role="alert" className="text-xs font-medium text-red-600 dark:text-red-400">
+            {copyMutation.error.message}
+          </span>
         )}
       </div>
 
@@ -619,6 +649,15 @@ export function BoardDetailView({
                 fill={saved ? "currentColor" : "none"}
               />
             </AppleDockIcon>
+            {!board.role && (
+              <AppleDockIcon
+                className="bg-rose-400/10 text-rose-400/80"
+                aria-label="Copy board to my boards"
+                onClick={() => void handleCopy()}
+              >
+                <Copy className="size-5" />
+              </AppleDockIcon>
+            )}
             {(board.role === "OWNER" || board.role === "EDITOR") && (
               <AppleDockIcon
                 className="bg-violet-500/10 text-violet-500"

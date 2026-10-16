@@ -1,10 +1,12 @@
 import { Controller, Get, Query } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Public } from '../auth/decorators/public.decorator';
 import type { AuthUser } from '../auth/auth.service';
 import { DiscoveryService } from './discovery.service';
 import type { ExploreResult, FeedSort } from './discovery.service';
 
+@ApiTags('explore')
 @Controller('explore')
 export class DiscoveryController {
   constructor(private readonly discoveryService: DiscoveryService) {}

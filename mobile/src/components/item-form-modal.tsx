@@ -11,8 +11,9 @@ import {
   View,
 } from 'react-native';
 
+import { FadeInScale } from '@/components/premium/motion';
 import { ThemedText } from '@/components/themed-text';
-import { Spacing } from '@/constants/theme';
+import { Radius, Shadows, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { api, ApiError } from '@/lib/api';
 import type { BoardItem, BoardItemType } from '@/lib/board-types';
@@ -257,8 +258,9 @@ export function ItemFormModal({
   return (
     <Modal visible={visible} transparent animationType="fade">
       <Pressable style={styles.overlay} onPress={onClose}>
+        <FadeInScale>
         <Pressable
-          style={[styles.card, { backgroundColor: theme.background }]}
+          style={[styles.card, { backgroundColor: theme.background }, Shadows.nav]}
           onPress={(e) => e.stopPropagation()}
         >
           <ScrollView keyboardShouldPersistTaps="handled">
@@ -428,16 +430,17 @@ export function ItemFormModal({
                 disabled={saving}
                 style={[
                   styles.primaryBtn,
-                  { backgroundColor: theme.text },
+                  { backgroundColor: theme.primary },
+                  !saving && Shadows.fab,
                   saving && styles.disabled,
                 ]}
               >
                 {saving ? (
-                  <ActivityIndicator color={theme.background} size="small" />
+                  <ActivityIndicator color={theme.onPrimary} size="small" />
                 ) : (
                   <ThemedText
                     type="smallBold"
-                    style={{ color: theme.background }}
+                    style={{ color: theme.onPrimary }}
                   >
                     {isEdit ? 'Save' : 'Add'}
                   </ThemedText>
@@ -446,6 +449,7 @@ export function ItemFormModal({
             </View>
           </ScrollView>
         </Pressable>
+        </FadeInScale>
       </Pressable>
     </Modal>
   );
@@ -463,8 +467,8 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 480,
     maxHeight: '85%',
-    borderRadius: Spacing.three,
-    padding: Spacing.three,
+    borderRadius: Radius.xl,
+    padding: Spacing.four,
     gap: Spacing.two,
   },
   title: { marginBottom: Spacing.one },
@@ -474,7 +478,7 @@ const styles = StyleSheet.create({
     gap: Spacing.one + Spacing.half,
   },
   typePill: {
-    borderRadius: Spacing.three,
+    borderRadius: Radius.full,
     paddingHorizontal: Spacing.two + Spacing.half,
     paddingVertical: Spacing.one,
   },
@@ -516,8 +520,8 @@ const styles = StyleSheet.create({
   },
   cancelBtn: { paddingHorizontal: Spacing.three, paddingVertical: Spacing.two },
   primaryBtn: {
-    borderRadius: Spacing.three,
-    paddingHorizontal: Spacing.four,
+    borderRadius: Radius.full,
+    paddingHorizontal: Spacing.five,
     paddingVertical: Spacing.two + Spacing.half,
     minWidth: 72,
     alignItems: 'center',

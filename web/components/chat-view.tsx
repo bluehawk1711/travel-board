@@ -33,7 +33,7 @@ import {
 } from "@/lib/chat-types";
 import type { AuthUser, SearchUser } from "@/lib/types";
 import { getBoardSocket } from "@/lib/socket";
-import { cn } from "@/lib/utils";
+import { cn, initials } from "@/lib/utils";
 import ChatContent from "@/components/shadcn-space/radix/blocks/chat-application-01/chat-content";
 import ChatMsgSent from "@/components/shadcn-space/radix/blocks/chat-application-01/chat-msgsent";
 import type { Chat } from "@/components/shadcn-space/radix/blocks/chat-application-01/types";
@@ -87,7 +87,7 @@ function AvatarStack({
               unoptimized
             />
           ) : (
-            m.name.slice(0, 2).toUpperCase()
+            initials(m.name)
           )}
         </span>
       ))}
@@ -895,7 +895,7 @@ export function ChatView({
                                 unoptimized
                               />
                             ) : (
-                              user.name.slice(0, 2).toUpperCase()
+                              initials(user.name)
                             )}
                           </span>
                           <span className="min-w-0 flex-1">

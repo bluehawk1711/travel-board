@@ -7,10 +7,33 @@ import {
   getAccessToken,
   saveTokens,
 } from './api';
+import { queryClient } from './query-client';
 import { disconnectSocket } from './socket';
 import type { AuthUser, TokensResponse } from './types';
 
 export type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated';
+
+/**
+ * Warm the queries the home screen needs the moment a session is established.
+ * We seed `me` straight from the login response (the user object is already
+ * there — no round-trip) and prefetch the default feed + unread badge in the
+ * background so the tabs render from cache instead of showing a spinner.
+ */
+async function prefetchHomeData(user: AuthUser): Promise<void> {
+  queryClient.setQueryData(['me'], { user });
+  await Promise.allSettled([
+    queryClient.prefetchQuery({
+      queryKey: ['unreadNotifications'],
+      queryFn: api.getUnreadNotificationCount,
+    }),
+    queryClient.prefetchInfiniteQuery({
+      queryKey: ['home', 'foryou', ''],
+      queryFn: ({ pageParam }) =>
+        api.getExplore('newest', 20, (pageParam as number) ?? 0),
+      initialPageParam: 0,
+    }),
+  ]);
+}
 
 interface AuthState {
   status: AuthStatus;
@@ -43,6 +66,9 @@ export const useAuthStore = create<AuthState>((set) => ({
   setSession: async (tokens) => {
     await saveTokens(tokens.accessToken, tokens.refreshToken);
     set({ status: 'authenticated', user: tokens.user });
+    // Warm the critical home data immediately so the feed, greeting and
+    // notification badge are already cached by the time the tabs mount.
+    void prefetchHomeData(tokens.user);
   },
   signOut: async () => {
     try {

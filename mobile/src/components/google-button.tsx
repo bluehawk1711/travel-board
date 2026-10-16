@@ -3,9 +3,11 @@ import * as WebBrowser from 'expo-web-browser';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
-import { ThemedText } from './themed-text';
-import { Spacing } from '@/constants/theme';
+import { AuthError } from '@/components/auth-shell';
+import { ThemedText } from '@/components/themed-text';
+import { Radius, Spacing, TouchTarget } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { api, ApiError } from '@/lib/api';
 import { useAuthStore } from '@/lib/auth-store';
@@ -74,38 +76,47 @@ export function GoogleButton({ style }: { style?: object } = {}) {
       <Pressable
         onPress={() => void promptAsync()}
         disabled={!request}
-        style={[
+        accessibilityRole="button"
+        accessibilityLabel={UI_MESSAGES.AUTH.GOOGLE_CONTINUE}
+        style={({ pressed }) => [
           styles.button,
           {
-            backgroundColor: theme.backgroundElement,
-            borderColor: theme.backgroundSelected,
+            backgroundColor: theme.surfaceCard,
+            borderColor: theme.borderSubtle,
           },
+          pressed && styles.pressed,
           !request && styles.disabled,
           style,
         ]}
       >
-        <ThemedText type="smallBold">Continue with Google</ThemedText>
+        {request ? (
+          <Ionicons name="logo-google" size={18} color={theme.primary} />
+        ) : (
+          <ActivityIndicator size="small" color={theme.textSecondary} />
+        )}
+        <ThemedText type="smallBold">{UI_MESSAGES.AUTH.GOOGLE_CONTINUE}</ThemedText>
       </Pressable>
-      {error ? (
-        <ThemedText type="small" style={[styles.error, { color: theme.danger }]}>
-          {error}
-        </ThemedText>
-      ) : null}
+      {error ? <AuthError message={error} /> : null}
     </>
   );
 }
 
 const styles = StyleSheet.create({
   button: {
+    flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: Spacing.three,
-    borderWidth: 1,
-    paddingVertical: Spacing.three,
+    justifyContent: 'center',
+    gap: Spacing.two,
+    width: '100%',
+    minHeight: TouchTarget,
+    borderRadius: Radius.full,
+    borderWidth: 1.5,
+  },
+  pressed: {
+    opacity: 0.85,
+    transform: [{ scale: 0.99 }],
   },
   disabled: {
-    opacity: 0.5,
-  },
-  error: {
-    textAlign: 'center',
+    opacity: 0.6,
   },
 });

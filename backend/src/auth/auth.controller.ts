@@ -8,6 +8,7 @@ import {
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import { AuthGuard } from '@nestjs/passport';
 import { Throttle } from '@nestjs/throttler';
@@ -24,6 +25,8 @@ import { GoogleMobileDto } from './dto/google-mobile.dto';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { Public } from './decorators/public.decorator';
 
+@ApiTags('auth')
+@ApiBearerAuth('bearer')
 @Controller('auth')
 export class AuthController {
   constructor(

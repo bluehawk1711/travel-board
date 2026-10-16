@@ -22,7 +22,7 @@ import {
   type BoardMember,
 } from "@/lib/api";
 import { fetchMyBoards, type MyBoard } from "@/lib/board-edit";
-import { getAccessToken } from "@/lib/auth";
+import { useSignedIn } from "@/hooks/use-signed-in";
 import type {
   AuthUser,
   ExploreResult,
@@ -108,31 +108,39 @@ export function useDestinationOptions(): UseQueryResult<string[]> {
 
 /** Current authenticated user (auth-only). */
 export function useMe(): UseQueryResult<AuthUser> {
+  const signedIn = useSignedIn();
   return useQuery({
     queryKey: queryKeys.me,
     queryFn: async () => {
-      const { user } = await fetchMe();
-      return user;
+      // Tolerate both the {user} wrapper and a flat payload (and any legacy
+      // cached wrapper) — the header crashes on `me.name` if a wrapper leaks.
+      const payload = (await fetchMe()) as unknown;
+      if (payload && typeof payload === "object" && "user" in payload) {
+        return (payload as { user: AuthUser }).user;
+      }
+      return payload as AuthUser;
     },
-    enabled: typeof window !== "undefined" && !!getAccessToken(),
+    enabled: signedIn,
   });
 }
 
 /** Boards I own or collaborate on (auth-only). */
 export function useMyBoards(): UseQueryResult<MyBoard[]> {
+  const signedIn = useSignedIn();
   return useQuery({
     queryKey: queryKeys.myBoards,
     queryFn: fetchMyBoards,
-    enabled: typeof window !== "undefined" && !!getAccessToken(),
+    enabled: signedIn,
   });
 }
 
 /** Boards from people I follow (auth-only, first page). */
 export function useFollowingFeed(): UseQueryResult<ExploreResult> {
+  const signedIn = useSignedIn();
   return useQuery({
     queryKey: queryKeys.followingFeed,
     queryFn: () => fetchFollowingFeed(24, 0),
-    enabled: typeof window !== "undefined" && !!getAccessToken(),
+    enabled: signedIn,
   });
 }
 
@@ -140,19 +148,21 @@ export function useFollowingFeed(): UseQueryResult<ExploreResult> {
 export function useBoardMembers(
   boardId: string,
 ): UseQueryResult<{ members: BoardMember[] }> {
+  const signedIn = useSignedIn();
   return useQuery({
     queryKey: queryKeys.boardMembers(boardId),
     queryFn: () => fetchBoardMembers(boardId),
-    enabled: boardId.length > 0,
+    enabled: boardId.length > 0 && signedIn,
   });
 }
 
 /** My backend settings (theme/notifications/currency) — lazy-created server-side. */
 export function useMySettings(): UseQueryResult<UserSettings> {
+  const signedIn = useSignedIn();
   return useQuery({
     queryKey: queryKeys.mySettings,
     queryFn: fetchMySettings,
-    enabled: typeof window !== "undefined" && !!getAccessToken(),
+    enabled: signedIn,
   });
 }
 
@@ -169,20 +179,22 @@ export function useUserSearch(q: string): UseQueryResult<{
 
 /** Notification inbox (auth-only, first page). */
 export function useNotifications(): UseQueryResult<NotificationListResult> {
+  const signedIn = useSignedIn();
   return useQuery({
     queryKey: queryKeys.notifications,
     queryFn: () => fetchNotifications(30, 0),
-    enabled: typeof window !== "undefined" && !!getAccessToken(),
+    enabled: signedIn,
   });
 }
 
 /** Unread badge count — polled lightly so the bell stays fresh. */
 export function useUnreadNotificationCount(): UseQueryResult<number> {
+  const signedIn = useSignedIn();
   return useQuery({
     queryKey: queryKeys.unreadNotifications,
     queryFn: async () =>
       (await fetchUnreadNotificationCount()).unreadCount,
-    enabled: typeof window !== "undefined" && !!getAccessToken(),
+    enabled: signedIn,
     refetchInterval: 60_000,
   });
 }

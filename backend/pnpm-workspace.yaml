@@ -1,4 +1,8 @@
+# pnpm 11 build-script allowlist (see ERR_PNPM_IGNORED_BUILDS): packages whose
+# install scripts are allowed to run. Denials (false) are recorded too, so the
+# deps-status check before `pnpm <script>` stops failing on them.
 allowBuilds:
   '@parcel/watcher': true
   esbuild: true
   unrs-resolver: true
+  '@scarf/scarf': false # optional telemetry postinstall — not needed

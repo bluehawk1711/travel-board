@@ -32,9 +32,12 @@ export const MESSAGES = {
     CANNOT_CHANGE_OWNER_ROLE: 'Cannot change the owner role',
     CANNOT_REMOVE_OWNER: 'Cannot remove the board owner',
     DELETED: 'Board deleted',
+    COPY_SOURCE_NOT_PUBLIC: 'Only public boards can be copied',
   },
   PLACES: {
     SEARCH_FAILED: 'Places search failed',
+    PHOTO_INVALID: 'Invalid place photo reference',
+    PHOTO_FAILED: 'Could not load place photo',
   },
   COMMENTS: {
     NOT_FOUND: 'Comment not found',

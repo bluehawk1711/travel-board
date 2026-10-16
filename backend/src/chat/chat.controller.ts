@@ -8,6 +8,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { ChatGateway } from './chat.gateway';
 import { ChatService } from './chat.service';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -18,6 +19,8 @@ import { SendMessageDto } from './dto/send-message.dto';
 import { MarkReadDto } from './dto/mark-read.dto';
 import { ListMessagesQueryDto } from './dto/list-messages-query.dto';
 
+@ApiTags('chat')
+@ApiBearerAuth('bearer')
 @Controller('chat')
 export class ChatController {
   constructor(

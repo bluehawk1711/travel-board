@@ -1,24 +1,30 @@
 import { useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
-  TextInput,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useMutation } from '@tanstack/react-query';
 
+import {
+  AuthDivider,
+  AuthError,
+  AuthField,
+  AuthShell,
+} from '@/components/auth-shell';
+import { GoogleButton } from '@/components/google-button';
 import { ThemedText } from '@/components/themed-text';
-import { Spacing } from '@/constants/theme';
+import { PillButton } from '@/components/ui/pill-button';
+import { Spacing, TouchTarget } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { api, ApiError } from '@/lib/api';
-import { useMutation } from '@tanstack/react-query';
 import { useAuthStore } from '@/lib/auth-store';
 import { queryClient } from '@/lib/query-client';
-import { GoogleButton } from '@/components/google-button';
 import { UI_MESSAGES } from '@travel-board/shared';
 
 export default function SignUpScreen() {
@@ -68,104 +74,105 @@ export default function SignUpScreen() {
     }
   }, [name, email, password, confirm, router, setSession, signUpMutation]);
 
-  const inputStyle = [
-    styles.input,
-    {
-      backgroundColor: theme.backgroundElement,
-      borderColor: theme.backgroundSelected,
-      color: theme.text,
-    },
-  ];
-
   return (
-    <KeyboardAvoidingView
-      style={styles.screen}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    <SafeAreaView
+      style={[styles.screen, { backgroundColor: theme.background }]}
+      edges={['top', 'bottom']}
     >
-      <SafeAreaView style={styles.safe}>
-        <View style={styles.card}>
-          <ThemedText type="subtitle" style={styles.title}>
-            Create account
-          </ThemedText>
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <AuthShell
+            title={UI_MESSAGES.AUTH.CREATE_ACCOUNT}
+            subtitle={UI_MESSAGES.AUTH.JOIN_TAGLINE}
+            footer={
+              <View style={styles.footerRow}>
+                <ThemedText type="small" themeColor="textSecondary">
+                  {UI_MESSAGES.AUTH.HAVE_ACCOUNT}
+                </ThemedText>
+                <Pressable
+                  onPress={() => router.replace('/(auth)/sign-in')}
+                  hitSlop={8}
+                  accessibilityRole="button"
+                  accessibilityLabel={UI_MESSAGES.AUTH.SIGN_IN}
+                >
+                  <ThemedText
+                    type="smallBold"
+                    style={[styles.footerLink, { color: theme.primary }]}
+                  >
+                    {UI_MESSAGES.AUTH.SIGN_IN}
+                  </ThemedText>
+                </Pressable>
+              </View>
+            }
+          >
+            <AuthField
+              label={UI_MESSAGES.AUTH.NAME_LABEL}
+              value={name}
+              onChangeText={setName}
+              placeholder="Your name"
+              autoCapitalize="words"
+              autoComplete="name"
+              textContentType="name"
+              returnKeyType="next"
+            />
+            <AuthField
+              label={UI_MESSAGES.AUTH.EMAIL_LABEL}
+              value={email}
+              onChangeText={setEmail}
+              placeholder="you@example.com"
+              autoCapitalize="none"
+              autoCorrect={false}
+              autoComplete="email"
+              textContentType="emailAddress"
+              keyboardType="email-address"
+              returnKeyType="next"
+            />
+            <AuthField
+              label={UI_MESSAGES.AUTH.PASSWORD_LABEL}
+              value={password}
+              onChangeText={setPassword}
+              placeholder="At least 8 characters"
+              secureTextEntry
+              autoComplete="new-password"
+              textContentType="newPassword"
+              returnKeyType="next"
+            />
+            <AuthField
+              label={UI_MESSAGES.AUTH.CONFIRM_PASSWORD_LABEL}
+              value={confirm}
+              onChangeText={setConfirm}
+              placeholder="Repeat your password"
+              secureTextEntry
+              autoComplete="new-password"
+              textContentType="newPassword"
+              returnKeyType="go"
+              onSubmitEditing={() => void submit()}
+            />
 
-          <TextInput
-            style={inputStyle}
-            placeholder="Name"
-            placeholderTextColor={theme.textSecondary}
-            autoCapitalize="words"
-            autoComplete="name"
-            value={name}
-            onChangeText={setName}
-          />
-          <TextInput
-            style={inputStyle}
-            placeholder="Email"
-            placeholderTextColor={theme.textSecondary}
-            autoCapitalize="none"
-            autoComplete="email"
-            keyboardType="email-address"
-            value={email}
-            onChangeText={setEmail}
-          />
-          <TextInput
-            style={inputStyle}
-            placeholder="Password (min 8 characters)"
-            placeholderTextColor={theme.textSecondary}
-            secureTextEntry
-            autoComplete="new-password"
-            value={password}
-            onChangeText={setPassword}
-          />
-          <TextInput
-            style={inputStyle}
-            placeholder="Confirm password"
-            placeholderTextColor={theme.textSecondary}
-            secureTextEntry
-            autoComplete="new-password"
-            value={confirm}
-            onChangeText={setConfirm}
-          />
+            {error ? <AuthError message={error} /> : null}
 
-          {error ? (
-            <ThemedText type="small" style={{ color: theme.danger }}>
-              {error}
-            </ThemedText>
-          ) : null}
+            <PillButton
+              label={UI_MESSAGES.AUTH.CREATE_ACCOUNT}
+              onPress={() => void submit()}
+              loading={submitting}
+              disabled={submitting}
+              style={styles.submitButton}
+            />
 
-          <Pressable
-            onPress={submit}
-            disabled={submitting}
-            style={[
-              styles.primaryButton,
-              { backgroundColor: theme.text },
-              submitting && styles.disabled,
-            ]}
->
-             {submitting ? (
-               <ActivityIndicator color={theme.background} />
-             ) : (
-               <ThemedText
-                 type="smallBold"
-                 style={{ color: theme.background }}
-               >
-                 Create account
-               </ThemedText>
-             )}
-           </Pressable>
+            <AuthDivider label={UI_MESSAGES.AUTH.OR} />
 
-           <GoogleButton />
-
-           <Pressable onPress={() => router.back()}>
-            <ThemedText type="small" themeColor="textSecondary" style={styles.switchText}>
-              Already have an account?{' '}
-              <ThemedText type="smallBold" style={{ color: theme.text }}>
-                Sign in
-              </ThemedText>
-            </ThemedText>
-          </Pressable>
-        </View>
-      </SafeAreaView>
-    </KeyboardAvoidingView>
+            <GoogleButton />
+          </AuthShell>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
@@ -173,35 +180,27 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
   },
-  safe: {
+  flex: {
     flex: 1,
+  },
+  scroll: {
+    flexGrow: 1,
     justifyContent: 'center',
-    padding: Spacing.four,
+    paddingHorizontal: Spacing.four,
+    paddingVertical: Spacing.five,
+    gap: Spacing.four,
   },
-  card: {
-    gap: Spacing.three,
+  submitButton: {
+    alignSelf: 'stretch',
   },
-  title: {
-    marginBottom: Spacing.one,
-  },
-  input: {
-    borderWidth: 1,
-    borderRadius: Spacing.three,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two + Spacing.half,
-    fontSize: 16,
-  },
-  primaryButton: {
-    borderRadius: Spacing.three,
-    paddingVertical: Spacing.three,
+  footerRow: {
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: Spacing.one,
+    gap: 6,
+    minHeight: TouchTarget - 16,
   },
-  disabled: {
-    opacity: 0.5,
-  },
-  switchText: {
-    textAlign: 'center',
+  footerLink: {
+    textDecorationLine: 'underline',
   },
 });

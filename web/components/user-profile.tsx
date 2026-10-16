@@ -13,6 +13,7 @@ import {
   toggleFollowUser,
 } from "@/lib/api";
 import { getAccessToken } from "@/lib/auth";
+import { initials } from "@/lib/utils";
 import type {
   FollowListResult,
   PublicProfile,
@@ -82,7 +83,7 @@ function FollowListModal({
                         className="h-full w-full object-cover"
                       />
                     ) : (
-                      user.name.slice(0, 2).toUpperCase()
+                      initials(user.name)
                     )}
                   </span>
                   <span className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-50">
@@ -185,7 +186,7 @@ export function UserProfileView({
               className="h-full w-full object-cover"
             />
           ) : (
-            profile.name.slice(0, 2).toUpperCase()
+            initials(profile.name)
           )}
         </span>
         <div className="min-w-0 flex-1">

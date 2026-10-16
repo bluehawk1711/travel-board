@@ -8,7 +8,6 @@
     "scheme": "travelboard",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/images/logo.png",
       "bundleIdentifier": "app.travelboard.mobile",
       "infoPlist": {
         "CFBundleDisplayName": "Travel Board"

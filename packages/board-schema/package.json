@@ -1,0 +1,20 @@
+{
+  "name": "@travel-board/board-schema",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Trip-board document schema (types + Zod), operations/reducer and undo/redo helpers. Pure TS — no React Native, no DOM. Consumed by the NestJS API, the Expo editor and the Next.js viewer.",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "test": "node --import tsx --test tests/schema.test.cjs tests/ops.test.cjs tests/history.test.cjs",
+    "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "^4.5.4"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "tsx": "^4.20.0",
+    "typescript": "~6.0.3"
+  }
+}

@@ -354,6 +354,14 @@ export const api = {
     });
   },
 
+  /**
+   * Duplicate a public board into my boards (starts private) — mirrors the
+   * web "Copy board" action. Returns the fresh board for navigation.
+   */
+  copyBoard(id: string): Promise<BoardDetail> {
+    return apiFetch<BoardDetail>(`/boards/${id}/copy`, { method: 'POST' });
+  },
+
   // ── Board sections & items ─────────────────────────────────
 
   createSection(

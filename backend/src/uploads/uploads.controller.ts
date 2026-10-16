@@ -6,6 +6,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { randomUUID } from 'node:crypto';
@@ -27,6 +28,8 @@ const IMAGE_MIME = new Set([
 ]);
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
+@ApiTags('uploads')
+@ApiBearerAuth('bearer')
 @Controller('uploads')
 export class UploadsController {
   @Throttle({ default: { limit: 20, ttl: 60_000 } })

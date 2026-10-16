@@ -1,23 +1,20 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { FlashList } from '@shopify/flash-list';
-import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  StyleSheet,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { Avatar } from '@/components/avatar';
 import { BoardCard, type BoardCardModel } from '@/components/board-card';
+import { GlassButton } from '@/components/premium/glass';
+import { Dissolve, Reveal } from '@/components/premium/motion';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { BottomTabInset, MaxContentWidth, Radius, Shadows, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { api, ApiError } from '@/lib/api';
-import type { SearchUser, UserBoardFeedItem } from '@/lib/types';
+import type { PublicProfile, SearchUser, UserBoardFeedItem } from '@/lib/types';
 
 function toCardModel(board: UserBoardFeedItem): BoardCardModel {
   return {
@@ -26,38 +23,163 @@ function toCardModel(board: UserBoardFeedItem): BoardCardModel {
     title: board.title,
     destination: board.destination,
     badge: board.boardType === 'ITINERARY' ? 'Itinerary' : null,
-    meta: `${board.itemCount} ${board.itemCount === 1 ? 'item' : 'items'} · ${board.likeCount} likes`,
+    owner: null,
+    meta: `${board.itemCount} ${board.itemCount === 1 ? 'item' : 'items'} · ♥ ${board.likeCount}`,
   };
 }
 
 type Tab = 'boards' | 'followers' | 'following';
 
-function UserRow({
-  user,
-  onPress,
-}: {
-  user: SearchUser;
-  onPress?: () => void;
-}) {
+const TABS: { key: Tab; label: string }[] = [
+  { key: 'boards', label: 'Boards' },
+  { key: 'followers', label: 'Followers' },
+  { key: 'following', label: 'Following' },
+];
+
+function UserRow({ user, onPress }: { user: SearchUser; onPress?: () => void }) {
   const theme = useTheme();
   return (
     <Pressable
       onPress={onPress}
-      style={[styles.userRow, { borderColor: theme.backgroundSelected }]}
+      style={({ pressed }) => [
+        styles.userRow,
+        { borderColor: theme.borderSubtle, backgroundColor: pressed ? theme.backgroundElement : theme.surfaceCard },
+      ]}
     >
-      <View style={[styles.userAvatar, { backgroundColor: theme.backgroundElement }]}>
-        {user.avatarUrl ? (
-          <Image source={{ uri: user.avatarUrl }} style={StyleSheet.absoluteFill} contentFit="cover" />
-        ) : (
-          <ThemedText type="smallBold" themeColor="textSecondary">
-            {user.name.slice(0, 2).toUpperCase()}
-          </ThemedText>
-        )}
-      </View>
+      <Avatar uri={user.avatarUrl} name={user.name} size={44} />
       <View style={styles.userInfo}>
         <ThemedText type="smallBold">{user.name}</ThemedText>
       </View>
+      <Ionicons name="chevron-forward" size={16} color={theme.textSecondary} />
     </Pressable>
+  );
+}
+
+/** Premium profile header: tinted hero band, ringed avatar, stats, actions, tabs. */
+function ProfileHeader({
+  profile,
+  tab,
+  onTab,
+  onFollow,
+  onChat,
+}: {
+  profile: PublicProfile;
+  tab: Tab;
+  onTab: (t: Tab) => void;
+  onFollow: () => void;
+  onChat: () => void;
+}) {
+  const theme = useTheme();
+  return (
+    <View style={styles.headerWrap}>
+      {/* Hero band */}
+      <Dissolve style={styles.heroBand} color={theme.primary} speed={0.35} intensity={0.8}>
+        <View style={styles.heroSpacer} />
+      </Dissolve>
+
+      <View style={styles.headerContent}>
+        {/* Avatar with ring */}
+        <Reveal style={styles.avatarRing}>
+          <View style={[styles.ring, { borderColor: theme.primary }]}>
+            <Avatar uri={profile.avatarUrl} name={profile.name} size={84} />
+          </View>
+        </Reveal>
+
+        <Reveal delay={80} style={styles.nameBlock}>
+          <ThemedText type="subtitle" style={styles.name}>
+            {profile.name}
+          </ThemedText>
+          {profile.bio ? (
+            <ThemedText type="small" themeColor="textSecondary" style={styles.bio}>
+              {profile.bio}
+            </ThemedText>
+          ) : null}
+          {profile.isMe ? (
+            <View style={[styles.youBadge, { backgroundColor: theme.primaryContainer }]}>
+              <Ionicons name="sparkles" size={11} color={theme.primaryDark} />
+              <ThemedText type="smallBold" style={{ color: theme.primaryDark, fontSize: 11 }}>
+                Your profile
+              </ThemedText>
+            </View>
+          ) : null}
+        </Reveal>
+
+        {/* Stat cards */}
+        <Reveal delay={140} style={styles.statsRow}>
+          {[
+            { label: 'Boards', value: profile.publicBoardCount, icon: 'grid-outline' as const },
+            { label: 'Followers', value: profile.followerCount, icon: 'people-outline' as const },
+            { label: 'Following', value: profile.followingCount, icon: 'person-add-outline' as const },
+          ].map((s) => (
+            <View key={s.label} style={[styles.statCard, { backgroundColor: theme.surfaceCard, borderColor: theme.borderSubtle }, Shadows.card]}>
+              <Ionicons name={s.icon} size={16} color={theme.primary} />
+              <ThemedText type="smallBold" style={styles.statValue}>
+                {s.value}
+              </ThemedText>
+              <ThemedText type="small" themeColor="textSecondary" style={styles.statLabel}>
+                {s.label}
+              </ThemedText>
+            </View>
+          ))}
+        </Reveal>
+
+        {/* Actions */}
+        {!profile.isMe ? (
+          <Reveal delay={200} style={styles.actionsRow}>
+            <Pressable
+              onPress={onFollow}
+              style={({ pressed }) => [
+                styles.followBtn,
+                {
+                  backgroundColor: profile.isFollowing ? theme.backgroundElement : theme.primary,
+                  borderColor: profile.isFollowing ? theme.borderSubtle : 'transparent',
+                },
+                !profile.isFollowing && Shadows.fab,
+                pressed && styles.pressed,
+              ]}
+            >
+              <Ionicons
+                name={profile.isFollowing ? 'checkmark' : 'person-add'}
+                size={16}
+                color={profile.isFollowing ? theme.text : theme.onPrimary}
+              />
+              <ThemedText type="smallBold" style={{ color: profile.isFollowing ? theme.text : theme.onPrimary }}>
+                {profile.isFollowing ? 'Following' : 'Follow'}
+              </ThemedText>
+            </Pressable>
+            <Pressable
+              onPress={onChat}
+              style={({ pressed }) => [
+                styles.chatBtn,
+                { backgroundColor: theme.surfaceCard, borderColor: theme.borderSubtle },
+                pressed && styles.pressed,
+              ]}
+            >
+              <Ionicons name="chatbubble-outline" size={16} color={theme.text} />
+              <ThemedText type="smallBold">Message</ThemedText>
+            </Pressable>
+          </Reveal>
+        ) : null}
+
+        {/* Segmented tabs */}
+        <View style={[styles.segment, { backgroundColor: theme.backgroundElement }]}>
+          {TABS.map((t) => {
+            const active = t.key === tab;
+            return (
+              <Pressable
+                key={t.key}
+                onPress={() => onTab(t.key)}
+                style={[styles.segmentItem, active && { backgroundColor: theme.surfaceCard, ...Shadows.card }]}
+              >
+                <ThemedText type="smallBold" themeColor={active ? 'text' : 'textSecondary'}>
+                  {t.label}
+                </ThemedText>
+              </Pressable>
+            );
+          })}
+        </View>
+      </View>
+    </View>
   );
 }
 
@@ -115,21 +237,34 @@ export default function UserProfileScreen() {
 
   const notFound = profileQuery.error instanceof ApiError && profileQuery.error.status === 404;
 
+  // Shared header rendered once above whichever list is active.
+  const header = profile ? (
+    <ProfileHeader
+      profile={profile}
+      tab={tab}
+      onTab={setTab}
+      onFollow={() => void handleFollow()}
+      onChat={() => void handleStartChat()}
+    />
+  ) : null;
+
+  const boardItems: BoardCardModel[] = (boardsQuery.data?.items ?? []).map(toCardModel);
+  const people: SearchUser[] =
+    tab === 'followers'
+      ? (followersQuery.data?.items ?? [])
+      : (followingQuery.data?.items ?? []);
+
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]} edges={['top', 'left', 'right']}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Pressable
-          onPress={() => router.back()}
-          hitSlop={8}
-          style={[styles.backButton, { backgroundColor: theme.backgroundElement }]}
-        >
-          <ThemedText type="smallBold">←</ThemedText>
-        </Pressable>
-        <ThemedText type="smallBold" numberOfLines={1} style={styles.headerTitle}>
+      {/* Floating back */}
+      <View style={styles.topBar}>
+        <GlassButton onPress={() => router.back()} accessibilityLabel="Go back">
+          <Ionicons name={Platform.OS === 'android' ? 'arrow-forward' : 'chevron-back'} size={22} color={theme.text} />
+        </GlassButton>
+        <ThemedText type="smallBold" numberOfLines={1} style={styles.topTitle}>
           {profile?.name ?? 'Profile'}
         </ThemedText>
-        <View style={styles.headerSpacer} />
+        <View style={styles.topSpacer} />
       </View>
 
       {profileQuery.isLoading ? (
@@ -138,110 +273,19 @@ export default function UserProfileScreen() {
         </View>
       ) : notFound ? (
         <View style={styles.center}>
+          <Ionicons name="person-remove-outline" size={32} color={theme.textSecondary} />
           <ThemedText themeColor="textSecondary">User not found</ThemedText>
         </View>
       ) : profile ? (
-        <>
-          {/* Profile header is always rendered above the tab content */}
+        tab === 'boards' ? (
           <FlashList
-            data={
-              tab === 'boards'
-                ? (boardsQuery.data?.items ?? [])
-                : []
-            }
+            data={boardItems}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
-              <BoardCard
-                board={toCardModel(item)}
-                onPress={() => router.push(`/board/${item.id}`)}
-              />
+              <BoardCard board={item} onPress={() => router.push(`/board/${item.id}`)} />
             )}
             numColumns={2}
-            ListHeaderComponent={
-              <View style={styles.profileHeader}>
-                {/* Avatar + name */}
-                <View style={styles.avatarRow}>
-                  <View style={[styles.avatar, { backgroundColor: theme.backgroundElement }]}>
-                    {profile.avatarUrl ? (
-                      <Image source={{ uri: profile.avatarUrl }} style={StyleSheet.absoluteFill} contentFit="cover" />
-                    ) : (
-                      <ThemedText type="subtitle" themeColor="textSecondary">
-                        {profile.name.slice(0, 2).toUpperCase()}
-                      </ThemedText>
-                    )}
-                  </View>
-                  <View style={styles.nameCol}>
-                    <ThemedText type="subtitle">{profile.name}</ThemedText>
-                    {profile.bio ? (
-                      <ThemedText type="small" themeColor="textSecondary" style={styles.bio}>
-                        {profile.bio}
-                      </ThemedText>
-                    ) : null}
-                  </View>
-                </View>
-
-                {/* Stats */}
-                <View style={styles.statsRow}>
-                  {[
-                    { label: 'boards', value: profile.publicBoardCount },
-                    { label: 'followers', value: profile.followerCount },
-                    { label: 'following', value: profile.followingCount },
-                  ].map((s) => (
-                    <View key={s.label} style={styles.stat}>
-                      <ThemedText type="smallBold">{s.value}</ThemedText>
-                      <ThemedText type="small" themeColor="textSecondary">{s.label}</ThemedText>
-                    </View>
-                  ))}
-                </View>
-
-                {/* Actions */}
-                {!profile.isMe ? (
-                  <View style={styles.actionsRow}>
-                    <Pressable
-                      onPress={handleFollow}
-                      style={[
-                        styles.followBtn,
-                        {
-                          backgroundColor: profile.isFollowing ? theme.backgroundElement : theme.text,
-                          borderColor: theme.backgroundSelected,
-                        },
-                      ]}
-                    >
-                      <ThemedText
-                        type="smallBold"
-                        style={{ color: profile.isFollowing ? theme.text : theme.background }}
-                      >
-                        {profile.isFollowing ? 'Following' : 'Follow'}
-                      </ThemedText>
-                    </Pressable>
-                    <Pressable
-                      onPress={handleStartChat}
-                      style={[styles.chatBtn, { borderColor: theme.backgroundSelected }]}
-                    >
-                      <ThemedText type="smallBold">Message</ThemedText>
-                    </Pressable>
-                  </View>
-                ) : null}
-
-                {/* Tabs */}
-                <View style={[styles.tabRow, { borderColor: theme.backgroundSelected }]}>
-                  {(['boards', 'followers', 'following'] as const).map((t) => (
-                    <Pressable
-                      key={t}
-                      onPress={() => setTab(t)}
-                      style={[styles.tab, tab === t && { borderBottomColor: theme.text }]}
-                    >
-                      <ThemedText
-                        type="smallBold"
-                        themeColor={tab === t ? 'text' : 'textSecondary'}
-                      >
-                        {t.charAt(0).toUpperCase() + t.slice(1)}
-                      </ThemedText>
-                    </Pressable>
-                  ))}
-                </View>
-              </View>
-            }
+            ListHeaderComponent={header}
             contentContainerStyle={[styles.listContent, { paddingBottom: BottomTabInset + Spacing.four }]}
             ListEmptyComponent={
               !boardsQuery.isLoading ? (
@@ -250,117 +294,24 @@ export default function UserProfileScreen() {
                 </ThemedText>
               ) : null
             }
-            style={tab !== 'boards' ? { display: 'none' } : undefined}
           />
-          {tab !== 'boards' && (
-            <FlashList
-              data={
-                tab === 'followers'
-                  ? (followersQuery.data?.items ?? [])
-                  : (followingQuery.data?.items ?? [])
-              }
-              keyExtractor={(item) => item.id}
-              renderItem={({ item }) => (
-                <UserRow
-                  user={item}
-                  onPress={() => router.push(`/user/${item.id}`)}
-                />
-              )}
-              numColumns={1}
-              ListHeaderComponent={
-                <View style={styles.profileHeader}>
-                  <View style={styles.avatarRow}>
-                    <View style={[styles.avatar, { backgroundColor: theme.backgroundElement }]}>
-                      {profile.avatarUrl ? (
-                        <Image source={{ uri: profile.avatarUrl }} style={StyleSheet.absoluteFill} contentFit="cover" />
-                      ) : (
-                        <ThemedText type="subtitle" themeColor="textSecondary">
-                          {profile.name.slice(0, 2).toUpperCase()}
-                        </ThemedText>
-                      )}
-                    </View>
-                    <View style={styles.nameCol}>
-                      <ThemedText type="subtitle">{profile.name}</ThemedText>
-                      {profile.bio ? (
-                        <ThemedText type="small" themeColor="textSecondary" style={styles.bio}>
-                          {profile.bio}
-                        </ThemedText>
-                      ) : null}
-                    </View>
-                  </View>
-
-                  <View style={styles.statsRow}>
-                    {[
-                      { label: 'boards', value: profile.publicBoardCount },
-                      { label: 'followers', value: profile.followerCount },
-                      { label: 'following', value: profile.followingCount },
-                    ].map((s) => (
-                      <View key={s.label} style={styles.stat}>
-                        <ThemedText type="smallBold">{s.value}</ThemedText>
-                        <ThemedText type="small" themeColor="textSecondary">{s.label}</ThemedText>
-                      </View>
-                    ))}
-                  </View>
-
-                  {!profile.isMe ? (
-                    <View style={styles.actionsRow}>
-                      <Pressable
-                        onPress={handleFollow}
-                        style={[
-                          styles.followBtn,
-                          {
-                            backgroundColor: profile.isFollowing ? theme.backgroundElement : theme.text,
-                            borderColor: theme.backgroundSelected,
-                          },
-                        ]}
-                      >
-                        <ThemedText
-                          type="smallBold"
-                          style={{ color: profile.isFollowing ? theme.text : theme.background }}
-                        >
-                          {profile.isFollowing ? 'Following' : 'Follow'}
-                        </ThemedText>
-                      </Pressable>
-                      <Pressable
-                        onPress={handleStartChat}
-                        style={[styles.chatBtn, { borderColor: theme.backgroundSelected }]}
-                      >
-                        <ThemedText type="smallBold">Message</ThemedText>
-                      </Pressable>
-                    </View>
-                  ) : null}
-
-                  <View style={[styles.tabRow, { borderColor: theme.backgroundSelected }]}>
-                    {(['boards', 'followers', 'following'] as const).map((t) => (
-                      <Pressable
-                        key={t}
-                        onPress={() => setTab(t)}
-                        style={[styles.tab, tab === t && { borderBottomColor: theme.text }]}
-                      >
-                        <ThemedText
-                          type="smallBold"
-                          themeColor={tab === t ? 'text' : 'textSecondary'}
-                        >
-                          {t.charAt(0).toUpperCase() + t.slice(1)}
-                        </ThemedText>
-                      </Pressable>
-                    ))}
-                  </View>
-                </View>
-              }
-              contentContainerStyle={[styles.listContent, { paddingBottom: BottomTabInset + Spacing.four }]}
-              ListEmptyComponent={
-                !followersQuery.isLoading && !followingQuery.isLoading ? (
-                  <ThemedText themeColor="textSecondary" style={styles.emptyText}>
-                    {tab === 'followers'
-                      ? 'No followers yet.'
-                      : 'Not following anyone yet.'}
-                  </ThemedText>
-                ) : null
-              }
-            />
-          )}
-        </>
+        ) : (
+          <FlashList
+            data={people}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => <UserRow user={item} onPress={() => router.push(`/user/${item.id}`)} />}
+            numColumns={1}
+            ListHeaderComponent={header}
+            contentContainerStyle={[styles.listContent, { paddingBottom: BottomTabInset + Spacing.four }]}
+            ListEmptyComponent={
+              !followersQuery.isLoading && !followingQuery.isLoading ? (
+                <ThemedText themeColor="textSecondary" style={styles.emptyText}>
+                  {tab === 'followers' ? 'No followers yet.' : 'Not following anyone yet.'}
+                </ThemedText>
+              ) : null
+            }
+          />
+        )
       ) : null}
     </SafeAreaView>
   );
@@ -373,80 +324,108 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     maxWidth: MaxContentWidth,
   },
-  header: {
+  topBar: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.three,
-    paddingVertical: Spacing.three,
     paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
   },
-  backButton: {
-    width: Spacing.five,
-    height: Spacing.five,
-    borderRadius: Spacing.five,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerTitle: { flex: 1 },
-  headerSpacer: { width: Spacing.five },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.four },
-  listContent: { paddingHorizontal: Spacing.three, paddingTop: Spacing.one, gap: Spacing.three },
-  profileHeader: { gap: Spacing.three, marginBottom: Spacing.three },
-  avatarRow: { flexDirection: 'row', gap: Spacing.three, alignItems: 'center' },
-  avatar: {
-    width: 64,
-    height: 64,
-    borderRadius: 64,
+  topTitle: { flex: 1, textAlign: 'center' },
+  topSpacer: { width: 44 },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.four, gap: Spacing.two },
+  listContent: { paddingHorizontal: Spacing.three, gap: Spacing.three, paddingTop: 0 },
+  emptyText: { textAlign: 'center', paddingVertical: Spacing.four },
+
+  // Header
+  headerWrap: { marginBottom: Spacing.three },
+  heroBand: {
+    height: 96,
+    borderTopLeftRadius: Radius.xl,
+    borderTopRightRadius: Radius.xl,
+    marginHorizontal: -Spacing.three,
     overflow: 'hidden',
+  },
+  heroSpacer: { flex: 1 },
+  headerContent: { alignItems: 'center', marginTop: -44, gap: Spacing.two },
+  avatarRing: { padding: 4 },
+  ring: {
+    width: 92,
+    height: 92,
+    borderRadius: 46,
+    borderWidth: 3,
+    padding: 3,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: '#fff',
   },
-  nameCol: { flex: 1, gap: Spacing.one },
-  bio: { lineHeight: 18 },
-  statsRow: { flexDirection: 'row', gap: Spacing.four },
-  stat: { alignItems: 'center', gap: 2 },
-  actionsRow: { flexDirection: 'row', gap: Spacing.two },
+  nameBlock: { alignItems: 'center', gap: Spacing.half, marginTop: Spacing.one },
+  name: { fontSize: 22, fontWeight: '800', letterSpacing: -0.4 },
+  bio: { textAlign: 'center', lineHeight: 18, paddingHorizontal: Spacing.four },
+  youBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.one,
+    paddingHorizontal: Spacing.two,
+    paddingVertical: Spacing.half,
+    borderRadius: Radius.full,
+    marginTop: Spacing.one,
+  },
+  statsRow: { flexDirection: 'row', gap: Spacing.two, marginTop: Spacing.two },
+  statCard: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 2,
+    paddingVertical: Spacing.two + Spacing.half,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+  },
+  statValue: { fontSize: 16, fontWeight: '800' },
+  statLabel: { fontSize: 11 },
+  actionsRow: { flexDirection: 'row', gap: Spacing.two, marginTop: Spacing.two, width: '100%' },
   followBtn: {
     flex: 1,
-    borderRadius: Spacing.three,
-    paddingVertical: Spacing.two,
+    flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
+    justifyContent: 'center',
+    gap: Spacing.one,
+    borderRadius: Radius.full,
+    paddingVertical: Spacing.two + Spacing.half,
   },
   chatBtn: {
     flex: 1,
-    borderRadius: Spacing.three,
-    paddingVertical: Spacing.two,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.one,
+    borderRadius: Radius.full,
+    paddingVertical: Spacing.two + Spacing.half,
     borderWidth: 1,
   },
-  tabRow: {
+  pressed: { opacity: 0.8, transform: [{ scale: 0.98 }] },
+  segment: {
     flexDirection: 'row',
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    marginTop: Spacing.two,
+    marginTop: Spacing.three,
+    padding: Spacing.half,
+    borderRadius: Radius.full,
+    gap: Spacing.one,
+    width: '100%',
   },
-  tab: {
+  segmentItem: {
     flex: 1,
-    paddingVertical: Spacing.two,
     alignItems: 'center',
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
+    justifyContent: 'center',
+    paddingVertical: Spacing.two,
+    borderRadius: Radius.full,
   },
-  emptyText: { textAlign: 'center', paddingVertical: Spacing.four },
+
   userRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.two,
-    paddingVertical: Spacing.two,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    padding: Spacing.two + Spacing.half,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
   },
-  userAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 40,
-    overflow: 'hidden',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  userInfo: { flex: 1, gap: 2 },
+  userInfo: { flex: 1 },
 });

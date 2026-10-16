@@ -19,7 +19,7 @@ import {
 import { clearTokens, notifyAuthChanged } from "@/lib/auth";
 import { queryKeys, useMe, useUnreadNotificationCount, useUserSearch } from "@/lib/queries";
 import { useQueryClient } from "@tanstack/react-query";
-import { cn } from "@/lib/utils";
+import { cn, initials } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -190,7 +190,7 @@ export function SiteHeader() {
                               unoptimized
                             />
                           ) : (
-                            user.name.slice(0, 2).toUpperCase()
+                            initials(user.name)
                           )}
                         </span>
                         <span className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-50">
@@ -259,7 +259,7 @@ export function SiteHeader() {
                   <Avatar className="size-9">
                     {me.avatarUrl && <AvatarImage src={me.avatarUrl} alt="" />}
                     <AvatarFallback className="bg-zinc-200 text-xs font-semibold text-zinc-700 dark:bg-zinc-700 dark:text-zinc-200">
-                      {me.name.slice(0, 2).toUpperCase()}
+                      {initials(me.name, me.email)}
                     </AvatarFallback>
                   </Avatar>
                 </button>

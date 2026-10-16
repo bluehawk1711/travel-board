@@ -88,11 +88,23 @@ export function fetchFollowingFeed(
 }
 
 /**
- * Board detail. Works server-side (page) and client-side (live refetch);
- * the API itself caches public board reads for 60s.
+ * Board detail. Works in three contexts:
+ * - RSC pages pass `cookieHeader` (from `next/headers` cookies) so the API can
+ *   authorize private boards via its httpOnly `tb_access_token` fallback;
+ * - client code attaches the in-memory Bearer token (authFetch);
+ * - anonymous client reads just get the public payload or a 404.
+ * The API itself caches public board reads for 60s.
  */
-export async function fetchBoard(id: string): Promise<BoardDetail> {
-  const response = await fetch(new URL(`/boards/${id}`, API_URL));
+export async function fetchBoard(
+  id: string,
+  cookieHeader?: string,
+): Promise<BoardDetail> {
+  if (typeof window !== 'undefined') {
+    return authFetch<BoardDetail>(`/boards/${id}`);
+  }
+  const response = await fetch(new URL(`/boards/${id}`, API_URL), {
+    headers: cookieHeader ? { Cookie: cookieHeader } : undefined,
+  });
   return parseResponse<BoardDetail>(response);
 }
 
@@ -354,6 +366,15 @@ export function removeBoardMember(
 
 export function deleteBoard(boardId: string): Promise<{ deleted: boolean }> {
   return authFetch(`/boards/${boardId}`, { method: 'DELETE' });
+}
+
+/**
+ * Duplicate a public board into the caller's own boards (POST /boards/:id/copy).
+ * The copy starts private so the owner can edit before sharing; returns the
+ * full new board so callers can navigate straight to it.
+ */
+export function copyBoard(boardId: string): Promise<BoardDetail> {
+  return authFetch(`/boards/${boardId}/copy`, { method: 'POST' });
 }
 
 // ── Password reset ────────────────────────────────────

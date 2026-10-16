@@ -12,21 +12,19 @@ The suite registers a throwaway account, walks every route, then deletes what it
 
 ## Latest run
 
-Verified twice on 2026-10-14 against a live server: once via `http://localhost:4100` and once through the ngrok tunnel (`71/71` each). The tunnel URL is what the mobile dev build uses as `EXPO_PUBLIC_API_URL`.
-
 | | |
 |---|---|
-| Base URL | `https://countdown-rocket-hatred.ngrok-free.dev` |
-| Ran at | 2026-10-14T09:13:59.144Z |
+| Base URL | `http://localhost:4100` |
+| Ran at | 2026-10-14T10:43:13.832Z |
 | Node | v24.21.0 |
-| **Result** | **71/71 passed** |
+| **Result** | **75/75 passed** |
 
 | Group | Checks | Passed |
 |---|---|---|
 | Health | 1 | 1 |
-| Auth | 10 | 10 |
+| Auth | 11 | 11 |
 | Users | 6 | 6 |
-| Boards | 23 | 23 |
+| Boards | 26 | 26 |
 | Comments | 4 | 4 |
 | Chat | 8 | 8 |
 | Discovery | 4 | 4 |
@@ -57,6 +55,7 @@ Verified twice on 2026-10-14 against a live server: once via `http://localhost:4
 | PASS | GET | `/auth/me` | 200 | Returns the current user |
 | PASS | POST | `/auth/refresh` | 201 | Rotates the refresh token |
 | PASS | POST | `/auth/forgot-password` | 201 | Accepts a password reset request |
+| PASS | POST | `/auth/register` | 201 | Registers a second account for the copy test |
 | PASS | POST | `/auth/logout` | 201 | Logs out and revokes the refresh token |
 
 ### Users
@@ -78,44 +77,47 @@ Verified twice on 2026-10-14 against a live server: once via `http://localhost:4
 | PASS | POST | `/boards` | 400 | Rejects a board with no title |
 | PASS | GET | `/boards/mine` | 200 | Lists my boards (bare array) |
 | PASS | GET | `/boards/saved` | 200 | Lists saved boards (bare array) |
-| PASS | GET | `/boards/03a14506-0868-43e5-95c1-cc6a87ded156` | 200 | Reads one board |
-| PASS | PATCH | `/boards/03a14506-0868-43e5-95c1-cc6a87ded156` | 200 | Updates the board |
-| PASS | POST | `/boards/03a14506-0868-43e5-95c1-cc6a87ded156/sections` | 201 | Adds a section |
-| PASS | PATCH | `/boards/sections/92061b87-ec81-4d0d-b196-03119814b3eb` | 200 | Renames the section |
-| PASS | POST | `/boards/03a14506-0868-43e5-95c1-cc6a87ded156/items` | 201 | Adds a place item to the section |
-| PASS | POST | `/boards/03a14506-0868-43e5-95c1-cc6a87ded156/items` | 400 | Rejects an item without sectionId |
-| PASS | PATCH | `/boards/items/e6ee8d8f-6c13-4916-9d42-5cfee8352c59` | 200 | Updates the item |
-| PASS | PATCH | `/boards/03a14506-0868-43e5-95c1-cc6a87ded156/items/reorder` | 200 | Reorders items within a section |
-| PASS | DELETE | `/boards/items/e6ee8d8f-6c13-4916-9d42-5cfee8352c59` | 200 | Deletes the item |
-| PASS | PATCH | `/boards/03a14506-0868-43e5-95c1-cc6a87ded156/sections/reorder` | 200 | Reorders sections |
-| PASS | GET | `/boards/03a14506-0868-43e5-95c1-cc6a87ded156/members` | 200 | Lists members |
-| PASS | POST | `/boards/03a14506-0868-43e5-95c1-cc6a87ded156/members` | 201 | Adds a collaborator by email |
-| PASS | PATCH | `/boards/03a14506-0868-43e5-95c1-cc6a87ded156/members/11111111-1111-4111-8111-111111111111` | 200 | Changes the collaborator role |
-| PASS | DELETE | `/boards/03a14506-0868-43e5-95c1-cc6a87ded156/members/11111111-1111-4111-8111-111111111111` | 200 | Removes the collaborator |
-| PASS | POST | `/boards/03a14506-0868-43e5-95c1-cc6a87ded156/like` | 201 | Likes the board |
-| PASS | POST | `/boards/03a14506-0868-43e5-95c1-cc6a87ded156/like` | 201 | Un-likes the board |
-| PASS | POST | `/boards/03a14506-0868-43e5-95c1-cc6a87ded156/save` | 201 | Saves the board |
-| PASS | POST | `/boards/03a14506-0868-43e5-95c1-cc6a87ded156/save` | 201 | Un-saves the board |
-| PASS | DELETE | `/boards/03a14506-0868-43e5-95c1-cc6a87ded156` | 200 | Deletes the board |
+| PASS | GET | `/boards/1febfb4f-583a-4860-a3f9-4362679f62af` | 200 | Reads one board |
+| PASS | PATCH | `/boards/1febfb4f-583a-4860-a3f9-4362679f62af` | 200 | Updates the board |
+| PASS | POST | `/boards/1febfb4f-583a-4860-a3f9-4362679f62af/sections` | 201 | Adds a section |
+| PASS | PATCH | `/boards/sections/209ddfbd-947a-4c4e-8e3d-53bdf469c9f8` | 200 | Renames the section |
+| PASS | POST | `/boards/1febfb4f-583a-4860-a3f9-4362679f62af/items` | 201 | Adds a place item to the section |
+| PASS | POST | `/boards/1febfb4f-583a-4860-a3f9-4362679f62af/items` | 400 | Rejects an item without sectionId |
+| PASS | PATCH | `/boards/items/d74f5325-a3ac-41fd-8e34-4ea7816e74bc` | 200 | Updates the item |
+| PASS | PATCH | `/boards/1febfb4f-583a-4860-a3f9-4362679f62af/items/reorder` | 200 | Reorders items within a section |
+| PASS | DELETE | `/boards/items/d74f5325-a3ac-41fd-8e34-4ea7816e74bc` | 200 | Deletes the item |
+| PASS | PATCH | `/boards/1febfb4f-583a-4860-a3f9-4362679f62af/sections/reorder` | 200 | Reorders sections |
+| PASS | GET | `/boards/1febfb4f-583a-4860-a3f9-4362679f62af/members` | 200 | Lists members |
+| PASS | POST | `/boards/1febfb4f-583a-4860-a3f9-4362679f62af/members` | 201 | Adds a collaborator by email |
+| PASS | PATCH | `/boards/1febfb4f-583a-4860-a3f9-4362679f62af/members/11111111-1111-4111-8111-111111111111` | 200 | Changes the collaborator role |
+| PASS | DELETE | `/boards/1febfb4f-583a-4860-a3f9-4362679f62af/members/11111111-1111-4111-8111-111111111111` | 200 | Removes the collaborator |
+| PASS | POST | `/boards/1febfb4f-583a-4860-a3f9-4362679f62af/like` | 201 | Likes the board |
+| PASS | POST | `/boards/1febfb4f-583a-4860-a3f9-4362679f62af/like` | 201 | Un-likes the board |
+| PASS | POST | `/boards/1febfb4f-583a-4860-a3f9-4362679f62af/save` | 201 | Saves the board |
+| PASS | POST | `/boards/1febfb4f-583a-4860-a3f9-4362679f62af/save` | 201 | Un-saves the board |
+| PASS | POST | `/boards/1febfb4f-583a-4860-a3f9-4362679f62af/copy` | 201 | Copies a public board into my boards (starts private) |
+| PASS | PATCH | `/boards/6578fddb-23ae-4dec-939c-8892503dc360` | 200 | Edits the copied board (owner can modify their copy) |
+| PASS | DELETE | `/boards/6578fddb-23ae-4dec-939c-8892503dc360` | 200 | Deletes the copied board (cleanup) |
+| PASS | DELETE | `/boards/1febfb4f-583a-4860-a3f9-4362679f62af` | 200 | Deletes the board |
 
 ### Comments
 
 | Result | Method | Path | Status | Checks |
 |---|---|---|---|---|
-| PASS | POST | `/boards/03a14506-0868-43e5-95c1-cc6a87ded156/comments` | 201 | Adds a comment |
-| PASS | GET | `/boards/03a14506-0868-43e5-95c1-cc6a87ded156/comments` | 200 | Lists comments on a board |
-| PASS | POST | `/boards/03a14506-0868-43e5-95c1-cc6a87ded156/comments` | 400 | Rejects an empty comment |
-| PASS | DELETE | `/boards/03a14506-0868-43e5-95c1-cc6a87ded156/comments/2bee8e68-27f7-41f5-9cab-91d485436149` | 200 | Deletes the comment |
+| PASS | POST | `/boards/1febfb4f-583a-4860-a3f9-4362679f62af/comments` | 201 | Adds a comment |
+| PASS | GET | `/boards/1febfb4f-583a-4860-a3f9-4362679f62af/comments` | 200 | Lists comments on a board |
+| PASS | POST | `/boards/1febfb4f-583a-4860-a3f9-4362679f62af/comments` | 400 | Rejects an empty comment |
+| PASS | DELETE | `/boards/1febfb4f-583a-4860-a3f9-4362679f62af/comments/f324ae98-73c4-4b2a-b892-0a670cfc9f18` | 200 | Deletes the comment |
 
 ### Chat
 
 | Result | Method | Path | Status | Checks |
 |---|---|---|---|---|
-| PASS | GET | `/chat/boards/03a14506-0868-43e5-95c1-cc6a87ded156` | 200 | Opens (or creates) the board chat room |
-| PASS | GET | `/chat/conversations/4f903c79-46bb-42a5-a050-69694de03d57` | 200 | Reads the conversation detail |
-| PASS | GET | `/chat/conversations/4f903c79-46bb-42a5-a050-69694de03d57/messages` | 200 | Lists messages (first cursor page) |
-| PASS | POST | `/chat/conversations/4f903c79-46bb-42a5-a050-69694de03d57/messages` | 201 | Sends a message |
-| PASS | POST | `/chat/conversations/4f903c79-46bb-42a5-a050-69694de03d57/read` | 201 | Marks the room read |
+| PASS | GET | `/chat/boards/1febfb4f-583a-4860-a3f9-4362679f62af` | 200 | Opens (or creates) the board chat room |
+| PASS | GET | `/chat/conversations/c099d116-147b-4eea-8902-38f74f8ffd3c` | 200 | Reads the conversation detail |
+| PASS | GET | `/chat/conversations/c099d116-147b-4eea-8902-38f74f8ffd3c/messages` | 200 | Lists messages (first cursor page) |
+| PASS | POST | `/chat/conversations/c099d116-147b-4eea-8902-38f74f8ffd3c/messages` | 201 | Sends a message |
+| PASS | POST | `/chat/conversations/c099d116-147b-4eea-8902-38f74f8ffd3c/read` | 201 | Marks the room read |
 | PASS | GET | `/chat/presence` | 200 | Reads the presence map |
 | PASS | GET | `/chat/conversations` | 200 | Lists conversations |
 | PASS | POST | `/chat/conversations` | 201 | Creates a direct conversation |
@@ -137,9 +139,9 @@ Verified twice on 2026-10-14 against a live server: once via `http://localhost:4
 | PASS | GET | `/users/11111111-1111-4111-8111-111111111111/followers` | 200 | Lists the followers of a user |
 | PASS | GET | `/users/11111111-1111-4111-8111-111111111111/following` | 200 | Lists who a user follows |
 | PASS | DELETE | `/users/11111111-1111-4111-8111-111111111111/follow` | 200 | Unfollows the user |
-| PASS | POST | `/boards/03a14506-0868-43e5-95c1-cc6a87ded156/follow` | 201 | Follows a board |
-| PASS | GET | `/boards/03a14506-0868-43e5-95c1-cc6a87ded156/followers` | 200 | Lists the followers of a board |
-| PASS | DELETE | `/boards/03a14506-0868-43e5-95c1-cc6a87ded156/follow` | 200 | Unfollows the board |
+| PASS | POST | `/boards/1febfb4f-583a-4860-a3f9-4362679f62af/follow` | 201 | Follows a board |
+| PASS | GET | `/boards/1febfb4f-583a-4860-a3f9-4362679f62af/followers` | 200 | Lists the followers of a board |
+| PASS | DELETE | `/boards/1febfb4f-583a-4860-a3f9-4362679f62af/follow` | 200 | Unfollows the board |
 
 ### Notifications
 
@@ -160,7 +162,7 @@ Verified twice on 2026-10-14 against a live server: once via `http://localhost:4
 | Result | Method | Path | Status | Checks |
 |---|---|---|---|---|
 | PASS | POST | `/uploads/image` | 201 | Multipart image upload returns { url } |
-| PASS | GET | `/uploads/1a5462eb-fedd-485a-8d88-8cfd0dbf2f66.png` | 200 | Uploaded file is served from /uploads |
+| PASS | GET | `/uploads/e871e453-8fd9-4c74-9374-6ccbdbb476e8.png` | 200 | Uploaded file is served from /uploads |
 | PASS | POST | `/uploads/image` | 400 | Rejects a non-image mime type |
 
 ### Places

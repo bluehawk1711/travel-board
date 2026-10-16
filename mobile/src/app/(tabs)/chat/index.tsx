@@ -22,7 +22,7 @@ export default function ChatListScreen() {
   const meQuery = useQuery({ queryKey: ['me'], queryFn: api.me });
   const myId = meQuery.data?.user.id;
 
-  const conversations = query.data ?? [];
+  const conversations = useMemo(() => query.data ?? [], [query.data]);
 
   // Fetch presence for every distinct "other" participant in one request.
   const otherUserIds = useMemo(() => {

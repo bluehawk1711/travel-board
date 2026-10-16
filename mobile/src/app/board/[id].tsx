@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -6,23 +7,28 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
-  KeyboardAvoidingView,
+  Linking,
   Modal,
   Platform,
   Pressable,
   ScrollView,
+  Share,
   StyleSheet,
   TextInput,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { Socket } from 'socket.io-client';
+import { UI_MESSAGES } from '@travel-board/shared';
 
+import { Avatar } from '@/components/avatar';
 import { BoardComments } from '@/components/board-comments';
 import { ItemFormModal } from '@/components/item-form-modal';
+import { Dissolve, Reveal } from '@/components/premium/motion';
+import { FloatingActionMenu, type FloatingAction } from '@/components/premium/floating-menu';
+import { GlassButton } from '@/components/premium/glass';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { MaxContentWidth, Spacing } from '@/constants/theme';
+import { MaxContentWidth, Radius, Shadows, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { api, ApiError } from '@/lib/api';
 import {
@@ -30,13 +36,72 @@ import {
   type BoardChangeEvent,
   type BoardDetail,
   type BoardItem,
+  type BoardItemType,
   type BoardPresenceEvent,
 } from '@/lib/board-types';
 import { getBoardSocket } from '@/lib/socket';
 
-// ── Item card ──────────────────────────────────────────────────────────────
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-function ItemCard({
+const TYPE_META: Record<BoardItemType, { icon: keyof typeof Ionicons.glyphMap; label: string }> = {
+  PLACE: { icon: 'location-outline', label: 'Place' },
+  RESTAURANT: { icon: 'restaurant-outline', label: 'Dining' },
+  HOTEL: { icon: 'bed-outline', label: 'Stay' },
+  ACTIVITY: { icon: 'sparkles-outline', label: 'Activity' },
+  NOTE: { icon: 'document-text-outline', label: 'Note' },
+  LINK: { icon: 'link-outline', label: 'Link' },
+  IMAGE: { icon: 'image-outline', label: 'Photo' },
+};
+
+function formatTime(iso: string | null): string | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  const h = d.getHours();
+  const m = d.getMinutes();
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const hour12 = h % 12 === 0 ? 12 : h % 12;
+  return `${hour12}:${String(m).padStart(2, '0')} ${ampm}`;
+}
+
+function dayLabel(index: number): string {
+  return `DAY ${String(index + 1).padStart(2, '0')}`;
+}
+
+/** "8 Days · Oct 5–12" from the board's start/end dates. */
+function formatRange(startISO: string | null, endISO: string | null): string | null {
+  if (!startISO || !endISO) return null;
+  const start = new Date(startISO);
+  const end = new Date(endISO);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return null;
+  const days = Math.round((end.getTime() - start.getTime()) / 86_400_000) + 1;
+  if (days <= 0) return null;
+  const sameMonth = start.getMonth() === end.getMonth();
+  const range = sameMonth
+    ? `${MONTHS[start.getMonth()]} ${start.getDate()}–${end.getDate()}`
+    : `${MONTHS[start.getMonth()]} ${start.getDate()} – ${MONTHS[end.getMonth()]} ${end.getDate()}`;
+  return `${days} Days · ${range}`;
+}
+
+function sectionDate(startDateISO: string | null, index: number): string | null {
+  if (!startDateISO) return null;
+  const start = new Date(startDateISO);
+  if (Number.isNaN(start.getTime())) return null;
+  const d = new Date(start.getTime() + index * 86_400_000);
+  return `${WEEKDAYS[d.getDay()]}, ${MONTHS[d.getMonth()]} ${d.getDate()}`;
+}
+
+function mapsUrl(lat: number, lng: number): string {
+  return Platform.select({
+    ios: `http://maps.apple.com/?daddr=${lat},${lng}`,
+    default: `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`,
+  }) as string;
+}
+
+// ── Timeline item ─────────────────────────────────────────────────────────
+
+function TimelineItem({
   item,
   boardId,
   sectionId,
@@ -60,8 +125,10 @@ function ItemCard({
   const theme = useTheme();
   const [deleting, setDeleting] = useState(false);
   const [moving, setMoving] = useState(false);
+  const meta = TYPE_META[item.type] ?? TYPE_META.PLACE;
+  const time = formatTime(item.date);
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     Alert.alert('Delete item', `Delete "${item.title}"?`, [
       { text: 'Cancel', style: 'cancel' },
       {
@@ -86,82 +153,120 @@ function ItemCard({
     if (moving) return;
     setMoving(true);
     onMove(direction);
-    // Parent refetches optimistically; unlock after the round-trip window.
     setTimeout(() => setMoving(false), 400);
   };
 
   return (
-    <ThemedView
-      type="backgroundElement"
-      style={[styles.itemCard, { borderColor: theme.backgroundSelected }]}
-    >
-      {item.imageUrl ? (
-        <Image
-          source={{ uri: item.imageUrl }}
-          style={[styles.itemImage, { backgroundColor: theme.backgroundSelected }]}
-          contentFit="cover"
-          transition={150}
-        />
-      ) : null}
-      <ThemedText type="smallBold">{item.title}</ThemedText>
-      {item.description ? (
-        <ThemedText
-          type="small"
-          themeColor="textSecondary"
-          style={styles.itemDescription}
-        >
-          {item.description}
+    <View style={styles.timelineRow}>
+      {/* Time rail */}
+      <View style={styles.timeCol}>
+        <ThemedText type="smallBold" themeColor="textSecondary" style={styles.timeText}>
+          {time ?? '—'}
         </ThemedText>
-      ) : null}
-      {item.url ? (
-        <ThemedText type="link" numberOfLines={1}>
-          {item.url.replace(/^https?:\/\//, '').slice(0, 40)}
-        </ThemedText>
-      ) : null}
-      {canEdit ? (
-        <View style={styles.itemActions}>
-          <Pressable onPress={() => onEdit(item)}>
-            <ThemedText type="small" themeColor="textSecondary">
-              Edit
+        <View style={[styles.dot, { backgroundColor: theme.primary, borderColor: theme.background }]} />
+        {!isLast ? <View style={[styles.line, { backgroundColor: theme.borderSubtle }]} /> : null}
+      </View>
+
+      {/* Card */}
+      <Reveal style={styles.itemCardWrap} delay={60}>
+        <View style={[styles.itemCard, { backgroundColor: theme.surfaceCard, borderColor: theme.borderSubtle }]}>
+          {/* Type chip */}
+          <View style={[styles.typeChip, { backgroundColor: theme.backgroundElement }]}>
+            <Ionicons name={meta.icon} size={12} color={theme.primary} />
+            <ThemedText type="smallBold" style={{ color: theme.primary, fontSize: 11 }}>
+              {meta.label}
             </ThemedText>
-          </Pressable>
-          <Pressable onPress={() => handleMove(-1)} disabled={isFirst || moving}>
-            <ThemedText
-              type="small"
-              themeColor={isFirst ? 'textSecondary' : 'textSecondary'}
-              style={isFirst ? { opacity: 0.4 } : undefined}
-            >
-              ↑
+          </View>
+
+          <ThemedText type="smallBold" style={styles.itemTitle}>
+            {item.title}
+          </ThemedText>
+
+          {item.description ? (
+            <ThemedText type="small" themeColor="textSecondary" style={styles.itemDescription}>
+              {item.description}
             </ThemedText>
-          </Pressable>
-          <Pressable onPress={() => handleMove(1)} disabled={isLast || moving}>
-            <ThemedText
-              type="small"
-              themeColor="textSecondary"
-              style={isLast ? { opacity: 0.4 } : undefined}
-            >
-              ↓
-            </ThemedText>
-          </Pressable>
-          <Pressable onPress={handleDelete} disabled={deleting}>
-            <ThemedText type="small" style={{ color: theme.danger }}>
-              {deleting ? '...' : 'Delete'}
-            </ThemedText>
-          </Pressable>
+          ) : null}
+
+          {item.imageUrl ? (
+            <Image
+              source={{ uri: item.imageUrl }}
+              style={[styles.itemImage, { backgroundColor: theme.backgroundElement }]}
+              contentFit="cover"
+              transition={150}
+            />
+          ) : null}
+
+          {(item.url || (item.lat != null && item.lng != null)) && (
+            <View style={styles.chipRow}>
+              {item.url ? (
+                <Pressable
+                  onPress={() => void Linking.openURL(item.url!)}
+                  style={[styles.chip, { backgroundColor: theme.backgroundElement }]}
+                >
+                  <Ionicons name="open-outline" size={13} color={theme.text} />
+                  <ThemedText type="small" numberOfLines={1} style={styles.chipText}>
+                    Open link
+                  </ThemedText>
+                </Pressable>
+              ) : null}
+              {item.lat != null && item.lng != null ? (
+                <Pressable
+                  onPress={() => void Linking.openURL(mapsUrl(item.lat!, item.lng!))}
+                  style={[styles.chip, { backgroundColor: theme.backgroundElement }]}
+                >
+                  <Ionicons name="navigate-outline" size={13} color={theme.info} />
+                  <ThemedText type="small" style={[styles.chipText, { color: theme.info }]}>
+                    Map
+                  </ThemedText>
+                </Pressable>
+              ) : null}
+            </View>
+          )}
+
+          {canEdit ? (
+            <View style={[styles.itemActions, { borderTopColor: theme.borderSubtle }]}>
+              <Pressable onPress={() => onEdit(item)} hitSlop={6}>
+                <ThemedText type="small" themeColor="textSecondary">Edit</ThemedText>
+              </Pressable>
+              <Pressable onPress={() => handleMove(-1)} disabled={isFirst || moving} hitSlop={6}>
+                <Ionicons
+                  name="chevron-up"
+                  size={16}
+                  color={theme.textSecondary}
+                  style={isFirst ? { opacity: 0.35 } : undefined}
+                />
+              </Pressable>
+              <Pressable onPress={() => handleMove(1)} disabled={isLast || moving} hitSlop={6}>
+                <Ionicons
+                  name="chevron-down"
+                  size={16}
+                  color={theme.textSecondary}
+                  style={isLast ? { opacity: 0.35 } : undefined}
+                />
+              </Pressable>
+              <View style={{ flex: 1 }} />
+              <Pressable onPress={handleDelete} disabled={deleting} hitSlop={6}>
+                <ThemedText type="small" style={{ color: theme.danger }}>
+                  {deleting ? '…' : 'Delete'}
+                </ThemedText>
+              </Pressable>
+            </View>
+          ) : null}
         </View>
-      ) : null}
-    </ThemedView>
+      </Reveal>
+    </View>
   );
 }
 
-// ── Add section modal ──────────────────────────────────────────────────────
+// ── Add / rename section modal ────────────────────────────────────────────
 
 function AddSectionModal({
   visible,
   onClose,
   onAdd,
   initialTitle = '',
-  heading = 'New section',
+  heading = 'New day',
 }: {
   visible: boolean;
   onClose: () => void;
@@ -183,21 +288,14 @@ function AddSectionModal({
   return (
     <Modal visible={visible} transparent animationType="fade">
       <Pressable style={styles.modalOverlay} onPress={onClose}>
-        <Pressable
-          style={[styles.modalCard, { backgroundColor: theme.background }]}
-          onPress={(e) => e.stopPropagation()}
-        >
+        <Pressable style={[styles.modalCard, { backgroundColor: theme.background }]} onPress={(e) => e.stopPropagation()}>
           <ThemedText type="subtitle" style={styles.modalTitle}>
             {heading}
           </ThemedText>
           <TextInput
             style={[
               styles.input,
-              {
-                backgroundColor: theme.backgroundElement,
-                borderColor: theme.backgroundSelected,
-                color: theme.text,
-              },
+              { backgroundColor: theme.backgroundElement, borderColor: theme.borderSubtle, color: theme.text },
             ]}
             placeholder="Section title"
             placeholderTextColor={theme.textSecondary}
@@ -207,17 +305,10 @@ function AddSectionModal({
           />
           <View style={styles.modalActions}>
             <Pressable onPress={onClose} style={styles.modalCancelBtn}>
-              <ThemedText type="small" themeColor="textSecondary">
-                Cancel
-              </ThemedText>
+              <ThemedText type="small" themeColor="textSecondary">Cancel</ThemedText>
             </Pressable>
-            <Pressable
-              onPress={handleAdd}
-              style={[styles.modalPrimaryBtn, { backgroundColor: theme.text }]}
-            >
-              <ThemedText type="smallBold" style={{ color: theme.background }}>
-                Add
-              </ThemedText>
+            <Pressable onPress={handleAdd} style={[styles.modalPrimaryBtn, { backgroundColor: theme.primary }]}>
+              <ThemedText type="smallBold" style={{ color: theme.onPrimary }}>Add</ThemedText>
             </Pressable>
           </View>
         </Pressable>
@@ -226,7 +317,7 @@ function AddSectionModal({
   );
 }
 
-// ── Members modal ──────────────────────────────────────────────────────────
+// ── Members modal ─────────────────────────────────────────────────────────
 
 function MembersModal({
   visible,
@@ -241,7 +332,6 @@ function MembersModal({
   const queryClient = useQueryClient();
   const [email, setEmail] = useState('');
 
-  // Members load through React Query while the sheet is open.
   const membersQuery = useQuery({
     queryKey: ['board', boardId, 'members'],
     queryFn: () => api.getBoardMembers(boardId),
@@ -253,7 +343,6 @@ function MembersModal({
   const invalidateMembers = () =>
     queryClient.invalidateQueries({ queryKey: ['board', boardId, 'members'] });
 
-  // Member writes are mutations so the list invalidates in one place.
   const addMutation = useMutation({
     mutationFn: (value: string) => api.addBoardMember(boardId, value),
     onSuccess: async () => {
@@ -279,36 +368,20 @@ function MembersModal({
     addMutation.mutate(email.trim().toLowerCase());
   };
 
-  const handleRemove = (userId: string) => {
-    removeMutation.mutate(userId);
-  };
-
-  const handleRoleChange = (userId: string, role: 'EDITOR' | 'VIEWER') => {
-    roleMutation.mutate({ userId, role });
-  };
-
   return (
     <Modal visible={visible} transparent animationType="fade">
       <Pressable style={styles.modalOverlay} onPress={onClose}>
-        <Pressable
-          style={[styles.modalCard, { backgroundColor: theme.background }]}
-          onPress={(e) => e.stopPropagation()}
-        >
+        <Pressable style={[styles.modalCard, { backgroundColor: theme.background }]} onPress={(e) => e.stopPropagation()}>
           <ThemedText type="subtitle" style={styles.modalTitle}>
             Members
           </ThemedText>
 
-          {/* Add by email */}
           <View style={styles.addMemberRow}>
             <TextInput
               style={[
                 styles.input,
                 styles.addMemberInput,
-                {
-                  backgroundColor: theme.backgroundElement,
-                  borderColor: theme.backgroundSelected,
-                  color: theme.text,
-                },
+                { backgroundColor: theme.backgroundElement, borderColor: theme.borderSubtle, color: theme.text },
               ]}
               placeholder="Add by email"
               placeholderTextColor={theme.textSecondary}
@@ -320,10 +393,10 @@ function MembersModal({
             <Pressable
               onPress={handleAdd}
               disabled={adding || !email.trim()}
-              style={[styles.addMemberBtn, { backgroundColor: theme.text }]}
+              style={[styles.addMemberBtn, { backgroundColor: theme.primary }]}
             >
-              <ThemedText type="smallBold" style={{ color: theme.background }}>
-                {adding ? '...' : 'Add'}
+              <ThemedText type="smallBold" style={{ color: theme.onPrimary }}>
+                {adding ? '…' : 'Add'}
               </ThemedText>
             </Pressable>
           </View>
@@ -335,32 +408,22 @@ function MembersModal({
               data={members}
               keyExtractor={(m) => m.userId}
               renderItem={({ item: m }) => (
-                <View style={[styles.memberRow, { borderColor: theme.backgroundSelected }]}>
+                <View style={[styles.memberRow, { borderColor: theme.borderSubtle }]}>
+                  <Avatar uri={m.user.avatarUrl} name={m.user.name} size={36} />
                   <View style={styles.memberInfo}>
                     <ThemedText type="smallBold">{m.user.name}</ThemedText>
-                    <ThemedText type="small" themeColor="textSecondary">
-                      {m.role}
-                    </ThemedText>
+                    <ThemedText type="small" themeColor="textSecondary">{m.role}</ThemedText>
                   </View>
                   <View style={styles.memberActions}>
                     {m.role !== 'OWNER' ? (
                       <>
-                        <Pressable
-                          onPress={() =>
-                            handleRoleChange(
-                              m.userId,
-                              m.role === 'EDITOR' ? 'VIEWER' : 'EDITOR',
-                            )
-                          }
-                        >
+                        <Pressable onPress={() => roleMutation.mutate({ userId: m.userId, role: m.role === 'EDITOR' ? 'VIEWER' : 'EDITOR' })}>
                           <ThemedText type="small" themeColor="textSecondary">
                             {m.role === 'EDITOR' ? 'Demote' : 'Promote'}
                           </ThemedText>
                         </Pressable>
-                        <Pressable onPress={() => handleRemove(m.userId)}>
-                          <ThemedText type="small" style={{ color: theme.danger }}>
-                            Remove
-                          </ThemedText>
+                        <Pressable onPress={() => removeMutation.mutate(m.userId)}>
+                          <ThemedText type="small" style={{ color: theme.danger }}>Remove</ThemedText>
                         </Pressable>
                       </>
                     ) : null}
@@ -370,14 +433,54 @@ function MembersModal({
             />
           )}
 
-          <Pressable onPress={onClose} style={[styles.modalPrimaryBtn, { backgroundColor: theme.text, marginTop: Spacing.three }]}>
-            <ThemedText type="smallBold" style={{ color: theme.background }}>
-              Done
-            </ThemedText>
+          <Pressable onPress={onClose} style={[styles.modalPrimaryBtn, { backgroundColor: theme.primary, marginTop: Spacing.three }]}>
+            <ThemedText type="smallBold" style={{ color: theme.onPrimary }}>Done</ThemedText>
           </Pressable>
         </Pressable>
       </Pressable>
     </Modal>
+  );
+}
+
+// ── Segmented tab bar ─────────────────────────────────────────────────────
+
+type TabKey = 'itinerary' | 'places' | 'map';
+
+function SegmentedTabs({
+  value,
+  onChange,
+  counts,
+}: {
+  value: TabKey;
+  onChange: (k: TabKey) => void;
+  counts: { places: number };
+}) {
+  const theme = useTheme();
+  const tabs: { key: TabKey; label: string }[] = [
+    { key: 'itinerary', label: 'Itinerary' },
+    { key: 'places', label: `Places (${counts.places})` },
+    { key: 'map', label: 'Map' },
+  ];
+  return (
+    <View style={[styles.segment, { backgroundColor: theme.backgroundElement }]}>
+      {tabs.map((tab) => {
+        const active = tab.key === value;
+        return (
+          <Pressable
+            key={tab.key}
+            onPress={() => onChange(tab.key)}
+            style={[styles.segmentItem, active && { backgroundColor: theme.surfaceCard, ...Shadows.card }]}
+          >
+            <ThemedText
+              type="smallBold"
+              themeColor={active ? 'text' : 'textSecondary'}
+            >
+              {tab.label}
+            </ThemedText>
+          </Pressable>
+        );
+      })}
+    </View>
   );
 }
 
@@ -400,17 +503,13 @@ export default function BoardDetailScreen() {
   const [editors, setEditors] = useState<string[]>([]);
   const [deleted, setDeleted] = useState(false);
   const [showAddSection, setShowAddSection] = useState(false);
+  const [tab, setTab] = useState<TabKey>('itinerary');
   const [itemModal, setItemModal] = useState<
-    | { mode: 'create'; sectionId: string }
-    | { mode: 'edit'; sectionId: string; item: BoardItem }
-    | null
+    { mode: 'create'; sectionId: string } | { mode: 'edit'; sectionId: string; item: BoardItem } | null
   >(null);
   const [showMembers, setShowMembers] = useState(false);
   const [chatOpening, setChatOpening] = useState(false);
-  const [renameSection, setRenameSection] = useState<{
-    id: string;
-    title: string;
-  } | null>(null);
+  const [renameSection, setRenameSection] = useState<{ id: string; title: string } | null>(null);
 
   const board = live ?? query.data;
   const boardRef = useRef<BoardDetail | null>(null);
@@ -420,22 +519,20 @@ export default function BoardDetailScreen() {
 
   const canEdit = board?.role === 'OWNER' || board?.role === 'EDITOR';
 
-  /** Items with coordinates — the map view is only offered when there are any. */
-  const mappedItems =
-    board?.sections.flatMap((section) =>
-      section.items.filter((item) => item.lat != null && item.lng != null),
-    ) ?? [];
+  // Members feed both the hero avatar stack and the members modal (shared key).
+  const membersQuery = useQuery({
+    queryKey: ['board', id, 'members'],
+    queryFn: () => api.getBoardMembers(id ?? ''),
+    enabled: Boolean(id),
+  });
+  const members = membersQuery.data ?? [];
 
-  // Like/save: the board query is the source of truth; an override holds the
-  // optimistic flip until the mutation settles and the query refetches.
-  const [likeOverride, setLikeOverride] = useState<{
-    liked: boolean;
-    count: number;
-  } | null>(null);
-  const [saveOverride, setSaveOverride] = useState<{
-    saved: boolean;
-    count: number;
-  } | null>(null);
+  const mappedItems =
+    board?.sections.flatMap((section) => section.items.filter((i) => i.lat != null && i.lng != null)) ?? [];
+  const allItems = board?.sections.flatMap((s) => s.items) ?? [];
+
+  const [likeOverride, setLikeOverride] = useState<{ liked: boolean; count: number } | null>(null);
+  const [saveOverride, setSaveOverride] = useState<{ saved: boolean; count: number } | null>(null);
 
   const liked = likeOverride?.liked ?? board?.liked ?? false;
   const likeCount = likeOverride?.count ?? board?.likeCount ?? 0;
@@ -460,24 +557,51 @@ export default function BoardDetailScreen() {
   });
   const savePending = saveMutation.isPending;
 
+  const copyMutation = useMutation({
+    mutationFn: (boardId: string) => api.copyBoard(boardId),
+    onSuccess: (copy) => {
+      void queryClient.invalidateQueries({ queryKey: ['boards'] });
+      router.push(`/board/${copy.id}`);
+    },
+    onError: (err) => {
+      if (err instanceof ApiError && err.status === 401) {
+        router.push('/(auth)/sign-in');
+        return;
+      }
+      Alert.alert(
+        UI_MESSAGES.BOARDS.COPY_FAILED,
+        err instanceof ApiError ? err.message : UI_MESSAGES.COMMON.GENERIC_ERROR,
+      );
+    },
+  });
+  const copyPending = copyMutation.isPending;
+
+  const handleCopy = () => {
+    if (!board || copyPending) return;
+    copyMutation.mutate(board.id);
+  };
+
   const handleLike = () => {
     if (!board || likePending) return;
     const next = !liked;
-    setLikeOverride({
-      liked: next,
-      count: Math.max(0, likeCount + (next ? 1 : -1)),
-    });
+    setLikeOverride({ liked: next, count: Math.max(0, likeCount + (next ? 1 : -1)) });
     likeMutation.mutate(board.id);
   };
 
   const handleSave = () => {
     if (!board || savePending) return;
     const next = !saved;
-    setSaveOverride({
-      saved: next,
-      count: Math.max(0, saveCount + (next ? 1 : -1)),
-    });
+    setSaveOverride({ saved: next, count: Math.max(0, saveCount + (next ? 1 : -1)) });
     saveMutation.mutate(board.id);
+  };
+
+  const handleShare = async () => {
+    if (!board) return;
+    try {
+      await Share.share({ message: `${board.title} — Travel Board` });
+    } catch {
+      // silent
+    }
   };
 
   const handleDeleteBoard = () => {
@@ -513,11 +637,10 @@ export default function BoardDetailScreen() {
     if (!board || chatOpening) return;
     setChatOpening(true);
     try {
-      // Get-or-create the per-board collaboration room (members only).
       const conv = await api.getBoardConversation(board.id);
       router.push(`/chat/${conv.id}`);
     } catch {
-      // silent — non-members cannot open the room
+      // silent
     } finally {
       setChatOpening(false);
     }
@@ -526,9 +649,7 @@ export default function BoardDetailScreen() {
   const handleRenameSection = async (title: string) => {
     if (!board || !renameSection || !title.trim()) return;
     try {
-      await api.updateSection(board.id, renameSection.id, {
-        title: title.trim(),
-      });
+      await api.updateSection(board.id, renameSection.id, { title: title.trim() });
       setRenameSection(null);
       query.refetch();
     } catch {
@@ -538,35 +659,30 @@ export default function BoardDetailScreen() {
 
   const handleDeleteSection = (sectionId: string) => {
     if (!board) return;
-    Alert.alert(
-      'Delete section',
-      'Delete this section and all of its items?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await api.deleteSection(board.id, sectionId);
-              query.refetch();
-            } catch {
-              // silent
-            }
-          },
+    Alert.alert('Delete day', 'Delete this day and all of its stops?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await api.deleteSection(board.id, sectionId);
+            query.refetch();
+          } catch {
+            // silent
+          }
         },
-      ],
-    );
+      },
+    ]);
   };
 
-  /** Swap a section with its neighbour and persist the full order. */
   const handleMoveSection = async (sectionId: string, direction: -1 | 1) => {
     if (!board) return;
     const ids = board.sections.map((s) => s.id);
     const index = ids.indexOf(sectionId);
     const target = index + direction;
     if (index < 0 || target < 0 || target >= ids.length) return;
-    [ids[index], ids[target]] = [ids[target], ids[index]];
+    [ids[index], ids[target]] = [ids[target]!, ids[index]!];
     try {
       await api.reorderSections(board.id, ids);
       query.refetch();
@@ -575,12 +691,7 @@ export default function BoardDetailScreen() {
     }
   };
 
-  /** Swap an item with its neighbour inside a section and persist order. */
-  const handleMoveItem = async (
-    sectionId: string,
-    itemId: string,
-    direction: -1 | 1,
-  ) => {
+  const handleMoveItem = async (sectionId: string, itemId: string, direction: -1 | 1) => {
     if (!board) return;
     const section = board.sections.find((s) => s.id === sectionId);
     if (!section) return;
@@ -588,7 +699,7 @@ export default function BoardDetailScreen() {
     const index = ids.indexOf(itemId);
     const target = index + direction;
     if (index < 0 || target < 0 || target >= ids.length) return;
-    [ids[index], ids[target]] = [ids[target], ids[index]];
+    [ids[index], ids[target]] = [ids[target]!, ids[index]!];
     try {
       await api.reorderItems(board.id, sectionId, ids);
       query.refetch();
@@ -597,11 +708,18 @@ export default function BoardDetailScreen() {
     }
   };
 
+  /** Quick-add a stop: into the given (or first) section, creating a day if none. */
+  const handleQuickAddItem = () => {
+    if (!board) return;
+    if (board.sections.length === 0) {
+      setShowAddSection(true);
+      return;
+    }
+    setItemModal({ mode: 'create', sectionId: board.sections[0]!.id });
+  };
+
   // Realtime
-  const liveRef = useRef<{
-    socket: Socket;
-    handlers: { event: string; remove: () => void }[];
-  } | null>(null);
+  const liveRef = useRef<{ socket: Socket; handlers: { event: string; remove: () => void }[] } | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -610,13 +728,9 @@ export default function BoardDetailScreen() {
     getBoardSocket()
       .then((socket) => {
         if (cancelled) return;
-        socket.emit(
-          'board:join',
-          { boardId: id },
-          (res: { ok: boolean }) => {
-            if (!cancelled && res?.ok) setJoined(true);
-          },
-        );
+        socket.emit('board:join', { boardId: id }, (res: { ok: boolean }) => {
+          if (!cancelled && res?.ok) setJoined(true);
+        });
 
         const onChange = (event: BoardChangeEvent) => {
           if (event.type === 'board:removed') {
@@ -659,416 +773,356 @@ export default function BoardDetailScreen() {
   }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const notFound = query.error instanceof ApiError && query.error.status === 404;
+  const dateRange = board ? formatRange(board.startDate, board.endDate) : null;
+
+  // Floating menu actions by permission.
+  const floatActions: FloatingAction[] = !board
+    ? []
+    : canEdit
+      ? [
+          { key: 'add', icon: 'add' as const, label: 'Add stop', onPress: handleQuickAddItem },
+          { key: 'day', icon: 'sunny-outline' as const, label: 'Add day', onPress: () => setShowAddSection(true) },
+          { key: 'members', icon: 'people-outline' as const, label: 'Members', onPress: () => setShowMembers(true) },
+          { key: 'chat', icon: 'chatbubble-outline' as const, label: 'Board chat', onPress: () => void handleOpenChat() },
+          { key: 'edit', icon: 'create-outline' as const, label: 'Edit board', onPress: () => router.push({ pathname: '/board/edit', params: { id: board.id } }) },
+          { key: 'delete', icon: 'trash-outline' as const, label: 'Delete board', onPress: handleDeleteBoard, danger: true },
+        ]
+      : board.role
+        ? [
+            { key: 'chat', icon: 'chatbubble-outline' as const, label: 'Board chat', onPress: () => void handleOpenChat() },
+            { key: 'members', icon: 'people-outline' as const, label: 'Members', onPress: () => setShowMembers(true) },
+            { key: 'save', icon: saved ? 'bookmark' : 'bookmark-outline' as const, label: saved ? 'Unsave' : 'Save', onPress: handleSave },
+          ]
+        : [
+            { key: 'copy', icon: 'copy-outline' as const, label: copyPending ? '…' : 'Copy board', onPress: handleCopy },
+            { key: 'save', icon: saved ? 'bookmark' : 'bookmark-outline' as const, label: saved ? 'Unsave' : 'Save', onPress: handleSave },
+            { key: 'share', icon: 'share-outline' as const, label: 'Share', onPress: () => void handleShare() },
+          ];
 
   return (
-    <SafeAreaView
-      style={[styles.safeArea, { backgroundColor: theme.background }]}
-      edges={['top', 'left', 'right']}
-    >
-      {query.isLoading && !board ? (
-        <View style={styles.center}>
-          <ActivityIndicator color={theme.textSecondary} />
-        </View>
-      ) : notFound ? (
-        <View style={styles.center}>
-          <ThemedText type="subtitle">Board not found</ThemedText>
-          <ThemedText themeColor="textSecondary" style={styles.centerText}>
-            It may have been deleted or you don&apos;t have access to it.
-          </ThemedText>
-          <Pressable
-            onPress={() => router.back()}
-            style={[styles.primaryButton, { backgroundColor: theme.text }]}
-          >
-            <ThemedText type="smallBold" style={{ color: theme.background }}>
-              Go back
-            </ThemedText>
-          </Pressable>
-        </View>
-      ) : query.isError ? (
-        <View style={styles.center}>
-          <ThemedText themeColor="textSecondary" style={styles.centerText}>
-            Couldn&apos;t load this board. Check that the API is running.
-          </ThemedText>
-          <Pressable
-            onPress={() => query.refetch()}
-            style={[styles.primaryButton, { backgroundColor: theme.text }]}
-          >
-            <ThemedText type="smallBold" style={{ color: theme.background }}>
-              Retry
-            </ThemedText>
-          </Pressable>
-        </View>
-      ) : board ? (
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          {/* Header */}
-          <View style={styles.header}>
-            <Pressable
-              onPress={() => router.back()}
-              hitSlop={8}
-              style={[styles.backButton, { backgroundColor: theme.backgroundElement }]}
-            >
-              <ThemedText type="smallBold">←</ThemedText>
-            </Pressable>
-            <ThemedText
-              type="smallBold"
-              numberOfLines={1}
-              style={styles.headerTitle}
-            >
-              {deleted ? 'Board' : board.title}
-            </ThemedText>
-            {canEdit ? (
-              <Pressable onPress={handleDeleteBoard} hitSlop={8}>
-                <ThemedText type="small" style={{ color: theme.danger }}>
-                  Delete
-                </ThemedText>
-              </Pressable>
-            ) : (
-              <View style={styles.headerSpacer} />
-            )}
+    <View style={[styles.screen, { backgroundColor: theme.background }]}>
+      <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
+        {query.isLoading && !board ? (
+          <View style={styles.center}>
+            <ActivityIndicator color={theme.textSecondary} />
           </View>
-
-          {deleted ? (
-            <View style={styles.deletedCard}>
-              <ThemedText type="subtitle">This board was deleted</ThemedText>
-              <ThemedText themeColor="textSecondary" style={styles.centerText}>
-                It was removed by a collaborator while you were viewing it.
-              </ThemedText>
-            </View>
-          ) : (
-            <>
-              {/* Cover */}
-              <View
-                style={[
-                  styles.cover,
-                  { backgroundColor: theme.backgroundElement },
-                ]}
-              >
-                {board.coverImageUrl ? (
-                  <Image
-                    source={{ uri: board.coverImageUrl }}
-                    style={StyleSheet.absoluteFill}
-                    contentFit="cover"
-                    transition={200}
-                  />
-                ) : (
-                  <ThemedText
-                    type="smallBold"
-                    themeColor="textSecondary"
-                    numberOfLines={2}
-                    style={styles.coverPlaceholder}
-                  >
-                    {board.destination ?? board.title}
-                  </ThemedText>
-                )}
-                {board.boardType === 'ITINERARY' ? (
-                  <View style={[styles.coverBadge, { backgroundColor: theme.text }]}>
-                    <ThemedText
-                      type="small"
-                      style={[styles.coverBadgeText, { color: theme.background }]}
-                    >
-                      Itinerary
-                    </ThemedText>
-                  </View>
-                ) : null}
-              </View>
-
-              {/* Meta + action bar */}
-              <View style={styles.metaRow}>
-                <Pressable
-                  style={styles.ownerBlock}
-                  onPress={() => router.push(`/user/${board.owner.id}`)}
-                >
-                  <View style={[styles.avatar, { backgroundColor: theme.backgroundElement }]}>
-                    {board.owner.avatarUrl ? (
-                      <Image
-                        source={{ uri: board.owner.avatarUrl }}
-                        style={StyleSheet.absoluteFill}
-                        contentFit="cover"
-                      />
-                    ) : (
-                      <ThemedText type="smallBold" themeColor="textSecondary">
-                        {board.owner.name.slice(0, 2).toUpperCase()}
-                      </ThemedText>
-                    )}
-                  </View>
-                  <View style={styles.ownerText}>
-                    <ThemedText type="smallBold">{board.owner.name}</ThemedText>
-                    <ThemedText type="small" themeColor="textSecondary">
-                      {board.role
-                        ? `You are a ${board.role.toLowerCase()}`
-                        : 'Public board'}
-                    </ThemedText>
-                  </View>
-                </Pressable>
-              </View>
-
-              {/* Like / Save / Members bar */}
-              <View style={styles.actionBar}>
-                <Pressable
-                  onPress={handleLike}
-                  disabled={likePending}
-                  style={styles.actionBtn}
-                >
-                  <ThemedText
-                    type="smallBold"
-                    style={{ color: liked ? theme.primary : theme.textSecondary }}
-                  >
-                    {liked ? '♥' : '♡'} {likeCount}
-                  </ThemedText>
-                </Pressable>
-                <Pressable
-                  onPress={handleSave}
-                  disabled={savePending}
-                  style={styles.actionBtn}
-                >
-                  <ThemedText
-                    type="smallBold"
-                    style={{ color: saved ? theme.golden : theme.textSecondary }}
-                  >
-                    {saved ? '★' : '☆'} {saveCount}
-                  </ThemedText>
-                </Pressable>
-                {canEdit ? (
-                  <Pressable
-                    onPress={() => setShowMembers(true)}
-                    style={styles.actionBtn}
-                  >
-                    <ThemedText type="smallBold" themeColor="textSecondary">
-                      Members
-                    </ThemedText>
-                  </Pressable>
-                ) : null}
-                {board.role ? (
-                  <Pressable
-                    onPress={() => void handleOpenChat()}
-                    disabled={chatOpening}
-                    style={styles.actionBtn}
-                  >
-                    <ThemedText type="smallBold" themeColor="textSecondary">
-                      {chatOpening ? '…' : 'Chat'}
-                    </ThemedText>
-                  </Pressable>
-                ) : null}
-                {canEdit ? (
-                  <Pressable
-                    onPress={() => router.push({ pathname: '/board/edit', params: { id: board.id } })}
-                    style={styles.actionBtn}
-                  >
-                    <ThemedText type="smallBold" themeColor="textSecondary">
-                      Edit
-                    </ThemedText>
-                  </Pressable>
-                ) : null}
-                {mappedItems.length > 0 ? (
-                  <Pressable
-                    onPress={() =>
-                      router.push({
-                        pathname: '/board/[id]/map',
-                        params: { id: board.id },
-                      })
-                    }
-                    style={styles.actionBtn}
-                  >
-                    <ThemedText type="smallBold" themeColor="textSecondary">
-                      Map
-                    </ThemedText>
-                  </Pressable>
-                ) : null}
-                <View style={styles.stats}>
-                  {[
-                    { label: 'items', value: board.itemCount },
-                    { label: 'saves', value: board.saveCount },
-                  ].map((stat) => (
-                    <View key={stat.label} style={styles.stat}>
-                      <ThemedText type="smallBold">{stat.value}</ThemedText>
-                      <ThemedText type="small" themeColor="textSecondary">
-                        {stat.label}
-                      </ThemedText>
-                    </View>
-                  ))}
-                </View>
-              </View>
-
-              {/* Live indicator */}
-              <View style={styles.liveRow}>
-                {joined ? (
-                  <>
-                    <View
-                      style={[
-                        styles.liveDot,
-                        { backgroundColor: theme.tertiary },
-                      ]}
-                    />
-                    <ThemedText type="small" themeColor="textSecondary">
-                      {editors.length > 0
-                        ? `Live · ${editors.length} ${editors.length === 1 ? 'person' : 'people'} viewing`
-                        : 'Live'}
-                    </ThemedText>
-                  </>
-                ) : null}
-              </View>
-
-              {board.description ? (
-                <ThemedText
-                  themeColor="textSecondary"
-                  style={styles.description}
-                >
-                  {board.description}
-                </ThemedText>
-              ) : null}
-
-              {/* Sections */}
-              {canEdit ? (
-                <Pressable
-                  onPress={() => setShowAddSection(true)}
-                  style={[styles.addSectionBtn, { borderColor: theme.backgroundSelected }]}
-                >
-                  <ThemedText type="smallBold" themeColor="textSecondary">
-                    + Add section
-                  </ThemedText>
-                </Pressable>
-              ) : null}
-
-              {board.sections.length === 0 ? (
-                <View
-                  style={[styles.emptyCard, { borderColor: theme.backgroundSelected }]}
-                >
-                  <ThemedText themeColor="textSecondary" style={styles.centerText}>
-                    This board has no sections yet.
-                  </ThemedText>
-                </View>
+        ) : notFound ? (
+          <View style={styles.center}>
+            <ThemedText type="subtitle">Board not found</ThemedText>
+            <ThemedText themeColor="textSecondary" style={styles.centerText}>
+              It may have been deleted or you don&apos;t have access to it.
+            </ThemedText>
+            <Pressable onPress={() => router.back()} style={[styles.primaryButton, { backgroundColor: theme.primary }]}>
+              <ThemedText type="smallBold" style={{ color: theme.onPrimary }}>Go back</ThemedText>
+            </Pressable>
+          </View>
+        ) : query.isError ? (
+          <View style={styles.center}>
+            <ThemedText themeColor="textSecondary" style={styles.centerText}>
+              Couldn&apos;t load this board. Check that the API is running.
+            </ThemedText>
+            <Pressable onPress={() => query.refetch()} style={[styles.primaryButton, { backgroundColor: theme.primary }]}>
+              <ThemedText type="smallBold" style={{ color: theme.onPrimary }}>Retry</ThemedText>
+            </Pressable>
+          </View>
+        ) : board ? (
+          <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+            {/* ── Hero ── */}
+            <View style={[styles.hero, { backgroundColor: theme.backgroundElement }]}>
+              {board.coverImageUrl ? (
+                <Image source={{ uri: board.coverImageUrl }} style={StyleSheet.absoluteFill} contentFit="cover" transition={200} />
               ) : (
-                <View style={styles.sections}>
-                  {board.sections.map((section, sectionIndex) => (
-                    <View key={section.id} style={styles.section}>
-                      <View style={styles.sectionHeader}>
-                        <ThemedText type="subtitle" style={styles.sectionTitle}>
-                          {section.title}
-                        </ThemedText>
-                        {canEdit ? (
-                          <View style={styles.sectionActions}>
-                            <Pressable
-                              onPress={() =>
-                                setItemModal({ mode: 'create', sectionId: section.id })
-                              }
-                            >
-                              <ThemedText type="small" themeColor="textSecondary">
-                                + Item
-                              </ThemedText>
-                            </Pressable>
-                            <Pressable
-                              onPress={() => handleMoveSection(section.id, -1)}
-                              disabled={sectionIndex === 0}
-                            >
-                              <ThemedText
-                                type="small"
-                                themeColor="textSecondary"
-                                style={
-                                  sectionIndex === 0 ? { opacity: 0.4 } : undefined
-                                }
-                              >
-                                ↑
-                              </ThemedText>
-                            </Pressable>
-                            <Pressable
-                              onPress={() => handleMoveSection(section.id, 1)}
-                              disabled={sectionIndex === board.sections.length - 1}
-                            >
-                              <ThemedText
-                                type="small"
-                                themeColor="textSecondary"
-                                style={
-                                  sectionIndex === board.sections.length - 1
-                                    ? { opacity: 0.4 }
-                                    : undefined
-                                }
-                              >
-                                ↓
-                              </ThemedText>
-                            </Pressable>
-                            <Pressable
-                              onPress={() =>
-                                setRenameSection({
-                                  id: section.id,
-                                  title: section.title,
-                                })
-                              }
-                            >
-                              <ThemedText type="small" themeColor="textSecondary">
-                                Rename
-                              </ThemedText>
-                            </Pressable>
-                            <Pressable
-                              onPress={() => handleDeleteSection(section.id)}
-                            >
-                              <ThemedText
-                                type="small"
-                                style={{ color: theme.danger }}
-                              >
-                                Delete
-                              </ThemedText>
-                            </Pressable>
-                          </View>
-                        ) : null}
-                      </View>
-                      {section.items.length === 0 ? (
-                        <ThemedText type="small" themeColor="textSecondary">
-                          No items in this section.
-                        </ThemedText>
-                      ) : (
-                        <View style={styles.itemGrid}>
-                          {section.items.map((item, itemIndex) => (
-                            <ItemCard
-                              key={item.id}
-                              item={item}
-                              boardId={board.id}
-                              sectionId={section.id}
-                              canEdit={canEdit}
-                              isFirst={itemIndex === 0}
-                              isLast={itemIndex === section.items.length - 1}
-                              onDeleted={() => query.refetch()}
-                              onEdit={(item) =>
-                                setItemModal({
-                                  mode: 'edit',
-                                  sectionId: section.id,
-                                  item,
-                                })
-                              }
-                              onMove={(direction) =>
-                                handleMoveItem(section.id, item.id, direction)
-                              }
-                            />
-                          ))}
-                        </View>
-                      )}
-                    </View>
-                  ))}
-                </View>
+                <Dissolve style={StyleSheet.absoluteFill} color={theme.primary} />
               )}
+              <View style={styles.heroScrim} />
 
-              <BoardComments boardId={board.id} />
-            </>
-          )}
-        </ScrollView>
+              {/* Top controls */}
+              <View style={styles.heroControls}>
+                <GlassButton onPress={() => router.back()} accessibilityLabel="Go back">
+                  <Ionicons name={Platform.OS === 'android' ? 'arrow-forward' : 'chevron-back'} size={22} color={theme.text} />
+                </GlassButton>
+                <View style={styles.heroRightControls}>
+                  <Pressable onPress={() => (canEdit ? setShowMembers(true) : void handleShare())}>
+                    <View style={styles.avatarStack}>
+                      <Avatar uri={board.owner.avatarUrl} name={board.owner.name} size={30} />
+                      {members.slice(0, 3).map((m, i) => (
+                        <View key={m.userId} style={[styles.stackOverlap, { marginLeft: -10, zIndex: 10 - i }]}>
+                          <Avatar uri={m.user.avatarUrl} name={m.user.name} size={30} online />
+                        </View>
+                      ))}
+                    </View>
+                  </Pressable>
+                  <GlassButton onPress={() => void handleShare()} accessibilityLabel="Share board">
+                    <Ionicons name="share-outline" size={20} color={theme.text} />
+                  </GlassButton>
+                </View>
+              </View>
+
+              {/* Title block */}
+              <View style={styles.heroBody}>
+                <View style={styles.badgeRow}>
+                  {joined ? (
+                    <View style={[styles.pill, { backgroundColor: 'rgba(14,116,83,0.9)' }]}>
+                      <View style={styles.liveDot} />
+                      <ThemedText type="smallBold" style={styles.pillTextOn}>
+                        {editors.length > 0 ? `Live · ${editors.length + 1} viewing` : 'Live'}
+                      </ThemedText>
+                    </View>
+                  ) : null}
+                  {dateRange ? (
+                    <View style={[styles.pill, { backgroundColor: 'rgba(0,0,0,0.55)' }]}>
+                      <Ionicons name="calendar-outline" size={12} color="#fff" />
+                      <ThemedText type="smallBold" style={styles.pillTextOn}>{dateRange}</ThemedText>
+                    </View>
+                  ) : null}
+                  {board.boardType === 'ITINERARY' ? (
+                    <View style={[styles.pill, { backgroundColor: 'rgba(0,0,0,0.55)' }]}>
+                      <Ionicons name="map-outline" size={12} color="#fff" />
+                      <ThemedText type="smallBold" style={styles.pillTextOn}>Itinerary</ThemedText>
+                    </View>
+                  ) : null}
+                </View>
+
+                <ThemedText style={styles.heroTitle}>{deleted ? 'Board' : board.title}</ThemedText>
+
+                <Pressable style={styles.breadcrumb} onPress={() => router.push(`/user/${board.owner.id}`)}>
+                  {board.destination ? (
+                    <>
+                      <Ionicons name="location-outline" size={14} color="rgba(255,255,255,0.9)" />
+                      <ThemedText type="small" style={styles.breadcrumbText}>{board.destination}</ThemedText>
+                      <ThemedText type="small" style={styles.breadcrumbSep}>·</ThemedText>
+                    </>
+                  ) : null}
+                  <ThemedText type="small" style={styles.breadcrumbText}>
+                    Curated by {board.owner.name.split(' ')[0]}
+                  </ThemedText>
+                </Pressable>
+              </View>
+            </View>
+
+            {deleted ? (
+              <View style={styles.deletedCard}>
+                <ThemedText type="subtitle">This board was deleted</ThemedText>
+                <ThemedText themeColor="textSecondary" style={styles.centerText}>
+                  It was removed by a collaborator while you were viewing it.
+                </ThemedText>
+              </View>
+            ) : (
+              <>
+                {/* ── Stats + like/save row ── */}
+                <View style={styles.statBar}>
+                  <Pressable onPress={handleLike} disabled={likePending} style={styles.statBtn}>
+                    <Ionicons name={liked ? 'heart' : 'heart-outline'} size={20} color={liked ? theme.primary : theme.textSecondary} />
+                    <ThemedText type="smallBold" themeColor={likeCount ? 'text' : 'textSecondary'}>{likeCount}</ThemedText>
+                  </Pressable>
+                  <Pressable onPress={handleSave} disabled={savePending} style={styles.statBtn}>
+                    <Ionicons name={saved ? 'bookmark' : 'bookmark-outline'} size={18} color={saved ? theme.golden : theme.textSecondary} />
+                    <ThemedText type="smallBold" themeColor={saveCount ? 'text' : 'textSecondary'}>{saveCount}</ThemedText>
+                  </Pressable>
+                  <View style={{ flex: 1 }} />
+                  <View style={styles.statBtn}>
+                    <Ionicons name="cube-outline" size={16} color={theme.textSecondary} />
+                    <ThemedText type="smallBold" themeColor="textSecondary">{board.itemCount}</ThemedText>
+                  </View>
+                  <View style={styles.statBtn}>
+                    <Ionicons name="people-outline" size={16} color={theme.textSecondary} />
+                    <ThemedText type="smallBold" themeColor="textSecondary">{board.memberCount}</ThemedText>
+                  </View>
+                </View>
+
+                {board.description ? (
+                  <ThemedText type="small" themeColor="textSecondary" style={styles.description}>
+                    {board.description}
+                  </ThemedText>
+                ) : null}
+
+                {/* ── Tabs ── */}
+                <SegmentedTabs value={tab} onChange={setTab} counts={{ places: allItems.length }} />
+
+                {/* ── Itinerary (day-by-day timeline) ── */}
+                {tab === 'itinerary' ? (
+                  board.sections.length === 0 ? (
+                    <View style={[styles.emptyCard, { borderColor: theme.borderSubtle }]}>
+                      <Ionicons name="calendar-outline" size={28} color={theme.textSecondary} />
+                      <ThemedText themeColor="textSecondary" style={styles.centerText}>
+                        No days yet. {canEdit ? 'Tap “Add day” to start planning.' : ''}
+                      </ThemedText>
+                    </View>
+                  ) : (
+                    <View style={styles.sections}>
+                      {board.sections.map((section, sIndex) => {
+                        const date = sectionDate(board.startDate, sIndex);
+                        return (
+                          <Reveal key={section.id} delay={sIndex * 60} style={styles.dayBlock}>
+                            {/* Day header */}
+                            <View style={styles.dayHeader}>
+                              <View style={[styles.dayTag, { backgroundColor: theme.primary }]}>
+                                <ThemedText type="smallBold" style={{ color: theme.onPrimary }}>{dayLabel(sIndex)}</ThemedText>
+                              </View>
+                              <View style={styles.dayHeaderText}>
+                                {date ? (
+                                  <ThemedText type="small" themeColor="textSecondary">{date}</ThemedText>
+                                ) : null}
+                                <ThemedText type="subtitle" style={styles.dayTitle}>{section.title}</ThemedText>
+                              </View>
+                            </View>
+
+                            {/* Section controls */}
+                            {canEdit ? (
+                              <View style={styles.sectionControls}>
+                                <Pressable onPress={() => setItemModal({ mode: 'create', sectionId: section.id })} style={[styles.sectionCtl, { backgroundColor: theme.backgroundElement }]}>
+                                  <Ionicons name="add" size={14} color={theme.primary} />
+                                  <ThemedText type="small" style={{ color: theme.primary }}>Stop</ThemedText>
+                                </Pressable>
+                                <Pressable onPress={() => setRenameSection({ id: section.id, title: section.title })} hitSlop={6}>
+                                  <ThemedText type="small" themeColor="textSecondary">Rename</ThemedText>
+                                </Pressable>
+                                <Pressable onPress={() => handleMoveSection(section.id, -1)} disabled={sIndex === 0} hitSlop={6}>
+                                  <Ionicons name="chevron-up" size={16} color={theme.textSecondary} style={sIndex === 0 ? { opacity: 0.35 } : undefined} />
+                                </Pressable>
+                                <Pressable onPress={() => handleMoveSection(section.id, 1)} disabled={sIndex === board.sections.length - 1} hitSlop={6}>
+                                  <Ionicons name="chevron-down" size={16} color={theme.textSecondary} style={sIndex === board.sections.length - 1 ? { opacity: 0.35 } : undefined} />
+                                </Pressable>
+                                <View style={{ flex: 1 }} />
+                                <Pressable onPress={() => handleDeleteSection(section.id)} hitSlop={6}>
+                                  <ThemedText type="small" style={{ color: theme.danger }}>Delete</ThemedText>
+                                </Pressable>
+                              </View>
+                            ) : null}
+
+                            {/* Timeline items */}
+                            {section.items.length === 0 ? (
+                              <ThemedText type="small" themeColor="textSecondary" style={styles.noStops}>
+                                No stops for this day.
+                              </ThemedText>
+                            ) : (
+                              <View style={styles.timeline}>
+                                {section.items.map((item, iIndex) => (
+                                  <TimelineItem
+                                    key={item.id}
+                                    item={item}
+                                    boardId={board.id}
+                                    sectionId={section.id}
+                                    canEdit={!!canEdit}
+                                    isFirst={iIndex === 0}
+                                    isLast={iIndex === section.items.length - 1}
+                                    onDeleted={() => query.refetch()}
+                                    onEdit={(it) => setItemModal({ mode: 'edit', sectionId: section.id, item: it })}
+                                    onMove={(dir) => handleMoveItem(section.id, item.id, dir)}
+                                  />
+                                ))}
+                              </View>
+                            )}
+                          </Reveal>
+                        );
+                      })}
+
+                      {canEdit ? (
+                        <Pressable onPress={() => setShowAddSection(true)} style={[styles.addDayBtn, { borderColor: theme.primary }]}>
+                          <Ionicons name="add" size={18} color={theme.primary} />
+                          <ThemedText type="smallBold" style={{ color: theme.primary }}>Add another day</ThemedText>
+                        </Pressable>
+                      ) : null}
+                    </View>
+                  )
+                ) : null}
+
+                {/* ── Places grid ── */}
+                {tab === 'places' ? (
+                  allItems.length === 0 ? (
+                    <View style={[styles.emptyCard, { borderColor: theme.borderSubtle }]}>
+                      <Ionicons name="location-outline" size={28} color={theme.textSecondary} />
+                      <ThemedText themeColor="textSecondary" style={styles.centerText}>No places yet.</ThemedText>
+                    </View>
+                  ) : (
+                    <View style={styles.placesGrid}>
+                      {allItems.map((item, i) => {
+                        const meta = TYPE_META[item.type] ?? TYPE_META.PLACE;
+                        return (
+                          <Reveal key={item.id} delay={i * 40} style={styles.placeCell}>
+                            <Pressable
+                              onPress={() =>
+                                item.lat != null && item.lng != null
+                                  ? void Linking.openURL(mapsUrl(item.lat, item.lng))
+                                  : item.url
+                                    ? void Linking.openURL(item.url)
+                                    : undefined
+                              }
+                              style={[styles.placeCard, { backgroundColor: theme.surfaceCard, borderColor: theme.borderSubtle }]}
+                            >
+                              {item.imageUrl ? (
+                                <Image source={{ uri: item.imageUrl }} style={styles.placeImage} contentFit="cover" transition={150} />
+                              ) : (
+                                <View style={[styles.placeImage, styles.placeImageEmpty, { backgroundColor: theme.backgroundElement }]}>
+                                  <Ionicons name={meta.icon} size={22} color={theme.textSecondary} />
+                                </View>
+                              )}
+                              <View style={styles.placeBody}>
+                                <ThemedText type="smallBold" numberOfLines={1}>{item.title}</ThemedText>
+                                <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
+                                  {meta.label}
+                                </ThemedText>
+                              </View>
+                            </Pressable>
+                          </Reveal>
+                        );
+                      })}
+                    </View>
+                  )
+                ) : null}
+
+                {/* ── Map ── */}
+                {tab === 'map' ? (
+                  <Reveal style={styles.mapPanel}>
+                    <Dissolve style={styles.mapDissolve} color={theme.info} speed={0.3}>
+                      <View style={styles.mapInner}>
+                        <Ionicons name="map" size={34} color={theme.onImage} />
+                        <ThemedText type="smallBold" style={{ color: theme.onImage, marginTop: Spacing.two }}>
+                          {mappedItems.length} mapped {mappedItems.length === 1 ? 'place' : 'places'}
+                        </ThemedText>
+                        {mappedItems.length > 0 ? (
+                          <Pressable
+                            onPress={() => router.push({ pathname: '/board/[id]/map', params: { id: board.id } })}
+                            style={[styles.mapBtn, { backgroundColor: theme.surfaceCard }]}
+                          >
+                            <ThemedText type="smallBold">Open interactive map</ThemedText>
+                          </Pressable>
+                        ) : (
+                          <ThemedText type="small" style={{ color: 'rgba(255,255,255,0.85)', textAlign: 'center' }}>
+                            Add stops with coordinates to see them here.
+                          </ThemedText>
+                        )}
+                      </View>
+                    </Dissolve>
+                  </Reveal>
+                ) : null}
+
+                {/* ── Comments ── */}
+                <BoardComments boardId={board.id} />
+              </>
+            )}
+          </ScrollView>
+        ) : null}
+      </SafeAreaView>
+
+      {/* Floating action menu */}
+      {board && !deleted ? (
+        <FloatingActionMenu actions={floatActions} trigger={canEdit ? 'add' : 'ellipsis-horizontal'} />
       ) : null}
 
-        {showAddSection ? (
-          <AddSectionModal
-            visible
-            onClose={() => setShowAddSection(false)}
-            onAdd={handleAddSection}
-          />
-        ) : null}
-        {renameSection ? (
-          <AddSectionModal
-            visible
-            heading="Rename section"
-            initialTitle={renameSection.title}
-            onClose={() => setRenameSection(null)}
-            onAdd={handleRenameSection}
-          />
-        ) : null}
-        {board && itemModal ? (
+      {showAddSection ? (
+        <AddSectionModal visible onClose={() => setShowAddSection(false)} onAdd={handleAddSection} />
+      ) : null}
+      {renameSection ? (
+        <AddSectionModal
+          visible
+          heading="Rename day"
+          initialTitle={renameSection.title}
+          onClose={() => setRenameSection(null)}
+          onAdd={handleRenameSection}
+        />
+      ) : null}
+      {board && itemModal ? (
         <ItemFormModal
           visible
           boardId={board.id}
@@ -1079,282 +1133,227 @@ export default function BoardDetailScreen() {
           onSaved={() => query.refetch()}
         />
       ) : null}
-      {id ? (
-        <MembersModal
-          visible={showMembers}
-          onClose={() => setShowMembers(false)}
-          boardId={id}
-        />
-      ) : null}
-    </SafeAreaView>
+      {id ? <MembersModal visible={showMembers} onClose={() => setShowMembers(false)} boardId={id} /> : null}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
+  screen: { flex: 1 },
+  safe: { flex: 1, width: '100%', alignSelf: 'center', maxWidth: MaxContentWidth },
+  scrollContent: { paddingBottom: 140 },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.four, gap: Spacing.three },
+  centerText: { textAlign: 'center' },
+  primaryButton: { borderRadius: Radius.full, paddingHorizontal: Spacing.five, paddingVertical: Spacing.two + Spacing.half },
+  deletedCard: { alignItems: 'center', padding: Spacing.five, gap: Spacing.two, marginTop: Spacing.four },
+
+  // Hero
+  hero: {
     width: '100%',
-    alignSelf: 'center',
-    maxWidth: MaxContentWidth,
-  },
-  scrollContent: {
-    paddingHorizontal: Spacing.three,
-    paddingBottom: Spacing.six,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingVertical: Spacing.three,
-  },
-  backButton: {
-    width: Spacing.five,
-    height: Spacing.five,
-    borderRadius: Spacing.five,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerTitle: {
-    flex: 1,
-  },
-  headerSpacer: {
-    width: Spacing.five,
-  },
-  cover: {
-    width: '100%',
-    aspectRatio: 16 / 9,
-    borderRadius: Spacing.three,
+    aspectRatio: 4 / 3,
+    justifyContent: 'space-between',
     overflow: 'hidden',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    padding: Spacing.three,
+    borderBottomLeftRadius: Radius.xl,
+    borderBottomRightRadius: Radius.xl,
   },
-  coverPlaceholder: {
-    textAlign: 'center',
-  },
-  coverBadge: {
+  heroScrim: {
     position: 'absolute',
-    top: Spacing.two,
-    left: Spacing.two,
-    borderRadius: Spacing.three,
-    paddingHorizontal: Spacing.two,
-    paddingVertical: Spacing.half,
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.28)',
   },
-  coverBadgeText: {
-    fontSize: 11,
-    lineHeight: 14,
-    fontWeight: '700',
-  },
-  metaRow: {
+  heroControls: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: Spacing.three,
-    gap: Spacing.three,
+    alignItems: 'center',
+    paddingHorizontal: Spacing.three,
+    paddingTop: Spacing.two,
   },
-  ownerBlock: {
+  heroRightControls: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
+  avatarStack: { flexDirection: 'row', alignItems: 'center' },
+  stackOverlap: {},
+  heroBody: { padding: Spacing.three, gap: Spacing.two },
+  badgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.one + Spacing.half },
+  pill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.two,
-    flexShrink: 1,
-  },
-  avatar: {
-    width: Spacing.five,
-    height: Spacing.five,
-    borderRadius: Spacing.five,
-    overflow: 'hidden',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  ownerText: {
-    flexShrink: 1,
-  },
-  actionBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.three,
-    marginTop: Spacing.three,
-    flexWrap: 'wrap',
-  },
-  actionBtn: {
+    gap: Spacing.one,
+    paddingHorizontal: Spacing.two + Spacing.half,
     paddingVertical: Spacing.one,
-    paddingHorizontal: Spacing.two,
+    borderRadius: Radius.full,
   },
-  stats: {
+  pillTextOn: { color: '#fff', fontSize: 11 },
+  liveDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#4FB98C' },
+  heroTitle: { color: '#fff', fontSize: 30, lineHeight: 36, fontWeight: '800', letterSpacing: -0.8 },
+  breadcrumb: { flexDirection: 'row', alignItems: 'center', gap: Spacing.one, flexWrap: 'wrap' },
+  breadcrumbText: { color: 'rgba(255,255,255,0.92)', fontWeight: '600' },
+  breadcrumbSep: { color: 'rgba(255,255,255,0.6)' },
+
+  // Stat bar
+  statBar: {
     flexDirection: 'row',
-    gap: Spacing.three,
-    marginLeft: 'auto',
-  },
-  stat: {
     alignItems: 'center',
-  },
-  liveRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.two,
-    marginTop: Spacing.three,
-    minHeight: Spacing.three,
-  },
-  liveDot: {
-    width: Spacing.two,
-    height: Spacing.two,
-    borderRadius: Spacing.two,
-  },
-  description: {
-    marginTop: Spacing.two,
-    lineHeight: 20,
-  },
-  addSectionBtn: {
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    borderRadius: Spacing.three,
-    paddingVertical: Spacing.three,
-    alignItems: 'center',
-    marginTop: Spacing.four,
-  },
-  sections: {
-    marginTop: Spacing.four,
     gap: Spacing.four,
+    paddingHorizontal: Spacing.three,
+    paddingTop: Spacing.three,
   },
-  section: {
-    gap: Spacing.two,
-  },
-  sectionHeader: {
+  statBtn: { flexDirection: 'row', alignItems: 'center', gap: Spacing.one },
+  description: { paddingHorizontal: Spacing.three, paddingTop: Spacing.two, lineHeight: 20 },
+
+  // Tabs
+  segment: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  sectionActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.three,
-  },
-  sectionTitle: {
-    marginBottom: Spacing.one,
-  },
-  itemGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.two,
-  },
-  itemCard: {
-    width: '48%',
-    flexGrow: 1,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: Spacing.three,
-    padding: Spacing.two,
+    margin: Spacing.three,
+    padding: Spacing.half,
+    borderRadius: Radius.full,
     gap: Spacing.one,
   },
-  itemImage: {
-    width: '100%',
-    aspectRatio: 16 / 9,
-    borderRadius: Spacing.two,
+  segmentItem: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: Spacing.two,
+    borderRadius: Radius.full,
   },
-  itemDescription: {
-    lineHeight: 18,
+
+  // Sections / days
+  sections: { paddingHorizontal: Spacing.three, gap: Spacing.five },
+  dayBlock: { gap: Spacing.two },
+  dayHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.two },
+  dayTag: { paddingHorizontal: Spacing.two, paddingVertical: Spacing.one, borderRadius: Radius.sm },
+  dayHeaderText: { flex: 1, gap: 2 },
+  dayTitle: { fontSize: 20, lineHeight: 26, fontWeight: '800', letterSpacing: -0.4 },
+  sectionControls: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three, paddingLeft: Spacing.one },
+  sectionCtl: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.one,
+    paddingHorizontal: Spacing.two,
+    paddingVertical: Spacing.half + 1,
+    borderRadius: Radius.full,
   },
+  noStops: { paddingLeft: Spacing.four, paddingVertical: Spacing.two },
+  addDayBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.one,
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderRadius: Radius.lg,
+    paddingVertical: Spacing.three,
+  },
+
+  // Timeline
+  timeline: { gap: 0 },
+  timelineRow: { flexDirection: 'row', gap: Spacing.two },
+  timeCol: { width: 58, alignItems: 'center', paddingTop: Spacing.one },
+  timeText: { fontSize: 11, marginBottom: Spacing.one },
+  dot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    borderWidth: 2,
+  },
+  line: { width: 2, flex: 1, marginTop: 2, borderRadius: 1 },
+  itemCardWrap: { flex: 1, paddingBottom: Spacing.three },
+  itemCard: {
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    padding: Spacing.two + Spacing.half,
+    gap: Spacing.one + Spacing.half,
+  },
+  typeChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.one,
+    alignSelf: 'flex-start',
+    paddingHorizontal: Spacing.two,
+    paddingVertical: 2,
+    borderRadius: Radius.full,
+  },
+  itemTitle: { fontSize: 15, lineHeight: 20, fontWeight: '700' },
+  itemDescription: { lineHeight: 18 },
+  itemImage: { width: '100%', aspectRatio: 16 / 9, borderRadius: Radius.md, marginTop: Spacing.one },
+  chipRow: { flexDirection: 'row', gap: Spacing.one + Spacing.half, flexWrap: 'wrap' },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.one,
+    paddingHorizontal: Spacing.two + Spacing.half,
+    paddingVertical: Spacing.one,
+    borderRadius: Radius.full,
+  },
+  chipText: { fontSize: 12, fontWeight: '600' },
   itemActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.two,
-    marginTop: Spacing.one,
-  },
-  itemDeleteBtn: {
-    marginTop: Spacing.one,
-  },
-  center: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: Spacing.four,
     gap: Spacing.three,
+    marginTop: Spacing.one,
+    paddingTop: Spacing.one + Spacing.half,
+    borderTopWidth: StyleSheet.hairlineWidth,
   },
-  centerText: {
-    textAlign: 'center',
-  },
-  primaryButton: {
-    borderRadius: Spacing.three,
-    paddingHorizontal: Spacing.four,
-    paddingVertical: Spacing.two,
-  },
-  deletedCard: {
-    alignItems: 'center',
-    padding: Spacing.five,
+
+  // Places grid
+  placesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    paddingHorizontal: Spacing.three,
     gap: Spacing.two,
   },
+  placeCell: { width: '48%', flexGrow: 1 },
+  placeCard: { borderRadius: Radius.lg, borderWidth: 1, overflow: 'hidden' },
+  placeImage: { width: '100%', aspectRatio: 16 / 10 },
+  placeImageEmpty: { alignItems: 'center', justifyContent: 'center' },
+  placeBody: { padding: Spacing.two + Spacing.half, gap: 2 },
+
+  // Map panel
+  mapPanel: { paddingHorizontal: Spacing.three },
+  mapDissolve: { borderRadius: Radius.xl, overflow: 'hidden' },
+  mapInner: { alignItems: 'center', justifyContent: 'center', padding: Spacing.five, gap: Spacing.one },
+  mapBtn: {
+    marginTop: Spacing.three,
+    paddingHorizontal: Spacing.four,
+    paddingVertical: Spacing.two + Spacing.half,
+    borderRadius: Radius.full,
+  },
+
   emptyCard: {
-    marginTop: Spacing.four,
+    margin: Spacing.three,
     borderWidth: 1,
     borderStyle: 'dashed',
-    borderRadius: Spacing.three,
+    borderRadius: Radius.lg,
     padding: Spacing.five,
     alignItems: 'center',
+    gap: Spacing.two,
   },
-  // Modal shared
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    padding: Spacing.four,
-  },
-  modalCard: {
-    borderRadius: Spacing.three,
-    padding: Spacing.four,
-    gap: Spacing.three,
-    maxHeight: '80%',
-  },
-  modalTitle: {
-    marginBottom: Spacing.one,
-  },
-  modalActions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: Spacing.three,
-  },
-  modalCancelBtn: {
-    paddingVertical: Spacing.two,
-    paddingHorizontal: Spacing.three,
-  },
-  modalPrimaryBtn: {
-    borderRadius: Spacing.three,
-    paddingVertical: Spacing.two,
-    paddingHorizontal: Spacing.three,
-    alignItems: 'center',
-  },
+
+  // Modals
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: Spacing.four },
+  modalCard: { borderRadius: Radius.xl, padding: Spacing.four, gap: Spacing.three, maxHeight: '80%' },
+  modalTitle: { marginBottom: Spacing.one },
+  modalActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: Spacing.three },
+  modalCancelBtn: { paddingVertical: Spacing.two, paddingHorizontal: Spacing.three },
+  modalPrimaryBtn: { borderRadius: Radius.full, paddingVertical: Spacing.two, paddingHorizontal: Spacing.four, alignItems: 'center' },
   input: {
     borderWidth: 1,
-    borderRadius: Spacing.three,
+    borderRadius: Radius.md,
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.two + Spacing.half,
     fontSize: 16,
   },
-  // Members
-  addMemberRow: {
-    flexDirection: 'row',
-    gap: Spacing.two,
-    alignItems: 'center',
-  },
-  addMemberInput: {
-    flex: 1,
-  },
-  addMemberBtn: {
-    borderRadius: Spacing.three,
-    paddingVertical: Spacing.two + Spacing.half,
-    paddingHorizontal: Spacing.three,
-    alignItems: 'center',
-  },
+  addMemberRow: { flexDirection: 'row', gap: Spacing.two, alignItems: 'center' },
+  addMemberInput: { flex: 1 },
+  addMemberBtn: { borderRadius: Radius.full, paddingVertical: Spacing.two + Spacing.half, paddingHorizontal: Spacing.four, alignItems: 'center' },
   memberRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: Spacing.two,
     paddingVertical: Spacing.two,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  memberInfo: {
-    flex: 1,
-  },
-  memberActions: {
-    flexDirection: 'row',
-    gap: Spacing.three,
-  },
+  memberInfo: { flex: 1 },
+  memberActions: { flexDirection: 'row', gap: Spacing.three },
 });

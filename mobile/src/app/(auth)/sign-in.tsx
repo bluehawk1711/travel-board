@@ -1,25 +1,31 @@
 import { useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
-  TextInput,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useMutation } from '@tanstack/react-query';
 
+import {
+  AuthDivider,
+  AuthError,
+  AuthField,
+  AuthShell,
+} from '@/components/auth-shell';
+import { GoogleButton } from '@/components/google-button';
 import { ThemedText } from '@/components/themed-text';
-import { Spacing } from '@/constants/theme';
+import { PillButton } from '@/components/ui/pill-button';
+import { Spacing, TouchTarget } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { api, ApiError } from '@/lib/api';
-import { useMutation } from '@tanstack/react-query';
 import { useAuthStore } from '@/lib/auth-store';
 import { queryClient } from '@/lib/query-client';
-import { GoogleButton } from '@/components/google-button';
-import { UI_MESSAGES } from '@travel-board/shared';
+import { APP, UI_MESSAGES } from '@travel-board/shared';
 
 export default function SignInScreen() {
   const theme = useTheme();
@@ -57,92 +63,100 @@ export default function SignInScreen() {
     }
   }, [email, password, router, setSession, signInMutation]);
 
-  const inputStyle = [
-    styles.input,
-    {
-      backgroundColor: theme.backgroundElement,
-      borderColor: theme.backgroundSelected,
-      color: theme.text,
-    },
-  ];
-
   return (
-    <KeyboardAvoidingView
-      style={styles.screen}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    <SafeAreaView
+      style={[styles.screen, { backgroundColor: theme.background }]}
+      edges={['top', 'bottom']}
     >
-      <SafeAreaView style={styles.safe}>
-        <View style={styles.card}>
-          <ThemedText type="subtitle" style={styles.title}>
-            Sign in
-          </ThemedText>
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <AuthShell
+            title={UI_MESSAGES.AUTH.WELCOME_BACK}
+            subtitle={APP.tagline}
+            footer={
+              <View style={styles.footerRow}>
+                <ThemedText type="small" themeColor="textSecondary">
+                  {UI_MESSAGES.AUTH.NEW_HERE}
+                </ThemedText>
+                <Pressable
+                  onPress={() => router.replace('/(auth)/sign-up')}
+                  hitSlop={8}
+                  accessibilityRole="button"
+                  accessibilityLabel={UI_MESSAGES.AUTH.CREATE_ACCOUNT}
+                >
+                  <ThemedText
+                    type="smallBold"
+                    style={[styles.footerLink, { color: theme.primary }]}
+                  >
+                    {UI_MESSAGES.AUTH.CREATE_ACCOUNT}
+                  </ThemedText>
+                </Pressable>
+              </View>
+            }
+          >
+            <AuthField
+              label={UI_MESSAGES.AUTH.EMAIL_LABEL}
+              value={email}
+              onChangeText={setEmail}
+              placeholder="you@example.com"
+              autoCapitalize="none"
+              autoCorrect={false}
+              autoComplete="email"
+              textContentType="emailAddress"
+              keyboardType="email-address"
+              returnKeyType="next"
+            />
+            <AuthField
+              label={UI_MESSAGES.AUTH.PASSWORD_LABEL}
+              value={password}
+              onChangeText={setPassword}
+              placeholder="Your password"
+              secureTextEntry
+              autoComplete="password"
+              textContentType="password"
+              returnKeyType="go"
+              onSubmitEditing={() => void submit()}
+              rightSlot={
+                <Pressable
+                  onPress={() => router.push('/(auth)/forgot-password')}
+                  hitSlop={8}
+                  accessibilityRole="button"
+                  accessibilityLabel={UI_MESSAGES.AUTH.FORGOT_PASSWORD}
+                >
+                  <ThemedText
+                    type="small"
+                    style={[styles.link, { color: theme.primary }]}
+                  >
+                    {UI_MESSAGES.AUTH.FORGOT_PASSWORD}
+                  </ThemedText>
+                </Pressable>
+              }
+            />
 
-          <TextInput
-            style={inputStyle}
-            placeholder="Email"
-            placeholderTextColor={theme.textSecondary}
-            autoCapitalize="none"
-            autoComplete="email"
-            keyboardType="email-address"
-            value={email}
-            onChangeText={setEmail}
-          />
-          <TextInput
-            style={inputStyle}
-            placeholder="Password"
-            placeholderTextColor={theme.textSecondary}
-            secureTextEntry
-            autoComplete="password"
-            value={password}
-            onChangeText={setPassword}
-          />
+            {error ? <AuthError message={error} /> : null}
 
-          <Pressable onPress={() => router.push('/(auth)/forgot-password')}>
-            <ThemedText type="small" themeColor="textSecondary" style={styles.forgot}>
-              Forgot password?
-            </ThemedText>
-          </Pressable>
+            <PillButton
+              label={UI_MESSAGES.AUTH.SIGN_IN}
+              onPress={() => void submit()}
+              loading={submitting}
+              disabled={submitting}
+              style={styles.submitButton}
+            />
 
-          {error ? (
-            <ThemedText type="small" style={{ color: theme.danger }}>
-              {error}
-            </ThemedText>
-          ) : null}
+            <AuthDivider label={UI_MESSAGES.AUTH.OR} />
 
-<Pressable
-             onPress={submit}
-             disabled={submitting}
-             style={[
-               styles.primaryButton,
-               { backgroundColor: theme.text },
-               submitting && styles.disabled,
-             ]}
-           >
-             {submitting ? (
-               <ActivityIndicator color={theme.background} />
-             ) : (
-               <ThemedText
-                 type="smallBold"
-                 style={{ color: theme.background }}
-               >
-                 Sign in
-               </ThemedText>
-             )}
-           </Pressable>
-
-           <GoogleButton />
-
-           <Pressable onPress={() => router.push('/(auth)/sign-up')}>
-             <ThemedText type="small" themeColor="textSecondary" style={styles.switchText}>
-               Don&apos;t have an account?{' '}
-               <ThemedText type="smallBold" style={{ color: theme.text }}>
-                 Sign up
-               </ThemedText>
-             </ThemedText>
-           </Pressable>
-        </View>
-      </SafeAreaView>
-    </KeyboardAvoidingView>
+            <GoogleButton />
+          </AuthShell>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
@@ -150,38 +164,30 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
   },
-  safe: {
+  flex: {
     flex: 1,
+  },
+  scroll: {
+    flexGrow: 1,
     justifyContent: 'center',
-    padding: Spacing.four,
+    paddingHorizontal: Spacing.four,
+    paddingVertical: Spacing.five,
+    gap: Spacing.four,
   },
-  card: {
-    gap: Spacing.three,
+  submitButton: {
+    alignSelf: 'stretch',
   },
-  title: {
-    marginBottom: Spacing.one,
+  link: {
+    textDecorationLine: 'underline',
   },
-  input: {
-    borderWidth: 1,
-    borderRadius: Spacing.three,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two + Spacing.half,
-    fontSize: 16,
-  },
-  forgot: {
-    marginTop: -Spacing.two,
-  },
-  primaryButton: {
-    borderRadius: Spacing.three,
-    paddingVertical: Spacing.three,
+  footerRow: {
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: Spacing.one,
+    gap: 6,
+    minHeight: TouchTarget - 16,
   },
-  disabled: {
-    opacity: 0.5,
-  },
-  switchText: {
-    textAlign: 'center',
+  footerLink: {
+    textDecorationLine: 'underline',
   },
 });

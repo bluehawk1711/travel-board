@@ -12,8 +12,8 @@ const COVER_ASPECTS = [
   "aspect-[3/4]",
 ];
 
-function ownerInitials(name: string): string {
-  return name
+function ownerInitials(name?: string | null): string {
+  return (name ?? "")
     .split(/\s+/)
     .filter(Boolean)
     .slice(0, 2)

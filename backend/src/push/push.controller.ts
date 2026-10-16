@@ -1,4 +1,5 @@
 import { Body, Controller, Delete, Post } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { AuthUser } from '../auth/auth.service';
 import { MESSAGES } from '../common/messages';
@@ -8,6 +9,8 @@ import {
   UnregisterPushTokenDto,
 } from './dto/push-token.dto';
 
+@ApiTags('push')
+@ApiBearerAuth('bearer')
 @Controller('push')
 export class PushController {
   constructor(private readonly pushService: PushService) {}

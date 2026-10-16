@@ -224,6 +224,20 @@ export const UI_MESSAGES = {
     HAVE_ACCOUNT: 'Already have an account?',
     NEW_HERE: 'New to Travel Boards?',
     JOIN_TAGLINE: 'Join Travel Boards to create, save and share trips.',
+    /** Sign-in screen hero. */
+    WELCOME_BACK: 'Welcome back',
+    /** Primary button labels (sign-in / sign-up forms). */
+    SIGN_IN: 'Sign in',
+    CREATE_ACCOUNT: 'Create account',
+    /** Field labels — inputs show a persistent label, not just a placeholder. */
+    EMAIL_LABEL: 'Email',
+    PASSWORD_LABEL: 'Password',
+    NAME_LABEL: 'Name',
+    CONFIRM_PASSWORD_LABEL: 'Confirm password',
+    FORGOT_PASSWORD: 'Forgot password?',
+    /** Divider label between the password form and the Google button. */
+    OR: 'or',
+    GOOGLE_CONTINUE: 'Continue with Google',
     SIGN_IN_META: 'Sign in to Travel Boards.',
     SIGN_UP_META: 'Join Travel Boards and start planning trips with friends.',
   },

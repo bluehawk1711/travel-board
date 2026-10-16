@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Patch, Query } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { AuthUser } from '../auth/auth.service';
 import { MESSAGES } from '../common/messages';
@@ -8,6 +9,8 @@ import {
 } from './notifications.service';
 import { MarkNotificationsReadDto } from './dto/mark-read.dto';
 
+@ApiTags('notifications')
+@ApiBearerAuth('bearer')
 @Controller('notifications')
 export class NotificationsController {
   constructor(private readonly notificationsService: NotificationsService) {}

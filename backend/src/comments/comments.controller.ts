@@ -7,6 +7,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Public } from '../auth/decorators/public.decorator';
 import type { AuthUser } from '../auth/auth.service';
@@ -17,6 +18,8 @@ import {
 } from './comments.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
 
+@ApiTags('comments')
+@ApiBearerAuth('bearer')
 @Controller('boards/:boardId/comments')
 export class CommentsController {
   constructor(private readonly commentsService: CommentsService) {}

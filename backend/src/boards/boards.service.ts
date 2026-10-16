@@ -249,6 +249,86 @@ export class BoardsService {
     return { deleted: true };
   }
 
+  /**
+   * Duplicate a public board into a new board owned by the caller (Pinterest-
+   * style "save a copy"). Sections and items are cloned in order; likes,
+   * saves, members, and comments are NOT copied — the copy starts clean and
+   * private so the owner can edit before sharing. The original is untouched.
+   */
+  async copyBoard(boardId: string, user: AuthUser) {
+    const source = await this.db.query.boards.findFirst({
+      where: eq(boards.id, boardId),
+      with: {
+        sections: {
+          orderBy: (s, { asc }) => [asc(s.position)],
+          with: { items: { orderBy: (i, { asc }) => [asc(i.position)] } },
+        },
+      },
+    });
+    if (!source) {
+      throw new NotFoundException(MESSAGES.BOARDS.NOT_FOUND);
+    }
+    // Members can already edit the original — copying is for everyone else
+    // who can see it, so the source must be public.
+    const isMember = await this.getRole(boardId, user.id);
+    if (!isMember && source.visibility !== 'PUBLIC') {
+      throw new ForbiddenException(MESSAGES.BOARDS.COPY_SOURCE_NOT_PUBLIC);
+    }
+
+    const copy = await this.db.transaction(async (tx) => {
+      const [created] = await tx
+        .insert(boards)
+        .values({
+          ownerId: user.id,
+          title: source.title,
+          description: source.description,
+          destination: source.destination,
+          boardType: source.boardType,
+          // Private by default: the copier edits first, then publishes.
+          visibility: 'PRIVATE',
+          startDate: source.startDate,
+          endDate: source.endDate,
+          coverImageUrl: source.coverImageUrl,
+        })
+        .returning();
+      await tx
+        .insert(boardMembers)
+        .values({ boardId: created.id, userId: user.id, role: 'OWNER' });
+
+      for (const section of source.sections) {
+        const [copiedSection] = await tx
+          .insert(boardSections)
+          .values({
+            boardId: created.id,
+            title: section.title,
+            position: section.position,
+          })
+          .returning();
+        if (section.items.length > 0) {
+          await tx.insert(boardItems).values(
+            section.items.map((item) => ({
+              boardId: created.id,
+              sectionId: copiedSection.id,
+              type: item.type,
+              placeId: item.placeId,
+              title: item.title,
+              description: item.description,
+              imageUrl: item.imageUrl,
+              url: item.url,
+              position: item.position,
+              lat: item.lat,
+              lng: item.lng,
+              date: item.date,
+            })),
+          );
+        }
+      }
+      return created;
+    });
+
+    return this.findOne(copy.id, user);
+  }
+
   // ── Sections ──────────────────────────────────────────────
 
   async createSection(boardId: string, user: AuthUser, dto: CreateSectionDto) {

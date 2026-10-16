@@ -1,14 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, Loader2, Save } from "lucide-react";
-import { fetchMe, fetchMySettings, updateMyProfile, updateMySettings, uploadImage } from "@/lib/api";
-import { notifyAuthChanged } from "@/lib/auth";
+import { fetchMySettings, updateMyProfile, updateMySettings, uploadImage } from "@/lib/api";
+import { clearTokens, notifyAuthChanged } from "@/lib/auth";
 import { useSignedIn } from "@/hooks/use-signed-in";
-import { queryKeys } from "@/lib/queries";
+import { queryKeys, useMe } from "@/lib/queries";
+import { initials } from "@/lib/utils";
 import type { ThemeMode, UserSettings } from "@/lib/types";
 import { THEME_MODES } from "@travel-board/shared";
 import { Button } from "@/components/ui/button";
@@ -42,19 +43,16 @@ export default function SettingsPage() {
   const [error, setError] = useState<string | null>(null);
   const [settingsSaved, setSettingsSaved] = useState(false);
 
-  // Server state via React Query.
-  const meQuery = useQuery({
-    queryKey: ["me"],
-    queryFn: fetchMe,
-    enabled: signedIn,
-  });
+  // Server state via React Query. `useMe` (shared with the site header) caches
+  // the FLAT AuthUser under ["me"] — always write that shape, never {user}.
+  const meQuery = useMe();
   const settingsQuery = useQuery({
     queryKey: queryKeys.mySettings,
     queryFn: fetchMySettings,
     enabled: signedIn,
   });
 
-  const me = meQuery.data?.user ?? null;
+  const me = meQuery.data ?? null;
   const settings = settingsQuery.data ?? null;
 
   // Derive the editable fields instead of copying them into state via an
@@ -85,7 +83,7 @@ export default function SettingsPage() {
       return user;
     },
     onSuccess: (user) => {
-      queryClient.setQueryData(["me"], { user });
+      queryClient.setQueryData(queryKeys.me, user);
       setAvatarDone(true);
       notifyAuthChanged("login");
     },
@@ -104,7 +102,7 @@ export default function SettingsPage() {
         bio: bio.trim() || undefined,
       }),
     onSuccess: ({ user }) => {
-      queryClient.setQueryData(["me"], { user });
+      queryClient.setQueryData(queryKeys.me, user);
       // Drop the drafts so the fresh server values render.
       setNameDraft(null);
       setBioDraft(null);
@@ -119,6 +117,16 @@ export default function SettingsPage() {
     setError(null);
     profileMutation.mutate();
   };
+
+  // A failed `me` read (expired session the bootstrap couldn't renew) must not
+  // spin forever — send the user back through login, which restores the cookie.
+  useEffect(() => {
+    if (meQuery.isError) {
+      clearTokens();
+      notifyAuthChanged("logout");
+      router.replace("/login");
+    }
+  }, [meQuery.isError, router]);
 
   if (!me) {
     return (
@@ -155,7 +163,7 @@ export default function SettingsPage() {
                     className="h-full w-full object-cover"
                   />
                 ) : (
-                  me.name.slice(0, 2).toUpperCase()
+                  initials(me.name, me.email)
                 )}
               </span>
               <div className="text-sm">

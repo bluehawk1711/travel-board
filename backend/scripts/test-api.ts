@@ -536,6 +536,80 @@ async function main() {
       { auth: true },
     );
 
+    // -- Board copy (user B duplicates user A's public board) --------------
+    if (boardId) {
+      const ownerToken = accessToken;
+      const COPY_USER = {
+        email: `e2e-copy-${Date.now()}@example.com`,
+        password: 'e2e-copy-pass-1',
+        name: 'E2E Copy User',
+      };
+      const copyRegistered = (await call(
+        'Auth',
+        'POST',
+        '/auth/register',
+        'Registers a second account for the copy test',
+        {
+          body: COPY_USER,
+          expect: [200, 201],
+          check: (json) =>
+            (json as { accessToken?: string })?.accessToken
+              ? ''
+              : 'missing accessToken',
+        },
+      )) as { accessToken?: string } | null;
+
+      if (copyRegistered?.accessToken) {
+        accessToken = copyRegistered.accessToken;
+
+        const copy = (await call(
+          'Boards',
+          'POST',
+          `/boards/${boardId}/copy`,
+          'Copies a public board into my boards (starts private)',
+          {
+            auth: true,
+            expect: [200, 201],
+            check: (json) => {
+              const body = json as {
+                id?: string;
+                visibility?: string;
+                sections?: unknown[];
+              };
+              if (!body.id) return 'missing copy id';
+              if (body.visibility !== 'PRIVATE')
+                return `copy should be PRIVATE, got ${body.visibility}`;
+              if (!Array.isArray(body.sections) || body.sections.length === 0)
+                return 'copy is missing cloned sections';
+              return '';
+            },
+          },
+        )) as { id?: string } | null;
+
+        const copyId = copy?.id;
+        if (copyId) {
+          // The owner of the copy can edit it (the whole point of copying).
+          await call(
+            'Boards',
+            'PATCH',
+            `/boards/${copyId}`,
+            'Edits the copied board (owner can modify their copy)',
+            { auth: true, body: { title: 'My copied trip' } },
+          );
+          await call(
+            'Boards',
+            'DELETE',
+            `/boards/${copyId}`,
+            'Deletes the copied board (cleanup)',
+            { auth: true, expect: [200, 204] },
+          );
+        }
+
+        // Restore the original account for the remaining checks.
+        accessToken = ownerToken;
+      }
+    }
+
     // -- Chat ---------------------------------------------------------------
     const room = (await call(
       'Chat',

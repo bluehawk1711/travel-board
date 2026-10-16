@@ -1,4 +1,5 @@
 import { Controller, Delete, Get, Param, Post, Query } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Public } from '../auth/decorators/public.decorator';
 import type { AuthUser } from '../auth/auth.service';
@@ -9,6 +10,8 @@ import {
   FollowUser,
 } from './follows.service';
 
+@ApiTags('follows')
+@ApiBearerAuth('bearer')
 @Controller()
 export class FollowsController {
   constructor(private readonly followsService: FollowsService) {}

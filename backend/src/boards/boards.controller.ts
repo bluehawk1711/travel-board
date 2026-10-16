@@ -8,6 +8,7 @@ import {
   Post,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Public } from '../auth/decorators/public.decorator';
 import type { AuthUser } from '../auth/auth.service';
@@ -21,6 +22,8 @@ import { ReorderItemsDto } from './dto/reorder-items.dto';
 import { ReorderSectionsDto } from './dto/reorder-sections.dto';
 import { AddMemberDto, UpdateMemberRoleDto } from './dto/member.dto';
 
+@ApiTags('boards')
+@ApiBearerAuth('bearer')
 @Controller('boards')
 export class BoardsController {
   constructor(
@@ -75,6 +78,16 @@ export class BoardsController {
       actorId: user.id,
     });
     return result;
+  }
+
+  /**
+   * Duplicate a public board into the caller's own boards (copy starts
+   * private). Nothing is broadcast to the source board's room — the copy is a
+   * brand-new board owned by the caller.
+   */
+  @Post(':id/copy')
+  copy(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.boardsService.copyBoard(id, user);
   }
 
   // ── Likes & saves ─────────────────────────────────────────

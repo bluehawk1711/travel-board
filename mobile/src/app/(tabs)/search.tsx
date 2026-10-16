@@ -16,7 +16,6 @@ import { BottomTabInset, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { api, ApiError } from '@/lib/api';
 import { useQuery } from '@tanstack/react-query';
-import type { SearchUser } from '@/lib/types';
 import { UI_MESSAGES } from '@travel-board/shared';
 
 export default function SearchScreen() {

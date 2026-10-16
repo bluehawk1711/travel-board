@@ -22,7 +22,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { cn } from "@/lib/utils";
+import { cn, initials } from "@/lib/utils";
 
 interface BoardMembersProps {
   boardId: string;
@@ -164,7 +164,7 @@ export function BoardMembers({ boardId, isOwner, open, onOpenChange }: BoardMemb
                                 unoptimized
                               />
                             ) : (
-                              user.name.slice(0, 2).toUpperCase()
+                              initials(user.name)
                             )}
                           </span>
                           <span className="min-w-0 flex-1 truncate">{user.name}</span>
@@ -232,7 +232,7 @@ export function BoardMembers({ boardId, isOwner, open, onOpenChange }: BoardMemb
                         unoptimized
                       />
                     ) : (
-                      member.user.name.slice(0, 2).toUpperCase()
+                      initials(member.user.name)
                     )}
                   </span>
                   <div className="min-w-0 flex-1">
