@@ -28,6 +28,7 @@ import { Dissolve, Reveal } from '@/components/premium/motion';
 import { FloatingActionMenu, type FloatingAction } from '@/components/premium/floating-menu';
 import { GlassButton } from '@/components/premium/glass';
 import { ThemedText } from '@/components/themed-text';
+import { Chip } from '@/components/ui/pill-button';
 import { MaxContentWidth, Radius, Shadows, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { api, ApiError } from '@/lib/api';
@@ -53,6 +54,25 @@ const TYPE_META: Record<BoardItemType, { icon: keyof typeof Ionicons.glyphMap; l
   LINK: { icon: 'link-outline', label: 'Link' },
   IMAGE: { icon: 'image-outline', label: 'Photo' },
 };
+
+/** Per-type badge tints — every stop type reads at a glance (image-3 style). */
+function typeTone(
+  type: BoardItemType,
+  theme: ReturnType<typeof useTheme>,
+): { bg: string; fg: string } {
+  switch (type) {
+    case 'PLACE':
+      return { bg: `${theme.info}1F`, fg: theme.info };
+    case 'RESTAURANT':
+      return { bg: `${theme.golden}1F`, fg: theme.golden };
+    case 'HOTEL':
+      return { bg: theme.primaryContainer, fg: theme.primaryDark };
+    case 'ACTIVITY':
+      return { bg: theme.tertiaryLight, fg: theme.tertiary };
+    default:
+      return { bg: theme.backgroundElement, fg: theme.textSecondary };
+  }
+}
 
 function formatTime(iso: string | null): string | null {
   if (!iso) return null;
@@ -126,6 +146,7 @@ function TimelineItem({
   const [deleting, setDeleting] = useState(false);
   const [moving, setMoving] = useState(false);
   const meta = TYPE_META[item.type] ?? TYPE_META.PLACE;
+  const tone = typeTone(item.type, theme);
   const time = formatTime(item.date);
 
   const handleDelete = () => {
@@ -160,9 +181,6 @@ function TimelineItem({
     <View style={styles.timelineRow}>
       {/* Time rail */}
       <View style={styles.timeCol}>
-        <ThemedText type="smallBold" themeColor="textSecondary" style={styles.timeText}>
-          {time ?? '—'}
-        </ThemedText>
         <View style={[styles.dot, { backgroundColor: theme.primary, borderColor: theme.background }]} />
         {!isLast ? <View style={[styles.line, { backgroundColor: theme.borderSubtle }]} /> : null}
       </View>
@@ -170,32 +188,45 @@ function TimelineItem({
       {/* Card */}
       <Reveal style={styles.itemCardWrap} delay={60}>
         <View style={[styles.itemCard, { backgroundColor: theme.surfaceCard, borderColor: theme.borderSubtle }]}>
-          {/* Type chip */}
-          <View style={[styles.typeChip, { backgroundColor: theme.backgroundElement }]}>
-            <Ionicons name={meta.icon} size={12} color={theme.primary} />
-            <ThemedText type="smallBold" style={{ color: theme.primary, fontSize: 11 }}>
-              {meta.label}
-            </ThemedText>
+          {/* Badge row: stop type + scheduled time */}
+          <View style={styles.itemTopRow}>
+            <View style={[styles.typeBadge, { backgroundColor: tone.bg }]}>
+              <Ionicons name={meta.icon} size={11} color={tone.fg} />
+              <ThemedText style={[styles.typeBadgeText, { color: tone.fg }]}>
+                {meta.label}
+              </ThemedText>
+            </View>
+            {time ? (
+              <View style={[styles.timePill, { backgroundColor: theme.backgroundElement }]}>
+                <Ionicons name="time-outline" size={11} color={theme.textSecondary} />
+                <ThemedText style={[styles.typeBadgeText, { color: theme.textSecondary }]}>
+                  {time}
+                </ThemedText>
+              </View>
+            ) : null}
           </View>
 
-          <ThemedText type="smallBold" style={styles.itemTitle}>
-            {item.title}
-          </ThemedText>
-
-          {item.description ? (
-            <ThemedText type="small" themeColor="textSecondary" style={styles.itemDescription}>
-              {item.description}
-            </ThemedText>
-          ) : null}
-
-          {item.imageUrl ? (
-            <Image
-              source={{ uri: item.imageUrl }}
-              style={[styles.itemImage, { backgroundColor: theme.backgroundElement }]}
-              contentFit="cover"
-              transition={150}
-            />
-          ) : null}
+          {/* Body: optional thumbnail + title/description */}
+          <View style={styles.itemBody}>
+            {item.imageUrl ? (
+              <Image
+                source={{ uri: item.imageUrl }}
+                style={[styles.itemThumb, { backgroundColor: theme.backgroundElement }]}
+                contentFit="cover"
+                transition={150}
+              />
+            ) : null}
+            <View style={styles.itemBodyText}>
+              <ThemedText type="smallBold" style={styles.itemTitle}>
+                {item.title}
+              </ThemedText>
+              {item.description ? (
+                <ThemedText type="small" themeColor="textSecondary" style={styles.itemDescription}>
+                  {item.description}
+                </ThemedText>
+              ) : null}
+            </View>
+          </View>
 
           {(item.url || (item.lat != null && item.lng != null)) && (
             <View style={styles.chipRow}>
@@ -226,30 +257,28 @@ function TimelineItem({
 
           {canEdit ? (
             <View style={[styles.itemActions, { borderTopColor: theme.borderSubtle }]}>
-              <Pressable onPress={() => onEdit(item)} hitSlop={6}>
-                <ThemedText type="small" themeColor="textSecondary">Edit</ThemedText>
+              <Pressable onPress={() => onEdit(item)} hitSlop={6} style={[styles.actionTile, { backgroundColor: theme.backgroundElement }]}>
+                <Ionicons name="create-outline" size={14} color={theme.textSecondary} />
               </Pressable>
-              <Pressable onPress={() => handleMove(-1)} disabled={isFirst || moving} hitSlop={6}>
+              <Pressable onPress={() => handleMove(-1)} disabled={isFirst || moving} hitSlop={6} style={[styles.actionTile, { backgroundColor: theme.backgroundElement }]}>
                 <Ionicons
                   name="chevron-up"
-                  size={16}
+                  size={14}
                   color={theme.textSecondary}
                   style={isFirst ? { opacity: 0.35 } : undefined}
                 />
               </Pressable>
-              <Pressable onPress={() => handleMove(1)} disabled={isLast || moving} hitSlop={6}>
+              <Pressable onPress={() => handleMove(1)} disabled={isLast || moving} hitSlop={6} style={[styles.actionTile, { backgroundColor: theme.backgroundElement }]}>
                 <Ionicons
                   name="chevron-down"
-                  size={16}
+                  size={14}
                   color={theme.textSecondary}
                   style={isLast ? { opacity: 0.35 } : undefined}
                 />
               </Pressable>
               <View style={{ flex: 1 }} />
-              <Pressable onPress={handleDelete} disabled={deleting} hitSlop={6}>
-                <ThemedText type="small" style={{ color: theme.danger }}>
-                  {deleting ? '…' : 'Delete'}
-                </ThemedText>
+              <Pressable onPress={handleDelete} disabled={deleting} hitSlop={6} style={[styles.actionTile, { backgroundColor: theme.backgroundElement }]}>
+                <Ionicons name="trash-outline" size={14} color={deleting ? theme.textSecondary : theme.danger} />
               </Pressable>
             </View>
           ) : null}
@@ -504,6 +533,8 @@ export default function BoardDetailScreen() {
   const [deleted, setDeleted] = useState(false);
   const [showAddSection, setShowAddSection] = useState(false);
   const [tab, setTab] = useState<TabKey>('itinerary');
+  // Day selector (image-3 style): null = all days, otherwise a single day.
+  const [dayFilter, setDayFilter] = useState<number | null>(null);
   const [itemModal, setItemModal] = useState<
     { mode: 'create'; sectionId: string } | { mode: 'edit'; sectionId: string; item: BoardItem } | null
   >(null);
@@ -628,6 +659,7 @@ export default function BoardDetailScreen() {
     try {
       await api.createSection(board.id, title);
       query.refetch();
+      setDayFilter(null);
     } catch {
       // silent
     }
@@ -668,6 +700,7 @@ export default function BoardDetailScreen() {
           try {
             await api.deleteSection(board.id, sectionId);
             query.refetch();
+            setDayFilter(null);
           } catch {
             // silent
           }
@@ -686,6 +719,7 @@ export default function BoardDetailScreen() {
     try {
       await api.reorderSections(board.id, ids);
       query.refetch();
+      setDayFilter(null);
     } catch {
       // silent
     }
@@ -774,6 +808,9 @@ export default function BoardDetailScreen() {
 
   const notFound = query.error instanceof ApiError && query.error.status === 404;
   const dateRange = board ? formatRange(board.startDate, board.endDate) : null;
+  // Ignore a stale filter (e.g. days were deleted while one was selected).
+  const safeDayFilter =
+    board && dayFilter !== null && dayFilter >= board.sections.length ? null : dayFilter;
 
   // Floating menu actions by permission.
   const floatActions: FloatingAction[] = !board
@@ -834,7 +871,9 @@ export default function BoardDetailScreen() {
               ) : (
                 <Dissolve style={StyleSheet.absoluteFill} color={theme.primary} />
               )}
-              <View style={styles.heroScrim} />
+              <View style={[styles.heroScrim, { backgroundColor: 'rgba(0,0,0,0.12)' }]} />
+              <View style={[styles.heroScrimLower, { backgroundColor: 'rgba(0,0,0,0.34)' }]} />
+              <View style={[styles.heroScrimBase, { backgroundColor: 'rgba(0,0,0,0.52)' }]} />
 
               {/* Top controls */}
               <View style={styles.heroControls}>
@@ -910,22 +949,24 @@ export default function BoardDetailScreen() {
             ) : (
               <>
                 {/* ── Stats + like/save row ── */}
-                <View style={styles.statBar}>
+                <View style={[styles.statStrip, { backgroundColor: theme.surfaceCard, borderColor: theme.borderSubtle }, Shadows.card]}>
                   <Pressable onPress={handleLike} disabled={likePending} style={styles.statBtn}>
-                    <Ionicons name={liked ? 'heart' : 'heart-outline'} size={20} color={liked ? theme.primary : theme.textSecondary} />
+                    <Ionicons name={liked ? 'heart' : 'heart-outline'} size={18} color={liked ? theme.danger : theme.textSecondary} />
                     <ThemedText type="smallBold" themeColor={likeCount ? 'text' : 'textSecondary'}>{likeCount}</ThemedText>
                   </Pressable>
+                  <View style={[styles.statDivider, { backgroundColor: theme.borderSubtle }]} />
                   <Pressable onPress={handleSave} disabled={savePending} style={styles.statBtn}>
-                    <Ionicons name={saved ? 'bookmark' : 'bookmark-outline'} size={18} color={saved ? theme.golden : theme.textSecondary} />
+                    <Ionicons name={saved ? 'bookmark' : 'bookmark-outline'} size={16} color={saved ? theme.golden : theme.textSecondary} />
                     <ThemedText type="smallBold" themeColor={saveCount ? 'text' : 'textSecondary'}>{saveCount}</ThemedText>
                   </Pressable>
-                  <View style={{ flex: 1 }} />
+                  <View style={[styles.statDivider, { backgroundColor: theme.borderSubtle }]} />
                   <View style={styles.statBtn}>
-                    <Ionicons name="cube-outline" size={16} color={theme.textSecondary} />
+                    <Ionicons name="cube-outline" size={15} color={theme.textSecondary} />
                     <ThemedText type="smallBold" themeColor="textSecondary">{board.itemCount}</ThemedText>
                   </View>
+                  <View style={[styles.statDivider, { backgroundColor: theme.borderSubtle }]} />
                   <View style={styles.statBtn}>
-                    <Ionicons name="people-outline" size={16} color={theme.textSecondary} />
+                    <Ionicons name="people-outline" size={15} color={theme.textSecondary} />
                     <ThemedText type="smallBold" themeColor="textSecondary">{board.memberCount}</ThemedText>
                   </View>
                 </View>
@@ -950,42 +991,66 @@ export default function BoardDetailScreen() {
                     </View>
                   ) : (
                     <View style={styles.sections}>
+                      {/* Day selector chips */}
+                      <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={styles.dayChipRow}
+                      >
+                        <Chip
+                          label="All Days"
+                          active={safeDayFilter === null}
+                          onPress={() => setDayFilter(null)}
+                        />
+                        {board.sections.map((section, i) => (
+                          <Chip
+                            key={section.id}
+                            label={`Day ${i + 1}`}
+                            active={safeDayFilter === i}
+                            onPress={() => setDayFilter(i)}
+                          />
+                        ))}
+                      </ScrollView>
                       {board.sections.map((section, sIndex) => {
+                        if (safeDayFilter !== null && sIndex !== safeDayFilter) return null;
                         const date = sectionDate(board.startDate, sIndex);
                         return (
                           <Reveal key={section.id} delay={sIndex * 60} style={styles.dayBlock}>
                             {/* Day header */}
                             <View style={styles.dayHeader}>
-                              <View style={[styles.dayTag, { backgroundColor: theme.primary }]}>
-                                <ThemedText type="smallBold" style={{ color: theme.onPrimary }}>{dayLabel(sIndex)}</ThemedText>
+                              <View style={[styles.dayTag, { backgroundColor: theme.primaryContainer }]}>
+                                <Ionicons name="sunny-outline" size={12} color={theme.primaryDark} />
+                                <ThemedText type="smallBold" style={{ color: theme.primaryDark }}>
+                                  {dayLabel(sIndex)}
+                                </ThemedText>
                               </View>
                               <View style={styles.dayHeaderText}>
+                                <ThemedText type="subtitle" style={styles.dayTitle}>{section.title}</ThemedText>
                                 {date ? (
                                   <ThemedText type="small" themeColor="textSecondary">{date}</ThemedText>
                                 ) : null}
-                                <ThemedText type="subtitle" style={styles.dayTitle}>{section.title}</ThemedText>
                               </View>
                             </View>
 
                             {/* Section controls */}
                             {canEdit ? (
                               <View style={styles.sectionControls}>
-                                <Pressable onPress={() => setItemModal({ mode: 'create', sectionId: section.id })} style={[styles.sectionCtl, { backgroundColor: theme.backgroundElement }]}>
-                                  <Ionicons name="add" size={14} color={theme.primary} />
-                                  <ThemedText type="small" style={{ color: theme.primary }}>Stop</ThemedText>
+                                <Pressable onPress={() => setItemModal({ mode: 'create', sectionId: section.id })} style={[styles.sectionCtl, { backgroundColor: theme.primary }]}>
+                                  <Ionicons name="add" size={14} color={theme.onPrimary} />
+                                  <ThemedText type="smallBold" style={{ color: theme.onPrimary }}>Add stop</ThemedText>
                                 </Pressable>
-                                <Pressable onPress={() => setRenameSection({ id: section.id, title: section.title })} hitSlop={6}>
-                                  <ThemedText type="small" themeColor="textSecondary">Rename</ThemedText>
+                                <Pressable onPress={() => setRenameSection({ id: section.id, title: section.title })} hitSlop={6} style={[styles.sectionIcon, { backgroundColor: theme.backgroundElement }]}>
+                                  <Ionicons name="create-outline" size={14} color={theme.textSecondary} />
                                 </Pressable>
-                                <Pressable onPress={() => handleMoveSection(section.id, -1)} disabled={sIndex === 0} hitSlop={6}>
-                                  <Ionicons name="chevron-up" size={16} color={theme.textSecondary} style={sIndex === 0 ? { opacity: 0.35 } : undefined} />
+                                <Pressable onPress={() => handleMoveSection(section.id, -1)} disabled={sIndex === 0} hitSlop={6} style={[styles.sectionIcon, { backgroundColor: theme.backgroundElement }]}>
+                                  <Ionicons name="chevron-up" size={14} color={theme.textSecondary} style={sIndex === 0 ? { opacity: 0.35 } : undefined} />
                                 </Pressable>
-                                <Pressable onPress={() => handleMoveSection(section.id, 1)} disabled={sIndex === board.sections.length - 1} hitSlop={6}>
-                                  <Ionicons name="chevron-down" size={16} color={theme.textSecondary} style={sIndex === board.sections.length - 1 ? { opacity: 0.35 } : undefined} />
+                                <Pressable onPress={() => handleMoveSection(section.id, 1)} disabled={sIndex === board.sections.length - 1} hitSlop={6} style={[styles.sectionIcon, { backgroundColor: theme.backgroundElement }]}>
+                                  <Ionicons name="chevron-down" size={14} color={theme.textSecondary} style={sIndex === board.sections.length - 1 ? { opacity: 0.35 } : undefined} />
                                 </Pressable>
                                 <View style={{ flex: 1 }} />
-                                <Pressable onPress={() => handleDeleteSection(section.id)} hitSlop={6}>
-                                  <ThemedText type="small" style={{ color: theme.danger }}>Delete</ThemedText>
+                                <Pressable onPress={() => handleDeleteSection(section.id)} hitSlop={6} style={[styles.sectionIcon, { backgroundColor: theme.backgroundElement }]}>
+                                  <Ionicons name="trash-outline" size={14} color={theme.danger} />
                                 </Pressable>
                               </View>
                             ) : null}
@@ -1162,8 +1227,11 @@ const styles = StyleSheet.create({
     right: 0,
     top: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.28)',
   },
+  // Stacked translucent bands stand in for a vertical gradient that keeps
+  // the title legible over any cover photo (no gradient dependency).
+  heroScrimLower: { position: 'absolute', left: 0, right: 0, top: '44%', bottom: 0 },
+  heroScrimBase: { position: 'absolute', left: 0, right: 0, top: '68%', bottom: 0 },
   heroControls: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -1199,6 +1267,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.three,
     paddingTop: Spacing.three,
   },
+  statStrip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-evenly',
+    marginTop: Spacing.three,
+    marginHorizontal: Spacing.three,
+    paddingVertical: Spacing.two + Spacing.half,
+    paddingHorizontal: Spacing.two,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+  },
+  statDivider: { width: StyleSheet.hairlineWidth, height: 18 },
   statBtn: { flexDirection: 'row', alignItems: 'center', gap: Spacing.one },
   description: { paddingHorizontal: Spacing.three, paddingTop: Spacing.two, lineHeight: 20 },
 
@@ -1222,7 +1302,15 @@ const styles = StyleSheet.create({
   sections: { paddingHorizontal: Spacing.three, gap: Spacing.five },
   dayBlock: { gap: Spacing.two },
   dayHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.two },
-  dayTag: { paddingHorizontal: Spacing.two, paddingVertical: Spacing.one, borderRadius: Radius.sm },
+  dayTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.one,
+    paddingHorizontal: Spacing.two,
+    paddingVertical: Spacing.one + 1,
+    borderRadius: Radius.full,
+  },
+  dayChipRow: { gap: Spacing.two, paddingRight: Spacing.two, paddingBottom: Spacing.one },
   dayHeaderText: { flex: 1, gap: 2 },
   dayTitle: { fontSize: 20, lineHeight: 26, fontWeight: '800', letterSpacing: -0.4 },
   sectionControls: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three, paddingLeft: Spacing.one },
@@ -1230,9 +1318,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.one,
-    paddingHorizontal: Spacing.two,
-    paddingVertical: Spacing.half + 1,
+    paddingHorizontal: Spacing.three - 2,
+    paddingVertical: Spacing.half + 2,
     borderRadius: Radius.full,
+  },
+  sectionIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   noStops: { paddingLeft: Spacing.four, paddingVertical: Spacing.two },
   addDayBtn: {
@@ -1249,8 +1344,7 @@ const styles = StyleSheet.create({
   // Timeline
   timeline: { gap: 0 },
   timelineRow: { flexDirection: 'row', gap: Spacing.two },
-  timeCol: { width: 58, alignItems: 'center', paddingTop: Spacing.one },
-  timeText: { fontSize: 11, marginBottom: Spacing.one },
+  timeCol: { width: 20, alignItems: 'center', paddingTop: Spacing.two + Spacing.one },
   dot: {
     width: 10,
     height: 10,
@@ -1265,18 +1359,35 @@ const styles = StyleSheet.create({
     padding: Spacing.two + Spacing.half,
     gap: Spacing.one + Spacing.half,
   },
-  typeChip: {
+  itemTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.one,
+    justifyContent: 'space-between',
+    gap: Spacing.two,
+  },
+  typeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     alignSelf: 'flex-start',
     paddingHorizontal: Spacing.two,
-    paddingVertical: 2,
+    paddingVertical: 3,
     borderRadius: Radius.full,
   },
+  typeBadgeText: { fontSize: 11, fontWeight: '800', letterSpacing: 0.2 },
+  timePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: Spacing.two,
+    paddingVertical: 3,
+    borderRadius: Radius.full,
+  },
+  itemBody: { flexDirection: 'row', gap: Spacing.two },
+  itemThumb: { width: 62, height: 62, borderRadius: Radius.md },
+  itemBodyText: { flex: 1, gap: 2 },
   itemTitle: { fontSize: 15, lineHeight: 20, fontWeight: '700' },
   itemDescription: { lineHeight: 18 },
-  itemImage: { width: '100%', aspectRatio: 16 / 9, borderRadius: Radius.md, marginTop: Spacing.one },
   chipRow: { flexDirection: 'row', gap: Spacing.one + Spacing.half, flexWrap: 'wrap' },
   chip: {
     flexDirection: 'row',
@@ -1290,10 +1401,17 @@ const styles = StyleSheet.create({
   itemActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.three,
+    gap: Spacing.two,
     marginTop: Spacing.one,
     paddingTop: Spacing.one + Spacing.half,
     borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  actionTile: {
+    width: 28,
+    height: 28,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   // Places grid

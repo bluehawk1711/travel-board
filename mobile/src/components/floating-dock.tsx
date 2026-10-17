@@ -16,7 +16,7 @@ const DOCK_TABS = [
   { name: 'index', label: 'Boards', icon: 'dashboard' as const },
   { name: 'explore', label: 'Explore', icon: 'explore' as const },
   { name: 'chat/index', label: 'Chat', icon: 'chat' as const },
-  { name: 'settings', label: 'Settings', icon: 'settings' as const },
+  { name: 'profile', label: 'Profile', icon: 'person' as const },
 ];
 
 type FloatingDockProps = {

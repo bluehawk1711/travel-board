@@ -1,4 +1,6 @@
+import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
+import { Image } from 'expo-image';
 import { useMutation } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
 import {
@@ -9,8 +11,9 @@ import {
   View,
 } from 'react-native';
 
+import { Dissolve } from '@/components/premium/motion';
 import { ThemedText } from '@/components/themed-text';
-import { Spacing } from '@/constants/theme';
+import { Radius, Shadows, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { api, ApiError } from '@/lib/api';
 import { UI_MESSAGES } from '@travel-board/shared';
@@ -27,6 +30,44 @@ export interface BoardFormValues {
   startDate?: string;
   endDate?: string;
   coverImageUrl?: string;
+}
+
+/** Uppercase field label used across the form. */
+function FieldLabel({ children }: { children: string }) {
+  return (
+    <ThemedText type="smallBold" themeColor="textSecondary" style={styles.fieldLabel}>
+      {children}
+    </ThemedText>
+  );
+}
+
+/** One option of a segmented control (type / visibility pickers). */
+function SegOption({
+  active,
+  icon,
+  label,
+  onPress,
+}: {
+  active: boolean;
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  onPress: () => void;
+}) {
+  const theme = useTheme();
+  return (
+    <Pressable
+      onPress={onPress}
+      style={[
+        styles.segOption,
+        active && { backgroundColor: theme.surfaceCard, ...Shadows.card },
+      ]}
+    >
+      <Ionicons name={icon} size={14} color={active ? theme.primary : theme.textSecondary} />
+      <ThemedText type="smallBold" themeColor={active ? 'text' : 'textSecondary'}>
+        {label}
+      </ThemedText>
+    </Pressable>
+  );
 }
 
 /**
@@ -139,129 +180,190 @@ export function BoardForm({
     styles.input,
     {
       backgroundColor: theme.backgroundElement,
-      borderColor: theme.backgroundSelected,
+      borderColor: theme.borderSubtle,
       color: theme.text,
     },
   ];
   const shownError = error ?? localError;
 
   return (
-    <View style={styles.card}>
-      <TextInput
-        style={inputStyle}
-        placeholder="Board title *"
-        placeholderTextColor={theme.textSecondary}
-        value={title}
-        onChangeText={setTitle}
-      />
-      <TextInput
-        style={inputStyle}
-        placeholder="Destination (optional)"
-        placeholderTextColor={theme.textSecondary}
-        value={destination}
-        onChangeText={setDestination}
-      />
-      <TextInput
-        style={[inputStyle, styles.textArea]}
-        placeholder="Description (optional)"
-        placeholderTextColor={theme.textSecondary}
-        multiline
-        numberOfLines={3}
-        value={description}
-        onChangeText={setDescription}
-      />
-
-      <ThemedText type="small" themeColor="textSecondary">
-        Board type
-      </ThemedText>
-      <View style={styles.pillRow}>
-        {(['FREEFORM', 'ITINERARY'] as BoardType[]).map((value) => (
-          <Pressable
-            key={value}
-            onPress={() => setBoardType(value)}
-            style={[
-              styles.pill,
-              {
-                backgroundColor:
-                  boardType === value ? theme.text : theme.backgroundElement,
-              },
-            ]}
-          >
-            <ThemedText
-              type="smallBold"
-              style={{
-                color: boardType === value ? theme.background : theme.text,
-              }}
-            >
-              {value === 'ITINERARY' ? 'Itinerary' : 'Freeform'}
-            </ThemedText>
-          </Pressable>
-        ))}
-      </View>
-
-      <ThemedText type="small" themeColor="textSecondary">
-        Dates (optional, YYYY-MM-DD)
-      </ThemedText>
-      <View style={styles.dateRow}>
-        <TextInput
-          style={[inputStyle, styles.dateInput]}
-          placeholder="Start"
-          placeholderTextColor={theme.textSecondary}
-          autoCapitalize="none"
-          value={startDate}
-          onChangeText={setStartDate}
-        />
-        <TextInput
-          style={[inputStyle, styles.dateInput]}
-          placeholder="End"
-          placeholderTextColor={theme.textSecondary}
-          autoCapitalize="none"
-          value={endDate}
-          onChangeText={setEndDate}
-        />
-      </View>
-
-      <Pressable onPress={() => void pickCover()} style={styles.coverRow}>
-        <View
-          style={[styles.coverPreview, { borderColor: theme.backgroundSelected }]}
-        >
-          {uploadingCover ? (
-            <ActivityIndicator color={theme.textSecondary} />
-          ) : (
-            <ThemedText type="small" themeColor="textSecondary">
-              {coverImageUrl ? 'Cover ✓' : 'No cover'}
-            </ThemedText>
-          )}
+    <View style={styles.form}>
+      {/* Cover hero picker */}
+      <Pressable
+        onPress={() => void pickCover()}
+        style={({ pressed }) => [
+          styles.cover,
+          { backgroundColor: theme.backgroundElement, borderColor: theme.borderSubtle },
+          pressed && styles.pressed,
+        ]}
+      >
+        {coverImageUrl ? (
+          <Image
+            source={{ uri: coverImageUrl }}
+            style={StyleSheet.absoluteFill}
+            contentFit="cover"
+            transition={200}
+          />
+        ) : (
+          <Dissolve style={StyleSheet.absoluteFill} color={theme.primary} speed={0.4} />
+        )}
+        <View style={[styles.coverScrim, { backgroundColor: theme.overlay }]} />
+        <View style={styles.coverCenter}>
+          <View style={[styles.coverIcon, { backgroundColor: theme.overlay }]}>
+            {uploadingCover ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <Ionicons
+                name={coverImageUrl ? 'image-outline' : 'camera-outline'}
+                size={20}
+                color="#fff"
+              />
+            )}
+          </View>
+          <ThemedText type="smallBold" style={{ color: '#fff' }}>
+            {uploadingCover
+              ? 'Uploading…'
+              : coverImageUrl
+                ? 'Change cover image'
+                : 'Add cover image'}
+          </ThemedText>
         </View>
-        <ThemedText type="small" themeColor="textSecondary">
-          {coverImageUrl ? 'Change cover image' : 'Add cover image'}
-        </ThemedText>
       </Pressable>
 
-      <Pressable
-        onPress={() =>
-          setVisibility(visibility === 'PRIVATE' ? 'PUBLIC' : 'PRIVATE')
-        }
-        style={styles.toggleRow}
-      >
+      {/* Title */}
+      <View style={styles.field}>
+        <FieldLabel>TITLE *</FieldLabel>
+        <TextInput
+          style={[...inputStyle, styles.titleInput]}
+          placeholder="e.g. Iceland Ring Road — Photo Spots"
+          placeholderTextColor={theme.textSecondary}
+          value={title}
+          onChangeText={setTitle}
+        />
+      </View>
+
+      {/* Destination */}
+      <View style={styles.field}>
+        <FieldLabel>DESTINATION</FieldLabel>
         <View
           style={[
-            styles.checkbox,
-            {
-              borderColor: theme.text,
-              backgroundColor:
-                visibility === 'PRIVATE' ? theme.text : 'transparent',
-            },
+            styles.inputRow,
+            { backgroundColor: theme.backgroundElement, borderColor: theme.borderSubtle },
           ]}
         >
-          {visibility === 'PRIVATE' ? (
-            <ThemedText type="smallBold" style={{ color: theme.background }}>
-              ✓
-            </ThemedText>
-          ) : null}
+          <Ionicons name="location-outline" size={17} color={theme.textSecondary} />
+          <TextInput
+            style={[styles.inputFlex, { color: theme.text }]}
+            placeholder="Where to? (optional)"
+            placeholderTextColor={theme.textSecondary}
+            value={destination}
+            onChangeText={setDestination}
+          />
         </View>
-        <ThemedText type="small">Private board</ThemedText>
-      </Pressable>
+      </View>
+
+      {/* Description */}
+      <View style={styles.field}>
+        <FieldLabel>DESCRIPTION</FieldLabel>
+        <TextInput
+          style={[...inputStyle, styles.textArea]}
+          placeholder="What's this trip about? (optional)"
+          placeholderTextColor={theme.textSecondary}
+          multiline
+          numberOfLines={3}
+          value={description}
+          onChangeText={setDescription}
+        />
+      </View>
+
+      {/* Board type */}
+      <View style={styles.field}>
+        <FieldLabel>BOARD TYPE</FieldLabel>
+        <View style={[styles.segment, { backgroundColor: theme.backgroundElement }]}>
+          <SegOption
+            active={boardType === 'ITINERARY'}
+            icon="map-outline"
+            label="Itinerary"
+            onPress={() => setBoardType('ITINERARY')}
+          />
+          <SegOption
+            active={boardType === 'FREEFORM'}
+            icon="grid-outline"
+            label="Freeform"
+            onPress={() => setBoardType('FREEFORM')}
+          />
+        </View>
+        <ThemedText type="small" themeColor="textSecondary" style={styles.hint}>
+          {boardType === 'ITINERARY'
+            ? 'Day-by-day plan with times and stops.'
+            : 'A free-form board for collecting ideas.'}
+        </ThemedText>
+      </View>
+
+      {/* Dates */}
+      <View style={styles.field}>
+        <FieldLabel>DATES (OPTIONAL, YYYY-MM-DD)</FieldLabel>
+        <View style={styles.dateRow}>
+          <View
+            style={[
+              styles.inputRow,
+              styles.dateInput,
+              { backgroundColor: theme.backgroundElement, borderColor: theme.borderSubtle },
+            ]}
+          >
+            <Ionicons name="calendar-outline" size={16} color={theme.textSecondary} />
+            <TextInput
+              style={[styles.inputFlex, { color: theme.text }]}
+              placeholder="Start"
+              placeholderTextColor={theme.textSecondary}
+              autoCapitalize="none"
+              value={startDate}
+              onChangeText={setStartDate}
+            />
+          </View>
+          <View
+            style={[
+              styles.inputRow,
+              styles.dateInput,
+              { backgroundColor: theme.backgroundElement, borderColor: theme.borderSubtle },
+            ]}
+          >
+            <Ionicons name="calendar-outline" size={16} color={theme.textSecondary} />
+            <TextInput
+              style={[styles.inputFlex, { color: theme.text }]}
+              placeholder="End"
+              placeholderTextColor={theme.textSecondary}
+              autoCapitalize="none"
+              value={endDate}
+              onChangeText={setEndDate}
+            />
+          </View>
+        </View>
+      </View>
+
+      {/* Visibility */}
+      <View style={styles.field}>
+        <FieldLabel>VISIBILITY</FieldLabel>
+        <View style={[styles.segment, { backgroundColor: theme.backgroundElement }]}>
+          <SegOption
+            active={visibility === 'PUBLIC'}
+            icon="globe-outline"
+            label="Public"
+            onPress={() => setVisibility('PUBLIC')}
+          />
+          <SegOption
+            active={visibility === 'PRIVATE'}
+            icon="lock-closed-outline"
+            label="Private"
+            onPress={() => setVisibility('PRIVATE')}
+          />
+        </View>
+        <ThemedText type="small" themeColor="textSecondary" style={styles.hint}>
+          {visibility === 'PUBLIC'
+            ? 'Anyone can discover and save this board.'
+            : 'Only you and collaborators can open it.'}
+        </ThemedText>
+      </View>
 
       {shownError ? (
         <ThemedText type="small" style={{ color: theme.danger }}>
@@ -274,16 +376,20 @@ export function BoardForm({
         disabled={saving}
         style={[
           styles.primaryButton,
-          { backgroundColor: theme.text },
+          { backgroundColor: theme.primary },
+          !saving && Shadows.fab,
           saving && styles.disabled,
         ]}
       >
         {saving ? (
-          <ActivityIndicator color={theme.background} />
+          <ActivityIndicator color={theme.onPrimary} />
         ) : (
-          <ThemedText type="smallBold" style={{ color: theme.background }}>
-            {submitLabel}
-          </ThemedText>
+          <>
+            <Ionicons name="checkmark-circle-outline" size={17} color={theme.onPrimary} />
+            <ThemedText type="smallBold" style={{ color: theme.onPrimary }}>
+              {submitLabel}
+            </ThemedText>
+          </>
         )}
       </Pressable>
     </View>
@@ -291,54 +397,77 @@ export function BoardForm({
 }
 
 const styles = StyleSheet.create({
-  card: { gap: Spacing.three },
+  form: { gap: Spacing.four },
+  field: { gap: Spacing.one + Spacing.half },
+  fieldLabel: { letterSpacing: 0.6, fontSize: 10 },
+
+  cover: {
+    width: '100%',
+    aspectRatio: 16 / 9,
+    borderRadius: Radius.xl,
+    borderWidth: 1,
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  coverScrim: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, opacity: 0.35 },
+  coverCenter: { alignItems: 'center', gap: Spacing.one + Spacing.half },
+  coverIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pressed: { opacity: 0.85, transform: [{ scale: 0.99 }] },
+
   input: {
     borderWidth: 1,
-    borderRadius: Spacing.three,
+    borderRadius: Radius.md + 2,
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.two + Spacing.half,
-    fontSize: 16,
+    fontSize: 15,
   },
-  textArea: { minHeight: 80, textAlignVertical: 'top' },
-  pillRow: { flexDirection: 'row', gap: Spacing.two, marginTop: -Spacing.two },
-  pill: {
-    borderRadius: Spacing.three,
+  titleInput: { fontSize: 17, fontWeight: '700' },
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+    borderWidth: 1,
+    borderRadius: Radius.md + 2,
     paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.one + Spacing.half,
+    paddingVertical: Spacing.two + Spacing.half,
   },
-  dateRow: { flexDirection: 'row', gap: Spacing.two, marginTop: -Spacing.two },
+  inputFlex: { flex: 1, fontSize: 15, padding: 0 },
+  textArea: { minHeight: 80, textAlignVertical: 'top', fontSize: 15 },
+
+  segment: {
+    flexDirection: 'row',
+    gap: Spacing.half,
+    padding: Spacing.half + 1,
+    borderRadius: Radius.full,
+  },
+  segOption: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.one,
+    paddingVertical: Spacing.two,
+    borderRadius: Radius.full,
+  },
+  hint: { fontSize: 11, marginTop: -Spacing.one },
+
+  dateRow: { flexDirection: 'row', gap: Spacing.two },
   dateInput: { flex: 1 },
-  coverRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.two,
-  },
-  coverPreview: {
-    width: 64,
-    height: 40,
-    borderRadius: Spacing.two,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  toggleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.two,
-  },
-  checkbox: {
-    width: 20,
-    height: 20,
-    borderRadius: 4,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+
   primaryButton: {
-    borderRadius: Spacing.three,
-    paddingVertical: Spacing.three,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: Spacing.one,
+    borderRadius: Radius.full,
+    paddingVertical: Spacing.three + Spacing.half,
     marginTop: Spacing.one,
   },
   disabled: { opacity: 0.5 },

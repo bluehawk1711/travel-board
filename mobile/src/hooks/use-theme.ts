@@ -5,10 +5,21 @@
 
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useThemeStore } from '@/lib/theme-store';
+
+/**
+ * Resolved light/dark scheme: the user's saved preference (Settings →
+ * Appearance) wins, otherwise the OS setting.
+ */
+export function useResolvedScheme(): 'light' | 'dark' {
+  const mode = useThemeStore((state) => state.mode);
+  const system = useColorScheme();
+
+  if (mode === 'LIGHT') return 'light';
+  if (mode === 'DARK') return 'dark';
+  return system === 'dark' ? 'dark' : 'light';
+}
 
 export function useTheme() {
-  const scheme = useColorScheme();
-  const theme = scheme === 'unspecified' ? 'light' : scheme;
-
-  return Colors[theme];
+  return Colors[useResolvedScheme()];
 }

@@ -5,6 +5,7 @@ import { useRouter, type Href } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { ScreenHeader } from '@/components/premium/screen-header';
 import { PillButton } from '@/components/ui/pill-button';
 import { ThemedText } from '@/components/themed-text';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
@@ -126,24 +127,19 @@ export default function NotificationsScreen() {
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <Pressable onPress={() => router.back()} hitSlop={12}>
-            <ThemedText type="subtitle" themeColor="textSecondary">
-              ‹ Back
-            </ThemedText>
-          </Pressable>
-          <ThemedText type="subtitle">Notifications</ThemedText>
-        </View>
-        {hasUnread ? (
-          <PillButton
-            label={UI_MESSAGES.NOTIFICATIONS.MARK_ALL_READ}
-            onPress={() => markAllReadMutation.mutate()}
-            variant="ghost"
-            compact
-          />
-        ) : null}
-      </View>
+      <ScreenHeader
+        title="Notifications"
+        actions={
+          hasUnread ? (
+            <PillButton
+              label={UI_MESSAGES.NOTIFICATIONS.MARK_ALL_READ}
+              onPress={() => markAllReadMutation.mutate()}
+              variant="ghost"
+              compact
+            />
+          ) : null
+        }
+      />
 
       <FlashList
         data={items}
@@ -202,18 +198,6 @@ const styles = StyleSheet.create({
     width: '100%',
     alignSelf: 'center',
     maxWidth: MaxContentWidth,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.three,
-    paddingTop: Spacing.three,
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.three,
   },
   listContent: {
     paddingHorizontal: Spacing.three,

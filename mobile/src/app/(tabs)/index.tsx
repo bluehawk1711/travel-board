@@ -15,7 +15,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Avatar } from '@/components/avatar';
-import { BoardCard, type BoardCardModel } from '@/components/board-card';
+import { BoardCard, durationLabel, type BoardCardModel } from '@/components/board-card';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Chip } from '@/components/ui/pill-button';
@@ -29,16 +29,6 @@ const PAGE_SIZE = 20;
 const ASPECT_RATIOS = [0.8, 1.0, 0.72, 0.85, 1.0, 0.78];
 
 type Scope = 'foryou' | 'trending' | 'following' | 'mine';
-
-function durationLabel(item: { startDate: string | null; endDate: string | null }): string | null {
-  if (!item.startDate || !item.endDate) return null;
-  const start = new Date(item.startDate).getTime();
-  const end = new Date(item.endDate).getTime();
-  if (Number.isNaN(start) || Number.isNaN(end)) return null;
-  const days = Math.round((end - start) / 86_400_000) + 1;
-  if (days <= 0 || days > 60) return null;
-  return `${days} ${days === 1 ? 'Day' : 'Days'}`;
-}
 
 function fromFeedItem(item: FeedItem, index: number): BoardCardModel {
   return {

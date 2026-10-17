@@ -1,5 +1,5 @@
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -14,6 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { Socket } from 'socket.io-client';
 
+import { ScreenHeader } from '@/components/premium/screen-header';
 import { ThemedText } from '@/components/themed-text';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -38,7 +39,6 @@ interface Member {
 
 export default function ChatViewScreen() {
   const theme = useTheme();
-  const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const queryClient = useQueryClient();
 
@@ -218,20 +218,8 @@ export default function ChatViewScreen() {
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]} edges={['top', 'left', 'right']}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Pressable
-          onPress={() => router.back()}
-          hitSlop={8}
-          style={[styles.backButton, { backgroundColor: theme.backgroundElement }]}
-        >
-          <ThemedText type="smallBold">←</ThemedText>
-        </Pressable>
-        <ThemedText type="smallBold" numberOfLines={1} style={styles.headerTitle}>
-          {convQuery.data?.name ?? 'Chat'}
-        </ThemedText>
-        <View style={styles.headerSpacer} />
-      </View>
+      {/* Premium nav bar */}
+      <ScreenHeader title={convQuery.data?.name ?? 'Chat'} />
       {typingUserIds.length > 0 ? (
         <ThemedText
           type="small"
@@ -371,22 +359,6 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     maxWidth: MaxContentWidth,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingVertical: Spacing.three,
-    paddingHorizontal: Spacing.three,
-  },
-  backButton: {
-    width: Spacing.five,
-    height: Spacing.five,
-    borderRadius: Spacing.five,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerTitle: { flex: 1 },
-  headerSpacer: { width: Spacing.five },
   typingRow: { paddingHorizontal: Spacing.three, marginBottom: Spacing.one },
   messagesList: {
     flexGrow: 1,

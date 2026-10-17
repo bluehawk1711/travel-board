@@ -9,13 +9,13 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BoardForm, type BoardFormValues } from '@/components/board-form';
+import { ScreenHeader } from '@/components/premium/screen-header';
 import { ThemedText } from '@/components/themed-text';
-import { Spacing } from '@/constants/theme';
+import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { api, ApiError } from '@/lib/api';
 import { UI_MESSAGES } from '@travel-board/shared';
@@ -134,17 +134,21 @@ export default function EditBoardScreen() {
       style={styles.screen}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <SafeAreaView style={styles.safe}>
-        <ScrollView contentContainerStyle={styles.content}>
-          <View style={styles.header}>
-            <ThemedText type="subtitle">Edit board</ThemedText>
-            <Pressable onPress={() => router.back()}>
-              <ThemedText type="small" themeColor="textSecondary">
+      <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
+        {/* Sticky premium top bar — back + cancel (previously scrolled away). */}
+        <ScreenHeader
+          title="Edit board"
+          divider
+          actions={
+            <Pressable onPress={() => router.back()} hitSlop={8}>
+              <ThemedText type="smallBold" themeColor="textSecondary">
                 Cancel
               </ThemedText>
             </Pressable>
-          </View>
+          }
+        />
 
+        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           <BoardForm
             initialValues={{
               title: board.title,
@@ -192,13 +196,8 @@ export default function EditBoardScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  safe: { flex: 1 },
+  safe: { flex: 1, width: '100%', alignSelf: 'center', maxWidth: MaxContentWidth },
   content: { padding: Spacing.four, gap: Spacing.three },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
   center: {
     flex: 1,
     alignItems: 'center',

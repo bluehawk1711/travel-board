@@ -29,7 +29,10 @@ export default function TabsLayout() {
       <Tabs.Screen name="following" options={{ href: null }} />
       <Tabs.Screen name="search" options={{ href: null }} />
       <Tabs.Screen name="chat/index" options={{ title: 'Chat' }} />
-      <Tabs.Screen name="settings" options={{ title: 'Settings' }} />
+      <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
+      {/* Settings stays reachable via the Profile gear (`router.push('/settings')`)
+          but is hidden from the dock — Profile owns the 4th slot. */}
+      <Tabs.Screen name="settings" options={{ href: null }} />
     </Tabs>
   );
 }

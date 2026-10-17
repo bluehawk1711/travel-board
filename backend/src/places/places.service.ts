@@ -160,11 +160,15 @@ export class PlacesService {
   private readonly photoCache = new Map<string, PlacePhoto>();
 
   /** Photo resource names look like `places/…/photos/…` — reject anything else. */
-  private static readonly PHOTO_NAME_RE = /^places\/[A-Za-z0-9_-]+\/photos\/[A-Za-z0-9_-]+$/;
+  private static readonly PHOTO_NAME_RE =
+    /^places\/[A-Za-z0-9_-]+\/photos\/[A-Za-z0-9_-]+$/;
 
   async getPhoto(photoName: string, maxWidthPx = 800): Promise<PlacePhoto> {
     if (!PlacesService.PHOTO_NAME_RE.test(photoName)) {
-      throw new HttpException(MESSAGES.PLACES.PHOTO_INVALID, HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        MESSAGES.PLACES.PHOTO_INVALID,
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     const width = Math.min(Math.max(Math.round(maxWidthPx), 16), 2048);
@@ -199,8 +203,8 @@ export class PlacesService {
 
     // Bounded LRU: drop the oldest entry once at capacity.
     if (this.photoCache.size >= PlacesService.PHOTO_CACHE_MAX_ENTRIES) {
-      const oldest = this.photoCache.keys().next().value;
-      if (oldest !== undefined) this.photoCache.delete(oldest);
+      const oldest = this.photoCache.keys().next();
+      if (!oldest.done) this.photoCache.delete(oldest.value);
     }
     this.photoCache.set(cacheKey, photo);
     return photo;

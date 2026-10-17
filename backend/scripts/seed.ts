@@ -5,7 +5,8 @@
  *   pnpm --dir backend db:seed
  *
  * Creates the `pg_trgm` extension (Drizzle can't express it), then inserts a
- * deterministic demo world: users (all password `password123`), boards with
+ * deterministic demo world: users (password `password123`; the QA account
+ * `test@example.com` uses its email as the password), boards with
  * sections + items, follows, likes, saves, comments, conversations and
  * messages. Idempotent — running it twice is safe (upserts on unique keys).
  */
@@ -43,6 +44,8 @@ interface SeedUser {
   name: string;
   bio: string;
   avatarUrl: string | null;
+  /** Overrides the shared password (the QA account uses its email). */
+  password?: string;
 }
 
 const SEED_USERS: SeedUser[] = [
@@ -74,6 +77,43 @@ const SEED_USERS: SeedUser[] = [
     bio: 'Deserts, mountains, and everything between.',
     avatarUrl: 'https://i.pravatar.cc/300?img=68',
   },
+  {
+    /** QA account — password is the email itself (see header comment). */
+    id: '55555555-5555-4555-8555-555555555555',
+    email: 'test@example.com',
+    name: 'Test Explorer',
+    bio: 'Here to click every button. Currently "planning" autumn in Kyoto.',
+    avatarUrl: 'https://i.pravatar.cc/300?img=15',
+    password: 'test@example.com',
+  },
+  {
+    id: '66666666-6666-4666-8666-666666666666',
+    email: 'priya@travelboard.dev',
+    name: 'Priya Raman',
+    bio: 'Backpacking routes and overnight trains.',
+    avatarUrl: 'https://i.pravatar.cc/300?img=45',
+  },
+  {
+    id: '77777777-7777-4777-8777-777777777777',
+    email: 'sofia@travelboard.dev',
+    name: 'Sofia Marino',
+    bio: 'Coastal towns, long lunches, no itineraries.',
+    avatarUrl: 'https://i.pravatar.cc/300?img=26',
+  },
+  {
+    id: '88888888-8888-4888-8888-888888888888',
+    email: 'jonas@travelboard.dev',
+    name: 'Jonas Weber',
+    bio: 'Hiking huts and very early starts.',
+    avatarUrl: 'https://i.pravatar.cc/300?img=52',
+  },
+  {
+    id: '99999999-9999-4999-8999-999999999999',
+    email: 'aisha@travelboard.dev',
+    name: 'Aisha Bello',
+    bio: 'Markets, street art, and whatever locals recommend.',
+    avatarUrl: 'https://i.pravatar.cc/300?img=44',
+  },
 ];
 
 async function main() {
@@ -89,10 +129,26 @@ async function main() {
   await pool.query('CREATE EXTENSION IF NOT EXISTS pg_trgm;');
   console.log('pg_trgm extension ready');
 
-  const passwordHash = await bcrypt.hash(SEED_PASSWORD, BCRYPT_ROUNDS);
+  // Adopt the ids of accounts that already exist (e.g. test@example.com was
+  // registered by hand) so every downstream seed row references the real id
+  // instead of colliding with `users_email_unique`.
+  const { rows: existingUsers } = await pool.query<{ id: string; email: string }>(
+    'SELECT id, email FROM users WHERE email = ANY($1::text[])',
+    [SEED_USERS.map((u) => u.email)],
+  );
+  const idByEmail = new Map(existingUsers.map((row) => [row.email, row.id]));
+  const seedUsers: SeedUser[] = SEED_USERS.map((user) => ({
+    ...user,
+    id: idByEmail.get(user.email) ?? user.id,
+  }));
+
+  const defaultHash = await bcrypt.hash(SEED_PASSWORD, BCRYPT_ROUNDS);
 
   // -- Users + per-user settings -------------------------------------------
-  for (const user of SEED_USERS) {
+  for (const user of seedUsers) {
+    const passwordHash = user.password
+      ? await bcrypt.hash(user.password, BCRYPT_ROUNDS)
+      : defaultHash;
     await db
       .insert(users)
       .values({
@@ -115,11 +171,15 @@ async function main() {
       });
     await db.insert(userSettings).values({ userId: user.id }).onConflictDoNothing();
   }
-  console.log(`${SEED_USERS.length} users seeded (password: ${SEED_PASSWORD})`);
+  console.log(`${seedUsers.length} users seeded (password: ${SEED_PASSWORD}, QA account uses its email)`);
 
-  const [maya, leo, nina, omar] = SEED_USERS;
+  const [maya, leo, nina, omar, test, priya, sofia, jonas, aisha] = seedUsers;
 
   // -- Boards ---------------------------------------------------------------
+  /** YYYY-MM-DD offset from today — drives the "active trip" demo board. */
+  const isoDay = (offset: number): string =>
+    new Date(Date.now() + offset * 86_400_000).toISOString().slice(0, 10);
+
   const boardSeeds = [
     {
       id: 'b0000000-0000-4000-8000-000000000001',
@@ -173,6 +233,34 @@ async function main() {
       startDate: null,
       endDate: null,
     },
+    {
+      // Dates span "today" so the Profile active-trip banner, day progress,
+      // and board day tabs always have something live to show.
+      id: 'b0000000-0000-4000-8000-000000000005',
+      ownerId: test.id,
+      title: 'Autumn in Kyoto - Test Trip',
+      description: 'The QA sandbox board: collab members, day tabs, and live dates.',
+      destination: 'Kyoto, Japan',
+      coverImageUrl:
+        'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=1200',
+      boardType: 'ITINERARY' as const,
+      visibility: 'PUBLIC' as const,
+      startDate: isoDay(-1),
+      endDate: isoDay(6),
+    },
+    {
+      id: 'b0000000-0000-4000-8000-000000000006',
+      ownerId: priya.id,
+      title: '48 Hours in Marrakech',
+      description: 'Riads, rooftop dinners, and a day trip to the Atlas foothills.',
+      destination: 'Marrakech, Morocco',
+      coverImageUrl:
+        'https://images.unsplash.com/photo-1539020140153-e479b8c22e70?w=1200',
+      boardType: 'FREEFORM' as const,
+      visibility: 'PUBLIC' as const,
+      startDate: null,
+      endDate: null,
+    },
   ];
 
   for (const board of boardSeeds) {
@@ -185,7 +273,25 @@ async function main() {
       .values({ boardId: board.id, userId: board.ownerId, role: 'OWNER' })
       .onConflictDoNothing();
   }
-  console.log(`${boardSeeds.length} boards seeded`);
+
+  // Shared boards: the QA account collaborates on the demo boards, and the
+  // test trip gets collaborators so member counts / chat feel real.
+  const sharedMemberSeeds = [
+    { boardId: boardSeeds[0].id, userId: test.id, role: 'EDITOR' as const },
+    { boardId: boardSeeds[0].id, userId: omar.id, role: 'EDITOR' as const },
+    { boardId: boardSeeds[0].id, userId: priya.id, role: 'VIEWER' as const },
+    { boardId: boardSeeds[1].id, userId: test.id, role: 'EDITOR' as const },
+    { boardId: boardSeeds[1].id, userId: nina.id, role: 'EDITOR' as const },
+    { boardId: boardSeeds[2].id, userId: test.id, role: 'VIEWER' as const },
+    { boardId: boardSeeds[4].id, userId: leo.id, role: 'EDITOR' as const },
+    { boardId: boardSeeds[4].id, userId: nina.id, role: 'EDITOR' as const },
+    { boardId: boardSeeds[4].id, userId: sofia.id, role: 'VIEWER' as const },
+    { boardId: boardSeeds[5].id, userId: test.id, role: 'EDITOR' as const },
+  ];
+  for (const member of sharedMemberSeeds) {
+    await db.insert(boardMembers).values(member).onConflictDoNothing();
+  }
+  console.log(`${boardSeeds.length} boards seeded (${sharedMemberSeeds.length} shared memberships)`);
 
   // -- Sections + items (the Japan itinerary board) -------------------------
   const [japan] = boardSeeds;
@@ -217,6 +323,33 @@ async function main() {
   ];
 
   for (const section of japanSections) {
+    await db
+      .insert(boardSections)
+      .values(section)
+      .onConflictDoUpdate({ target: boardSections.id, set: section });
+  }
+
+  const extraSections = [
+    {
+      id: 'a0000000-0000-4000-8000-000000000005',
+      boardId: 'b0000000-0000-4000-8000-000000000005',
+      title: 'Day 1 - Eastern Kyoto',
+      position: 0,
+    },
+    {
+      id: 'a0000000-0000-4000-8000-000000000006',
+      boardId: 'b0000000-0000-4000-8000-000000000005',
+      title: 'Day 2 - Fushimi Inari & Gion',
+      position: 1,
+    },
+    {
+      id: 'a0000000-0000-4000-8000-000000000007',
+      boardId: 'b0000000-0000-4000-8000-000000000006',
+      title: 'Saved spots',
+      position: 0,
+    },
+  ];
+  for (const section of extraSections) {
     await db
       .insert(boardSections)
       .values(section)
@@ -318,6 +451,84 @@ async function main() {
       date: null,
       position: 1,
     },
+    {
+      id: 'e0000000-0000-4000-8000-000000000007',
+      boardId: 'b0000000-0000-4000-8000-000000000005',
+      sectionId: 'a0000000-0000-4000-8000-000000000005',
+      type: 'PLACE' as const,
+      title: 'Kiyomizu-dera at opening',
+      description: 'Beat the crowds - gates open at 6am.',
+      placeId: 'ChIJ1RCVv6mNHhAROw8fTQh-mXk',
+      imageUrl:
+        'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=800',
+      url: null,
+      lat: 34.9949,
+      lng: 135.785,
+      date: isoDay(-1),
+      position: 0,
+    },
+    {
+      id: 'e0000000-0000-4000-8000-000000000008',
+      boardId: 'b0000000-0000-4000-8000-000000000005',
+      sectionId: 'a0000000-0000-4000-8000-000000000005',
+      type: 'RESTAURANT' as const,
+      title: 'Nishiki Market lunch crawl',
+      description: 'Tamagoyaki, pickles, and soy-milk doughnuts.',
+      placeId: null,
+      imageUrl: null,
+      url: null,
+      lat: 35.005,
+      lng: 135.7649,
+      date: isoDay(-1),
+      position: 1,
+    },
+    {
+      id: 'e0000000-0000-4000-8000-000000000009',
+      boardId: 'b0000000-0000-4000-8000-000000000005',
+      sectionId: 'a0000000-0000-4000-8000-000000000006',
+      type: 'ACTIVITY' as const,
+      title: 'Fushimi Inari before sunrise',
+      description: '10,000 torii gates with nobody on them.',
+      placeId: 'ChIJ1RCVv6mNHhAROw8fTQh-mXk',
+      imageUrl:
+        'https://images.unsplash.com/photo-1478436127897-769e1b3f0f36?w=800',
+      url: null,
+      lat: 34.9671,
+      lng: 135.7727,
+      date: isoDay(0),
+      position: 0,
+    },
+    {
+      id: 'e0000000-0000-4000-8000-000000000010',
+      boardId: 'b0000000-0000-4000-8000-000000000006',
+      sectionId: 'a0000000-0000-4000-8000-000000000007',
+      type: 'RESTAURANT' as const,
+      title: 'Jemaa el-Fnaa food stalls',
+      description: 'Go after 7pm - the square turns into an open-air dinner.',
+      placeId: null,
+      imageUrl:
+        'https://images.unsplash.com/photo-1539020140153-e479b8c22e70?w=800',
+      url: null,
+      lat: 31.6258,
+      lng: -7.9891,
+      date: null,
+      position: 0,
+    },
+    {
+      id: 'e0000000-0000-4000-8000-000000000011',
+      boardId: 'b0000000-0000-4000-8000-000000000006',
+      sectionId: 'a0000000-0000-4000-8000-000000000007',
+      type: 'PLACE' as const,
+      title: 'Rooftop mint tea, Medina',
+      description: 'Sunset over the Koutoubia - ask for the terrace.',
+      placeId: null,
+      imageUrl: null,
+      url: null,
+      lat: 31.631,
+      lng: -7.989,
+      date: null,
+      position: 1,
+    },
   ];
 
   for (const item of itemSeeds) {
@@ -346,6 +557,17 @@ async function main() {
       targetType: 'BOARD' as const,
       targetId: japan.id,
     },
+    // QA account: follows the demo crew, and is followed back (profile stats).
+    { followerId: test.id, targetType: 'USER' as const, targetId: maya.id },
+    { followerId: test.id, targetType: 'USER' as const, targetId: leo.id },
+    { followerId: test.id, targetType: 'USER' as const, targetId: nina.id },
+    { followerId: test.id, targetType: 'BOARD' as const, targetId: boardSeeds[1].id },
+    { followerId: maya.id, targetType: 'USER' as const, targetId: test.id },
+    { followerId: leo.id, targetType: 'USER' as const, targetId: test.id },
+    { followerId: priya.id, targetType: 'USER' as const, targetId: test.id },
+    { followerId: sofia.id, targetType: 'USER' as const, targetId: test.id },
+    { followerId: aisha.id, targetType: 'USER' as const, targetId: test.id },
+    { followerId: jonas.id, targetType: 'USER' as const, targetId: priya.id },
   ];
   for (const follow of followSeeds) {
     await db.insert(follows).values(follow).onConflictDoNothing();
@@ -357,6 +579,12 @@ async function main() {
     { boardId: japan.id, userId: omar.id },
     { boardId: boardSeeds[1].id, userId: maya.id },
     { boardId: boardSeeds[2].id, userId: maya.id },
+    { boardId: boardSeeds[4].id, userId: leo.id },
+    { boardId: boardSeeds[4].id, userId: maya.id },
+    { boardId: boardSeeds[5].id, userId: maya.id },
+    { boardId: boardSeeds[5].id, userId: jonas.id },
+    { boardId: boardSeeds[1].id, userId: test.id },
+    { boardId: boardSeeds[2].id, userId: test.id },
   ];
   for (const like of likeSeeds) {
     await db.insert(likes).values(like).onConflictDoNothing();
@@ -367,6 +595,11 @@ async function main() {
     { boardId: japan.id, userId: leo.id },
     { boardId: boardSeeds[1].id, userId: nina.id },
     { boardId: boardSeeds[2].id, userId: omar.id },
+    // QA account saved tab + a couple of organic saves.
+    { boardId: japan.id, userId: test.id },
+    { boardId: boardSeeds[2].id, userId: test.id },
+    { boardId: boardSeeds[5].id, userId: nina.id },
+    { boardId: boardSeeds[4].id, userId: sofia.id },
   ];
   for (const save of saveSeeds) {
     await db.insert(boardSaves).values(save).onConflictDoNothing();
@@ -390,6 +623,18 @@ async function main() {
       boardId: boardSeeds[1].id,
       userId: maya.id,
       body: 'Costa da Caparica is worth the extra train hop. Bring a wetsuit in May.',
+    },
+    {
+      id: 'c0000000-0000-4000-8000-000000000004',
+      boardId: boardSeeds[4].id,
+      userId: nina.id,
+      body: 'Fushimi Inari before sunrise is the move - by 7am it is a queue. Add the full Inari loop to the map pin?',
+    },
+    {
+      id: 'c0000000-0000-4000-8000-000000000005',
+      boardId: boardSeeds[5].id,
+      userId: aisha.id,
+      body: 'Add the tannery viewpoint if you have time - best around 4pm when the light hits the dye pits.',
     },
   ];
   for (const comment of commentSeeds) {
@@ -418,6 +663,38 @@ async function main() {
       name: null,
       createdBy: maya.id,
     },
+    {
+      // QA account <-> Maya (direct)
+      id: 'd0000000-0000-4000-8000-000000000003',
+      type: 'DIRECT' as const,
+      boardId: null,
+      name: null,
+      createdBy: maya.id,
+    },
+    {
+      // QA account <-> Leo (direct)
+      id: 'd0000000-0000-4000-8000-000000000004',
+      type: 'DIRECT' as const,
+      boardId: null,
+      name: null,
+      createdBy: leo.id,
+    },
+    {
+      // Named group chat (shows under "Groups" alongside board chats).
+      id: 'd0000000-0000-4000-8000-000000000005',
+      type: 'GROUP' as const,
+      boardId: null,
+      name: 'Sakura Crew 2027',
+      createdBy: maya.id,
+    },
+    {
+      // Lisbon board chat
+      id: 'd0000000-0000-4000-8000-000000000006',
+      type: 'BOARD' as const,
+      boardId: boardSeeds[1].id,
+      name: null,
+      createdBy: leo.id,
+    },
   ];
   for (const conversation of conversationSeeds) {
     await db
@@ -432,6 +709,21 @@ async function main() {
     { conversationId: conversationSeeds[1].id, userId: maya.id },
     { conversationId: conversationSeeds[1].id, userId: leo.id },
     { conversationId: conversationSeeds[1].id, userId: nina.id },
+    { conversationId: conversationSeeds[1].id, userId: test.id },
+    { conversationId: conversationSeeds[1].id, userId: omar.id },
+    { conversationId: conversationSeeds[1].id, userId: priya.id },
+    { conversationId: conversationSeeds[2].id, userId: maya.id },
+    { conversationId: conversationSeeds[2].id, userId: test.id },
+    { conversationId: conversationSeeds[3].id, userId: leo.id },
+    { conversationId: conversationSeeds[3].id, userId: test.id },
+    { conversationId: conversationSeeds[4].id, userId: maya.id },
+    { conversationId: conversationSeeds[4].id, userId: leo.id },
+    { conversationId: conversationSeeds[4].id, userId: nina.id },
+    { conversationId: conversationSeeds[4].id, userId: priya.id },
+    { conversationId: conversationSeeds[4].id, userId: test.id },
+    { conversationId: conversationSeeds[5].id, userId: leo.id },
+    { conversationId: conversationSeeds[5].id, userId: nina.id },
+    { conversationId: conversationSeeds[5].id, userId: test.id },
   ];
   for (const member of memberSeeds) {
     await db
@@ -461,6 +753,56 @@ async function main() {
       senderId: maya.id,
       body: 'Perfect. I will reorder the itinerary tonight.',
     },
+    {
+      conversationId: conversationSeeds[2].id,
+      senderId: maya.id,
+      body: 'Hey! Welcome aboard 👋 Start with our Japan board - I just added Day 2.',
+    },
+    {
+      conversationId: conversationSeeds[2].id,
+      senderId: test.id,
+      body: 'Just saw it. The Asakusa timing looks spot on.',
+    },
+    {
+      conversationId: conversationSeeds[3].id,
+      senderId: leo.id,
+      body: 'Lisbon board is live - rate the Alfama day when you get a sec.',
+    },
+    {
+      conversationId: conversationSeeds[3].id,
+      senderId: test.id,
+      body: 'Looks great. Add the tram 28 loop and it is perfect.',
+    },
+    {
+      conversationId: conversationSeeds[4].id,
+      senderId: nina.id,
+      body: 'Sakura forecast is out: peak bloom the last week of March 🌸',
+    },
+    {
+      conversationId: conversationSeeds[4].id,
+      senderId: maya.id,
+      body: 'Booking flights tonight then.',
+    },
+    {
+      conversationId: conversationSeeds[4].id,
+      senderId: leo.id,
+      body: 'Count me in - someone add a ramen crawl to Day 1.',
+    },
+    {
+      conversationId: conversationSeeds[4].id,
+      senderId: test.id,
+      body: 'Fuunji is already pinned. You are welcome.',
+    },
+    {
+      conversationId: conversationSeeds[5].id,
+      senderId: leo.id,
+      body: 'Swapped the surf day to Saturday - the tide was wrong on Friday.',
+    },
+    {
+      conversationId: conversationSeeds[5].id,
+      senderId: nina.id,
+      body: 'Perfect, the market run works better on Friday then.',
+    },
   ];
   // messages has an identity PK (no natural unique key), so clear the seeded
   // conversations first to keep the script idempotent.
@@ -476,8 +818,44 @@ async function main() {
     `${conversationSeeds.length} conversations and ${messageSeeds.length} messages seeded`,
   );
 
+  // -- Read receipts + list ordering ----------------------------------------
+  // Unread counts come from `conversation_members.last_read_message_id`.
+  // Everyone has read everything except the QA account's group chat and the
+  // direct thread from Maya, so badge states are visible by hand.
+  const { rows: latestRows } = await pool.query<{
+    conversationId: string;
+    maxId: string;
+  }>(
+    'SELECT conversation_id AS "conversationId", max(id) AS "maxId" FROM messages GROUP BY conversation_id',
+  );
+  for (const { conversationId, maxId } of latestRows) {
+    await pool.query(
+      'UPDATE conversation_members SET last_read_message_id = $1 WHERE conversation_id = $2 AND user_id <> $3',
+      [maxId, conversationId, test.id],
+    );
+  }
+  await pool.query(
+    `UPDATE conversation_members cm SET last_read_message_id = m.max_id
+     FROM (SELECT conversation_id, max(id) AS max_id FROM messages GROUP BY conversation_id) m
+     WHERE cm.conversation_id = m.conversation_id AND cm.user_id = $1`,
+    [test.id],
+  );
+  await pool.query(
+    `UPDATE conversation_members SET last_read_message_id = NULL
+     WHERE user_id = $1 AND conversation_id = ANY($2::uuid[])`,
+    [test.id, [conversationSeeds[2].id, conversationSeeds[4].id]],
+  );
+  // Recency ordering for the conversation list (messages don't touch it).
+  await pool.query(
+    `UPDATE conversations c SET updated_at = COALESCE(
+       (SELECT max(created_at) FROM messages m WHERE m.conversation_id = c.id),
+       c.updated_at
+     )`,
+  );
+  console.log('read receipts + conversation ordering updated');
+
   // -- Push tokens ----------------------------------------------------------
-  for (const [index, user] of SEED_USERS.entries()) {
+  for (const [index, user] of seedUsers.entries()) {
     await db
       .insert(pushTokens)
       .values({
@@ -495,9 +873,14 @@ async function main() {
   console.log(`  boards=${boardSeeds.length}`);
   console.log('');
   console.log('Sign in with any of:');
-  for (const user of SEED_USERS) {
-    console.log(`  ${user.email} / ${SEED_PASSWORD}`);
+  for (const user of seedUsers) {
+    console.log(`  ${user.email} / ${user.password ?? SEED_PASSWORD}`);
   }
+  console.log('');
+  console.log('QA quick start (test@example.com):');
+  console.log('  - member of the Japan + Lisbon boards (shared editing)');
+  console.log('  - unread chats: "Sakura Crew 2027" + the thread from Maya');
+  console.log('  - Profile shows an active trip (Day 2 of 8) + Saved boards');
 
   await pool.end();
 }

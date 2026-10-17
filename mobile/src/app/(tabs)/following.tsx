@@ -1,12 +1,13 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BoardCard, type BoardCardModel } from '@/components/board-card';
+import { ScreenHeader } from '@/components/premium/screen-header';
 import { PillButton } from '@/components/ui/pill-button';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { api } from '@/lib/api';
@@ -43,16 +44,12 @@ export default function FollowingScreen() {
   );
 
   return (
-    <ThemedView style={styles.screen}>
-      <View style={styles.header}>
-        {/* Secondary destination (hidden dock tab) — offer a way back. */}
-        <Pressable onPress={() => router.back()} hitSlop={12}>
-          <ThemedText type="subtitle" themeColor="textSecondary">
-            ‹ Back
-          </ThemedText>
-        </Pressable>
-        <ThemedText type="subtitle">Following</ThemedText>
-      </View>
+    <SafeAreaView
+      style={[styles.screen, { backgroundColor: theme.background }]}
+      edges={['top', 'left', 'right']}
+    >
+      {/* Secondary destination (hidden dock tab) — premium back bar. */}
+      <ScreenHeader title="Following" />
 
       {query.isError ? (
         <View style={styles.center}>
@@ -110,17 +107,12 @@ export default function FollowingScreen() {
           <ActivityIndicator color={theme.textSecondary} />
         </View>
       )}
-    </ThemedView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  header: {
-    paddingHorizontal: Spacing.three,
-    paddingTop: Spacing.three,
-    gap: Spacing.two,
-  },
   listContent: {
     paddingHorizontal: Spacing.two,
     paddingTop: Spacing.two,

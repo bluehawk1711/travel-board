@@ -27,6 +27,20 @@ export interface BoardCardModel {
   aspectRatio?: number;
 }
 
+/** Trip length chip label ("7 Days") derived from a board's date range. */
+export function durationLabel(item: {
+  startDate: string | null;
+  endDate: string | null;
+}): string | null {
+  if (!item.startDate || !item.endDate) return null;
+  const start = new Date(item.startDate).getTime();
+  const end = new Date(item.endDate).getTime();
+  if (Number.isNaN(start) || Number.isNaN(end)) return null;
+  const days = Math.round((end - start) / 86_400_000) + 1;
+  if (days <= 0 || days > 60) return null;
+  return `${days} ${days === 1 ? 'Day' : 'Days'}`;
+}
+
 function formatCount(n?: number): string | null {
   if (n == null) return null;
   if (n < 1000) return String(n);

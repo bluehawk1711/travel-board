@@ -2,30 +2,33 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
-import { ActivityIndicator, StyleSheet, View, useColorScheme } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { ToastViewport } from '@/components/toast';
 import { useAuthGuard } from '@/hooks/use-auth-guard';
 import { usePushRegistration } from '@/hooks/use-push-registration';
-import { useTheme } from '@/hooks/use-theme';
+import { useResolvedScheme, useTheme } from '@/hooks/use-theme';
 import { useAuthStore } from '@/lib/auth-store';
 import { useOnboardingStore } from '@/lib/onboarding-store';
+import { useThemeStore } from '@/lib/theme-store';
 import { queryClient } from '@/lib/query-client';
 
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
+  const colorScheme = useResolvedScheme();
   const theme = useTheme();
   const status = useAuthStore((state) => state.status);
   const hydrate = useAuthStore((state) => state.hydrate);
   const hydrateOnboarding = useOnboardingStore((state) => state.hydrate);
+  const hydrateTheme = useThemeStore((state) => state.hydrate);
 
   useEffect(() => {
     void hydrate();
     void hydrateOnboarding();
-  }, [hydrate, hydrateOnboarding]);
+    void hydrateTheme();
+  }, [hydrate, hydrateOnboarding, hydrateTheme]);
 
   // Route guard: redirects between the auth and app groups based on session.
   useAuthGuard();

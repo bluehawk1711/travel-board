@@ -76,6 +76,7 @@ describe('BoardsService', () => {
           id: 'user-1',
           email: 'test@test.com',
           name: 'Test',
+          bio: null,
           avatarUrl: null,
         }),
       ).rejects.toThrow(NotFoundException);
@@ -119,6 +120,7 @@ describe('BoardsService', () => {
           id: 'user-1',
           email: 'test@test.com',
           name: 'Test',
+          bio: null,
           avatarUrl: null,
         }),
       ).rejects.toThrow(NotFoundException);
@@ -139,6 +141,7 @@ describe('BoardsService', () => {
           id: 'user-2',
           email: 'other@test.com',
           name: 'Other',
+          bio: null,
           avatarUrl: null,
         }),
       ).rejects.toThrow(ForbiddenException);
@@ -156,6 +159,7 @@ describe('BoardsService', () => {
           id: 'user-2',
           email: 'other@test.com',
           name: 'Other',
+          bio: null,
           avatarUrl: null,
         }),
       ).rejects.toThrow(NotFoundException);
@@ -171,6 +175,7 @@ describe('BoardsService', () => {
           id: 'user-1',
           email: 'test@test.com',
           name: 'Test',
+          bio: null,
           avatarUrl: null,
         }),
       ).rejects.toThrow(NotFoundException);

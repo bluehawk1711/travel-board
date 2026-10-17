@@ -9,9 +9,10 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { ScreenHeader } from '@/components/premium/screen-header';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { api, ApiError } from '@/lib/api';
@@ -49,10 +50,13 @@ export default function SearchScreen() {
   }, [query]);
 
   return (
-    <ThemedView style={styles.screen}>
-      <View style={styles.header}>
-        <ThemedText type="subtitle">Search</ThemedText>
-        <View style={styles.searchRow}>
+    <SafeAreaView
+      style={[styles.screen, { backgroundColor: theme.background }]}
+      edges={['top', 'left', 'right']}
+    >
+      {/* Secondary destination (hidden dock tab) — premium back bar. */}
+      <ScreenHeader title="Search" />
+      <View style={styles.searchRow}>
           <TextInput
             style={[
               styles.searchInput,
@@ -79,7 +83,6 @@ export default function SearchScreen() {
               {loading ? '...' : 'Go'}
             </ThemedText>
           </Pressable>
-        </View>
       </View>
 
       {error ? (
@@ -139,20 +142,17 @@ export default function SearchScreen() {
           <ActivityIndicator color={theme.textSecondary} />
         </View>
       )}
-    </ThemedView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  header: {
-    paddingHorizontal: Spacing.three,
-    paddingTop: Spacing.three,
-    gap: Spacing.two,
-  },
   searchRow: {
     flexDirection: 'row',
     gap: Spacing.two,
+    paddingHorizontal: Spacing.three,
+    paddingBottom: Spacing.two,
   },
   searchInput: {
     flex: 1,

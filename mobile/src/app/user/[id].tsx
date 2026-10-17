@@ -3,13 +3,13 @@ import { useQuery } from '@tanstack/react-query';
 import { FlashList } from '@shopify/flash-list';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Platform, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Avatar } from '@/components/avatar';
 import { BoardCard, type BoardCardModel } from '@/components/board-card';
-import { GlassButton } from '@/components/premium/glass';
 import { Dissolve, Reveal } from '@/components/premium/motion';
+import { ScreenHeader } from '@/components/premium/screen-header';
 import { ThemedText } from '@/components/themed-text';
 import { BottomTabInset, MaxContentWidth, Radius, Shadows, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -256,16 +256,8 @@ export default function UserProfileScreen() {
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]} edges={['top', 'left', 'right']}>
-      {/* Floating back */}
-      <View style={styles.topBar}>
-        <GlassButton onPress={() => router.back()} accessibilityLabel="Go back">
-          <Ionicons name={Platform.OS === 'android' ? 'arrow-forward' : 'chevron-back'} size={22} color={theme.text} />
-        </GlassButton>
-        <ThemedText type="smallBold" numberOfLines={1} style={styles.topTitle}>
-          {profile?.name ?? 'Profile'}
-        </ThemedText>
-        <View style={styles.topSpacer} />
-      </View>
+      {/* Premium nav bar */}
+      <ScreenHeader title={profile?.name ?? 'Profile'} />
 
       {profileQuery.isLoading ? (
         <View style={styles.center}>
@@ -324,15 +316,6 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     maxWidth: MaxContentWidth,
   },
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
-  },
-  topTitle: { flex: 1, textAlign: 'center' },
-  topSpacer: { width: 44 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.four, gap: Spacing.two },
   listContent: { paddingHorizontal: Spacing.three, gap: Spacing.three, paddingTop: 0 },
   emptyText: { textAlign: 'center', paddingVertical: Spacing.four },
