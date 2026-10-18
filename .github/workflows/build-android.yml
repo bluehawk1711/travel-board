@@ -76,23 +76,41 @@ jobs:
           KEY_PASS: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           set -euo pipefail
-          KS=android/app/release.keystore
-          if [ -z "$KEYSTORE_BASE64" ]; then
-            echo "::error::ANDROID_KEYSTORE_BASE64 is empty - cannot produce a signed release APK"
-            exit 1
-          fi
-          echo "$KEYSTORE_BASE64" | base64 --decode > "$KS"
-          for VAR in STORE_PASS ALIAS KEY_PASS; do
-            if [ -z "${!VAR}" ]; then
-              echo "::error::$VAR is empty - set the ANDROID_* secrets in the repo"
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            KS=android/app/release.keystore
+            echo "$KEYSTORE_BASE64" | base64 --decode > "$KS"
+            for VAR in STORE_PASS ALIAS KEY_PASS; do
+              if [ -z "${!VAR}" ]; then
+                echo "::error::$VAR is empty - set the ANDROID_* secrets in the repo"
+                exit 1
+              fi
+            done
+            if ! keytool -list -keystore "$KS" -storepass "$STORE_PASS" -alias "$ALIAS" >/dev/null 2>&1; then
+              echo "::error::Keystore credentials check failed - password or alias does not match"
               exit 1
             fi
-          done
-          if ! keytool -list -keystore "$KS" -storepass "$STORE_PASS" -alias "$ALIAS" >/dev/null 2>&1; then
-            echo "::error::Keystore credentials check failed - password or alias does not match"
-            exit 1
+            echo "Signing credentials verified (alias: $ALIAS)"
+            {
+              echo "ANDROID_SIGNING_KS=${GITHUB_WORKSPACE}/mobile/android/app/release.keystore"
+              echo "ANDROID_SIGNING_STORE_PASS=$STORE_PASS"
+              echo "ANDROID_SIGNING_KEY_ALIAS=$ALIAS"
+              echo "ANDROID_SIGNING_KEY_PASS=$KEY_PASS"
+              echo "SIGNED_WITH=release keystore ($ALIAS)"
+            } >> "$GITHUB_ENV"
+          else
+            echo "ANDROID_KEYSTORE_BASE64 is not set - signing the release APK with the debug keystore (personal testing build)"
+            if [ ! -f android/app/debug.keystore ]; then
+              echo "::error::android/app/debug.keystore missing - expo prebuild must run before this step"
+              exit 1
+            fi
+            {
+              echo "ANDROID_SIGNING_KS=${GITHUB_WORKSPACE}/mobile/android/app/debug.keystore"
+              echo "ANDROID_SIGNING_STORE_PASS=android"
+              echo "ANDROID_SIGNING_KEY_ALIAS=androiddebugkey"
+              echo "ANDROID_SIGNING_KEY_PASS=android"
+              echo "SIGNED_WITH=debug keystore (personal testing)"
+            } >> "$GITHUB_ENV"
           fi
-          echo "Signing credentials verified (alias: $ALIAS)"
           cat >> android/app/build.gradle <<'EOF'
 
           android {
@@ -120,10 +138,10 @@ jobs:
           if [ "${{ inputs.build_type }}" = "release" ]; then
             ./gradlew assembleRelease \
               -Dorg.gradle.jvmargs="-Xmx4g -XX:MaxMetaspaceSize=1g" \
-              -PANDROID_KEYSTORE_FILE="${{ github.workspace }}/mobile/android/app/release.keystore" \
-              -PANDROID_KEYSTORE_PASSWORD="${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" \
-              -PANDROID_KEY_ALIAS="${{ secrets.ANDROID_KEY_ALIAS }}" \
-              -PANDROID_KEY_PASSWORD="${{ secrets.ANDROID_KEY_PASSWORD }}" \
+              -PANDROID_KEYSTORE_FILE="$ANDROID_SIGNING_KS" \
+              -PANDROID_KEYSTORE_PASSWORD="$ANDROID_SIGNING_STORE_PASS" \
+              -PANDROID_KEY_ALIAS="$ANDROID_SIGNING_KEY_ALIAS" \
+              -PANDROID_KEY_PASSWORD="$ANDROID_SIGNING_KEY_PASS" \
               --no-daemon --parallel --build-cache
           else
             ./gradlew assembleDebug \
@@ -148,6 +166,6 @@ jobs:
             echo "## Android build"
             echo ""
             echo "- Build type: \`${{ inputs.build_type }}\`"
-            echo "- Signed: \`${{ inputs.build_type == 'release' && 'yes (release keystore)' || 'no (debug signing)' }}\`"
+            echo "- Signed: ${SIGNED_WITH:-no (debug signing)}"
             echo "- Package: app.travelboard.mobile"
           } >> "$GITHUB_STEP_SUMMARY"
